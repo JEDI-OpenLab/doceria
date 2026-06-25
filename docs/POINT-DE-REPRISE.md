@@ -22,6 +22,8 @@ dans une coquille Rust.
 **DA & thème (Phase 3) — FAIT** — charte **« Atelier »** (papier chaud, pétrole, or) en variables CSS, **claire + sombre**. Thème **clair/sombre/auto** (suit le système), bouton dans la barre, persisté (`theme.js`). **Vibrance macOS** (fenêtre `transparent` + `windowEffects` sidebar, `macOSPrivateApi` ; colonnes translucides `--panel-bg`, centre opaque). **Mémorisation fenêtre** (`tauri-plugin-window-state`). **Colonnes pliables** (chevrons ❮/❯ dans la barre, persisté). Aide **« ? »** (gras, infobulle en `position:fixed` calculée en JS → jamais rognée). **Modèles de consigne système** (presets) + feedback « appliquée ».
 **Finitions macOS** — **renommage de conversation inline** (le `window.prompt` n'est pas géré par la webview Tauri — règle générale : toujours des champs inline). **CSP** stricte (à valider, §8). `INSTALLATION-macOS.md`.
 
+**Site web (GitHub Pages) — FAIT** — site premium dans **`docs/`** (Fraunces + IBM Plex Sans + Bootstrap + Font Awesome, palette Atelier), publié via Pages « Deploy from a branch → `main` `/docs` » (`.nojekyll`). **En ligne : https://jedi-openlab.github.io/doceria/**. Sources : `docs/index.html`, `docs/style.css`, `docs/assets/`. *(À FAIRE par l'utilisateur : déposer `screen-1.png`/`screen-2.png`/`screen-3.png` dans `docs/assets/` pour la section « Aperçu » ; créer une Release GitHub avec le `.dmg` pour le bouton « Télécharger ».)*
+
 ## 4. Carte du code
 **Front** (`src/`) : `main.js` (orchestration), `api.js` (invoke : chat/profils/RAG + dialog), `state.js`, `ui.js`, `theme.js`, `conversations.js`, `documents.js` (pdf.js/mammoth), `styles.css` (variables Atelier clair+sombre).
 **Rust** (`src-tauri/src/`) : `lib.rs` (commandes, plugins, fenêtre, charge les profils), `ilaas.rs` (chat/list_models/test + helpers HTTP `pub(crate)` : client/send_error/http_error/normalize_base), `keychain.rs` (secrets, write-only), `settings.rs` (profils en `appDataDir/settings.json` + `resolve(profil, "llm"|"rag")`), `rag.rs` (client OpenGateLLM).
@@ -51,5 +53,6 @@ dans une coquille Rust.
 
 ## 8. En attente de validation
 - **Test utilisateur (macOS)** après redémarrage : l'app **se lance** (CSP ne casse pas l'écran), **chat + RAG** OK, et **charger un PDF puis un DOCX** (« Document de contexte ») fonctionne (point sensible de la CSP). Si écran blanc / PDF KO → ajuster/retirer la CSP (`tauri.conf.json` `security.csp`).
-- **Vérif macOS** (workflow lancé) : CSP / renommage / packaging — intégrer ses trouvailles confirmées.
+- **Vérif macOS** : faite (1 medium « app endommagée » → corrigé dans `INSTALLATION-macOS.md` ; reste des confirmations ; aucun blocker).
+- **Site web** : en ligne. À faire par l'utilisateur — déposer `screen-1.png`/`screen-2.png`/`screen-3.png` dans `docs/assets/` (section « Aperçu ») + créer une **Release** GitHub avec le `.dmg` (bouton « Télécharger »).
 - **Vibrance** : validée par l'utilisateur (« ça rend super bien »). Alpha réglable via `--panel-bg` (2 valeurs clair/sombre).

@@ -17,7 +17,9 @@
 - ⏳ **Avant Linux (demandé)** : mode **Chat/Requête** + **réglages de récupération** (top-k, seuil, méthode) + **mémoire** ; **chevrons de sections** du rail droit. *(Voir le backlog ci-dessous et `docs/POINT-DE-REPRISE.md`.)*
 - ⏳ **Phase 5 — Conso/coût** : tokens par échange (V1) ; `GET /v1/me/usage` (RAG géré).
 - 📄 **`docs/POINT-DE-REPRISE.md`** : état complet + conventions, à lire en premier pour reprendre.
-- ⏳ **Site de présentation (GitHub Pages)** : mini-site pour présenter et documenter Doceria — objectif, fonctionnalités, captures, installation, **et faiblesses/limites assumées** (RAG géré = documents sur l'infra ESR souveraine ≠ 100 % local ; app non signée ; bêta OpenGateLLM ; prompt-injection possible via documents…). À planifier.
+- ✅ **Site de présentation (GitHub Pages)** — site **premium** dans `docs/` (Fraunces + IBM Plex Sans + Bootstrap + Font Awesome, palette Atelier), publié via Pages « Deploy from a branch → `main` `/docs` » (`.nojekyll`). **En ligne : https://jedi-openlab.github.io/doceria/**. Sections : hero + maquette, fonctionnalités, souveraineté, limites assumées, installation, stack/licence.
+  - ⏳ **À FAIRE (utilisateur) — captures d'écran** : déposer 3 PNG nommés **`screen-1.png`, `screen-2.png`, `screen-3.png`** dans le dossier **`docs/assets/`** (suggestions : 1 = chat + citations/Sources ; 2 = Bibliothèque RAG ; 3 = thème sombre), puis commit + push → la section « Aperçu » du site se remplit automatiquement (sinon elle reste masquée).
+  - ⏳ **À FAIRE (utilisateur) — Release** : créer une *Release* GitHub et y déposer le `.dmg` (Apple Silicon) → le bouton « Télécharger » du site (qui pointe sur `releases/latest`) devient fonctionnel.
 
 ## Notes transverses (UX)
 - **Aides contextuelles** : partout où c'est pertinent, ajouter une icône **« ? » dans un cercle** ; au survol, une infobulle s'affiche proprement **par-dessus** (sans casser la mise en page). À généraliser progressivement, toujours utile/pertinent.
