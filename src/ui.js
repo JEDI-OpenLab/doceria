@@ -172,6 +172,27 @@ export function removeBubble(bubble) {
   bubble.parentNode?.remove();
 }
 
+// Affiche les sources RAG sous une réponse : [n] nom du document — extrait.
+export function appendSources(bubble, sources) {
+  if (!sources || !sources.length) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'sources';
+  const title = document.createElement('div');
+  title.className = 'sources-title';
+  title.textContent = 'Sources (' + sources.length + ')';
+  wrap.appendChild(title);
+  for (const s of sources) {
+    const item = document.createElement('div');
+    item.className = 'source-item';
+    const snippet = (s.content || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+    const more = s.content && s.content.replace(/\s+/g, ' ').trim().length > 160 ? '…' : '';
+    item.textContent = '[' + s.n + '] ' + (s.name || 'document #' + s.documentId) + ' — « ' + snippet + more + ' »';
+    wrap.appendChild(item);
+  }
+  bubble.parentNode?.appendChild(wrap);
+  scrollDown();
+}
+
 /* ---------- Bannière d'erreur ---------- */
 export function showError(msg) {
   clearError();

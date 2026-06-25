@@ -16,6 +16,8 @@ export const state = {
   // Bibliothèque RAG (collections gérées ILaaS du profil actif ; brut du backend)
   collections: [],
   activeCollectionId: null,
+  ragOwner: null, // email du propriétaire RAG (filtrage « mes collections »)
+  useLibrary: false, // interrupteur « Utiliser la bibliothèque » dans le chat
   // Modèles
   models: [],
   model: '',

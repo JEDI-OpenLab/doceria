@@ -91,25 +91,43 @@ function collectionsFrom(payload) {
 
 function refreshRag() {
   const enabled = ragEnabled();
-  for (const id of ['collectionSelect', 'collectionName', 'collectionNew', 'collectionDelete', 'ragAddFiles', 'ragAddFolder']) {
+  for (const id of ['collectionSelect', 'collectionName', 'collectionNew', 'collectionDelete', 'ragAddFiles', 'ragAddFolder', 'useLibrary']) {
     $(id).disabled = !enabled;
   }
   if (!enabled) {
     state.collections = [];
     state.activeCollectionId = null;
+    state.useLibrary = false;
+    $('useLibrary').checked = false;
     ui.renderCollections();
     $('ragHint').textContent = 'Ajoute une URL + clé RAG au profil pour activer la bibliothèque.';
     $('ragStatus').textContent = '';
     return;
   }
-  $('ragHint').textContent = 'Collections privées hébergées chez ILaaS (RAG géré).';
-  loadCollections();
+  $('ragHint').textContent = 'Tes collections privées (RAG géré ILaaS).';
+  loadRag();
+}
+
+// Récupère l'identité RAG (propriétaire) puis charge les collections.
+async function loadRag() {
+  state.ragOwner = null;
+  try {
+    const me = await ragApi.me();
+    if (me && typeof me.email === 'string') state.ragOwner = me.email;
+  } catch {
+    /* identité indisponible : on affichera toutes les collections en repli */
+  }
+  await loadCollections();
 }
 
 async function loadCollections() {
   try {
     const payload = await ragApi.listCollections();
-    state.collections = collectionsFrom(payload);
+    let all = collectionsFrom(payload);
+    // N'afficher que MES collections : la liste inclut les collections publiques
+    // d'autres utilisateurs, sur lesquelles l'écriture échoue (« Collection not found »).
+    if (state.ragOwner) all = all.filter((c) => !c.owner || c.owner === state.ragOwner);
+    state.collections = all;
     if (!state.collections.some((c) => String(c.id) === String(state.activeCollectionId))) {
       state.activeCollectionId = state.collections[0] ? state.collections[0].id : null;
     }
@@ -399,16 +417,54 @@ function readGenerationFromInputs() {
   saveSettings();
 }
 
-function buildMessages(conv) {
+function buildMessages(conv, ragContext) {
   const msgs = [];
   let sys = $('sysPrompt').value.trim();
   if (state.doc.text) {
     const ctx = 'Document de contexte « ' + state.doc.name + ' » :\n\n' + state.doc.text;
     sys = sys ? sys + '\n\n' + ctx : ctx;
   }
+  if (ragContext) {
+    const rag =
+      'Extraits de la bibliothèque de documents. Réponds en t\'appuyant dessus et cite tes ' +
+      'sources avec [n]. Si la réponse ne s\'y trouve pas, dis-le clairement.\n\n' + ragContext;
+    sys = sys ? sys + '\n\n' + rag : rag;
+  }
   if (sys) msgs.push({ role: 'system', content: sys });
   msgs.push(...conv.messages);
   return msgs;
+}
+
+// Recherche dans la bibliothèque (si activée) et prépare contexte + sources.
+async function retrieveFromLibrary(query) {
+  if (!state.useLibrary || state.activeCollectionId == null) return { context: '', sources: [] };
+  ui.setComposerMeta('recherche dans la bibliothèque…');
+  const res = await ragApi.search([Number(state.activeCollectionId)], query, 5, 'hybrid');
+  const items = res && Array.isArray(res.data) ? res.data : [];
+  const sources = items.map((it, i) => ({
+    n: i + 1,
+    content: (it.chunk && it.chunk.content) || '',
+    documentId: it.chunk && it.chunk.document_id,
+    score: it.score,
+  }));
+  // Résolution best-effort des noms de documents (id → nom) pour des citations lisibles.
+  const ids = [...new Set(sources.map((s) => s.documentId).filter((x) => x != null))];
+  const names = {};
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const d = await ragApi.getDocument(id);
+        names[id] = (d && (d.name || (d.data && d.data.name))) || null;
+      } catch {
+        /* nom non résolu : on retombera sur « document #id » */
+      }
+    })
+  );
+  sources.forEach((s) => {
+    s.name = names[s.documentId] || null;
+  });
+  const context = sources.length ? sources.map((s) => '[' + s.n + '] ' + s.content).join('\n\n') : '';
+  return { context, sources };
 }
 
 /* ---------- Envoi (streaming) ---------- */
@@ -441,9 +497,22 @@ async function send() {
   ui.resizePrompt();
   ui.clearError();
 
+  // RAG : si activé, on cherche dans la bibliothèque avant de construire la requête.
+  let ragContext = '';
+  let ragSources = [];
+  if (state.useLibrary && state.activeCollectionId != null) {
+    try {
+      const r = await retrieveFromLibrary(text);
+      ragContext = r.context;
+      ragSources = r.sources;
+    } catch (err) {
+      ui.showError('Recherche RAG : ' + describeError(err) + ' — réponse sans la bibliothèque.');
+    }
+  }
+
   // On capture les messages envoyés AVANT d'ajouter le slot assistant (sinon on enverrait
   // un tour assistant vide à l'API).
-  const apiMessages = buildMessages(conv);
+  const apiMessages = buildMessages(conv, ragContext);
   addMessage(conv, 'assistant', ''); // slot persisté, rempli au fil du streaming
   ui.renderConversationList(convHandlers);
 
@@ -478,6 +547,7 @@ async function send() {
     });
     const finalText = (full || acc).trim();
     ui.finalizeBubble(bubble, finalText);
+    if (ragSources.length) ui.appendSources(bubble, ragSources);
     setLastMessageContent(conv, finalText || '(réponse vide)');
     if (usage) {
       ui.setComposerMeta(
@@ -601,6 +671,9 @@ function wireEvents() {
   $('collectionDelete').addEventListener('click', onDeleteCollection);
   $('ragAddFiles').addEventListener('click', onAddFiles);
   $('ragAddFolder').addEventListener('click', onAddFolder);
+  $('useLibrary').addEventListener('change', (e) => {
+    state.useLibrary = e.target.checked;
+  });
 
   // Génération
   $('modelSelect').addEventListener('change', (e) => {

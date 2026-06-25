@@ -35,6 +35,7 @@ export const profilesApi = {
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */
 // Toutes les commandes résolvent l'URL + la clé RAG du profil actif côté Rust.
 export const ragApi = {
+  me: () => invoke('rag_me', { profileId: state.activeId }),
   listCollections: () => invoke('rag_list_collections', { profileId: state.activeId }),
   createCollection: (name, description) =>
     invoke('rag_create_collection', { profileId: state.activeId, name, description: description || null }),
@@ -42,6 +43,7 @@ export const ragApi = {
     invoke('rag_delete_collection', { profileId: state.activeId, collectionId }),
   uploadDocument: (collectionId, filePath, name) =>
     invoke('rag_upload_document', { profileId: state.activeId, collectionId, filePath, name: name || null }),
+  getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
   deleteDocument: (documentId) =>
     invoke('rag_delete_document', { profileId: state.activeId, documentId }),
   search: (collectionIds, query, limit, method) =>

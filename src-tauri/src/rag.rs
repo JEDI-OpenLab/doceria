@@ -109,6 +109,24 @@ pub async fn rag_delete_collection(
     Ok(())
 }
 
+/// Identité RAG du profil (GET /me/info) — utilisée pour ne lister que les
+/// collections dont l'utilisateur est propriétaire.
+#[tauri::command]
+pub async fn rag_me(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+) -> Result<Value, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
+    let url = format!("{}/me/info", normalize_base(&base));
+    let res = client()?
+        .get(&url)
+        .bearer_auth(key.trim())
+        .send()
+        .await
+        .map_err(send_error)?;
+    json_or_error(res).await
+}
+
 // ────────────────────────────── Documents ──────────────────────────────
 
 /// Téléverse un fichier local dans une collection (multipart). Le serveur découpe
@@ -151,6 +169,24 @@ pub async fn rag_upload_document(
         .post(&url)
         .bearer_auth(key.trim())
         .multipart(form)
+        .send()
+        .await
+        .map_err(send_error)?;
+    json_or_error(res).await
+}
+
+/// Récupère un document (GET /documents/{id}) — pour résoudre son nom dans les citations.
+#[tauri::command]
+pub async fn rag_get_document(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    document_id: i64,
+) -> Result<Value, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
+    let url = format!("{}/documents/{}", normalize_base(&base), document_id);
+    let res = client()?
+        .get(&url)
+        .bearer_auth(key.trim())
         .send()
         .await
         .map_err(send_error)?;

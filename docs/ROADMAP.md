@@ -10,6 +10,7 @@
   - ✅ **A. Client backend** OpenGateLLM (`rag.rs`) : collections, upload multipart, search hybride, rerank.
   - 🔄 **B. UI bibliothèque** : collections (créer/sélectionner/supprimer) + ajout fichiers/dossier. *(Fiabilisation de l'upload en cours.)*
   - ⏳ **C. Récupération dans le chat** : interrupteur « Utiliser la bibliothèque » → recherche + **citations des sources**.
+  - ⏳ **Sync dossier ↔ collection** : une collection peut être **liée à un dossier local** ; **bouton « Synchroniser »** (ajoute le nouveau/modifié, retire le supprimé — **indexation incrémentale** par empreinte hash/mtime, on ne re-téléverse pas tout) + **sync auto** au lancement de l'app et/ou à la sélection du profil. *(À trancher : le moment le plus pertinent — ne re-scanner que si quelque chose a changé ; cf. « watch temps réel » en P1.)*
   - ⏳ **D. Finitions + revue** (phase lourde).
 - ⏳ **Phase 3 — Préférences & thème** : clair/sombre/auto + vibrance macOS — **+ refonte de la charte graphique** (palette actuelle jugée trop neutre).
 - ⏳ **Phase 5 — Conso/coût** : tokens par échange (V1) ; `GET /v1/me/usage` (RAG géré).
