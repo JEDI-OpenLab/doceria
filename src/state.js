@@ -1,19 +1,21 @@
 // État global de l'application + persistance légère.
-// La clé API est sensible (nominative, facturée) : si l'utilisateur demande de la
-// mémoriser, elle est mise en sessionStorage (effacée à la fermeture de l'onglet),
-// jamais en localStorage. Les réglages non sensibles vont, eux, en localStorage.
+//
+// Aucune clé API ne vit côté JS : les secrets sont au trousseau OS (gérés par le
+// Rust). Le front ne garde que des métadonnées de profils (miroir du backend) et
+// l'identifiant du profil actif. Les réglages de génération non sensibles vont
+// en localStorage ; les conversations aussi (migration vers appData en Phase 3).
 
-const SETTINGS_KEY = 'ilaas_portal'; // réglages non sensibles (localStorage)
-const KEY_STORE = 'ilaas_key'; // clé API (sessionStorage uniquement)
+const SETTINGS_KEY = 'ilaas_portal'; // réglages de génération (localStorage)
 const CONVOS_KEY = 'ilaas_conversations';
 
 export const state = {
-  // Connexion — URL réelle d'ILaaS en dur (les appels partent du Rust, pas de proxy).
-  // Pas d'override par variable d'env de build : ça éviterait qu'un .env de dev (ex.
-  // « /ilaas ») se retrouve figé dans le bundle. L'URL reste modifiable dans l'UI et persistée.
-  baseUrl: 'https://llm.ilaas.fr/v1',
-  apiKey: '',
-  remember: false,
+  // Profils (miroir du backend — AUCUNE clé ici, seulement métadonnées + présence)
+  // [{ id, name, llmBaseUrl, llmModel, ragBaseUrl, hasLlmKey, hasRagKey }]
+  profiles: [],
+  activeId: null,
+  // Bibliothèque RAG (collections gérées ILaaS du profil actif ; brut du backend)
+  collections: [],
+  activeCollectionId: null,
   // Modèles
   models: [],
   model: '',
@@ -30,45 +32,32 @@ export const state = {
   busy: false,
 };
 
+export function activeProfile() {
+  return state.profiles.find((p) => p.id === state.activeId) || null;
+}
+
 export function loadSettings() {
+  // Migration Phase 1 → 2 : purge toute clé éventuellement laissée par l'ancienne
+  // version dans le stockage du webview (la clé vit désormais au trousseau OS).
+  try { sessionStorage.removeItem('ilaas_key'); } catch { /* ignore */ }
   try {
     const d = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
     if (d) {
-      if (d.baseUrl) state.baseUrl = d.baseUrl;
       if (typeof d.temp === 'number') state.temp = d.temp;
       if (typeof d.maxTokens === 'number') state.maxTokens = d.maxTokens;
       if (typeof d.sys === 'string') state.sys = d.sys;
+      if (typeof d.model === 'string') state.model = d.model;
     }
   } catch { /* stockage illisible : on ignore */ }
-  // Clé : uniquement sessionStorage (durée de vie de l'onglet).
-  try {
-    const k = sessionStorage.getItem(KEY_STORE);
-    if (k) {
-      state.apiKey = k;
-      state.remember = true;
-    }
-  } catch {}
 }
 
 export function saveSettings() {
-  // Réglages non sensibles dans localStorage (la clé n'y figure jamais).
   try {
     localStorage.setItem(
       SETTINGS_KEY,
-      JSON.stringify({ baseUrl: state.baseUrl, temp: state.temp, maxTokens: state.maxTokens, sys: state.sys })
+      JSON.stringify({ temp: state.temp, maxTokens: state.maxTokens, sys: state.sys, model: state.model })
     );
-  } catch {}
-  // Clé : en sessionStorage seulement si l'utilisateur l'a demandé.
-  try {
-    if (state.remember && state.apiKey) sessionStorage.setItem(KEY_STORE, state.apiKey);
-    else sessionStorage.removeItem(KEY_STORE);
-  } catch {}
-}
-
-// Efface toute trace de la clé mémorisée.
-export function forgetKey() {
-  state.remember = false;
-  try { sessionStorage.removeItem(KEY_STORE); } catch {}
+  } catch { /* on ignore */ }
 }
 
 export function loadConversations() {

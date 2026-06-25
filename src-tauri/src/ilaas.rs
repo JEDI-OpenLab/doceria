@@ -44,7 +44,7 @@ impl Drop for CancelGuard<'_> {
 }
 
 /// Messages d'erreur lisibles, alignés sur l'ancien front (api.js).
-fn http_error(code: u16) -> String {
+pub(crate) fn http_error(code: u16) -> String {
     match code {
         401 | 403 => format!("Clé refusée (HTTP {code}). Vérifiez la clé fournie par votre DSI."),
         404 => "Endpoint introuvable (404). Vérifiez l'URL de base.".to_string(),
@@ -54,11 +54,11 @@ fn http_error(code: u16) -> String {
     }
 }
 
-fn normalize_base(base: &str) -> String {
+pub(crate) fn normalize_base(base: &str) -> String {
     base.trim().trim_end_matches('/').to_string()
 }
 
-fn client() -> Result<reqwest::Client, String> {
+pub(crate) fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         // Pas de timeout global : une réponse en streaming peut légitimement durer.
         // Mais on borne l'établissement de connexion et l'inactivité du flux (serveur
@@ -70,7 +70,7 @@ fn client() -> Result<reqwest::Client, String> {
 }
 
 /// Message lisible pour une erreur de requête reqwest (timeout vs reste).
-fn send_error(e: reqwest::Error) -> String {
+pub(crate) fn send_error(e: reqwest::Error) -> String {
     if e.is_timeout() {
         "Délai dépassé : pas de réponse d'ILaaS. Réessayez plus tard.".to_string()
     } else {
@@ -80,16 +80,12 @@ fn send_error(e: reqwest::Error) -> String {
 
 // ───────────────────────────── Modèles ──────────────────────────────
 
-#[tauri::command]
-pub async fn list_models(base_url: String, api_key: String) -> Result<Vec<String>, String> {
-    let url = format!("{}/models", normalize_base(&base_url));
-    let mut req = client()?.get(&url);
-    let key = api_key.trim();
-    if !key.is_empty() {
-        req = req.bearer_auth(key);
-    }
-
-    let res = req
+/// GET {base}/models avec la clé fournie → liste d'ids de modèles.
+async fn fetch_models(base: &str, key: &str) -> Result<Vec<String>, String> {
+    let url = format!("{}/models", normalize_base(base));
+    let res = client()?
+        .get(&url)
+        .bearer_auth(key.trim())
         .send()
         .await
         .map_err(send_error)?;
@@ -97,7 +93,6 @@ pub async fn list_models(base_url: String, api_key: String) -> Result<Vec<String
     if !status.is_success() {
         return Err(http_error(status.as_u16()));
     }
-
     let data: Value = res
         .json()
         .await
@@ -107,6 +102,16 @@ pub async fn list_models(base_url: String, api_key: String) -> Result<Vec<String
         return Err("La liste des modèles est vide.".to_string());
     }
     Ok(list)
+}
+
+/// Liste les modèles d'inférence (LLM) du profil : URL du profil + clé au trousseau.
+#[tauri::command]
+pub async fn list_models(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+) -> Result<Vec<String>, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, "llm")?;
+    fetch_models(&base, &key).await
 }
 
 /// Extrait les ids de modèles d'une réponse `/models` (`data[].id|name`).
@@ -137,26 +142,20 @@ pub async fn test_connection(
     target: String,
 ) -> Result<Vec<String>, String> {
     let (base, key) = settings::resolve(&settings, &profile_id, &target)?;
-    let url = format!("{}/models", normalize_base(&base));
-    let res = client()?
-        .get(&url)
-        .bearer_auth(key.trim())
-        .send()
-        .await
-        .map_err(send_error)?;
-    let status = res.status();
-    if !status.is_success() {
-        return Err(http_error(status.as_u16()));
+    fetch_models(&base, &key).await
+}
+
+/// Teste une URL + clé saisies dans l'éditeur SANS rien persister (ni profil, ni
+/// trousseau) : permet de valider une clé AVANT de l'enregistrer. Aucune écriture.
+#[tauri::command]
+pub async fn test_connection_ephemeral(
+    base_url: String,
+    secret: String,
+) -> Result<Vec<String>, String> {
+    if secret.trim().is_empty() {
+        return Err("Saisissez une clé pour tester.".to_string());
     }
-    let data: Value = res
-        .json()
-        .await
-        .map_err(|e| format!("Réponse illisible : {e}"))?;
-    let list = parse_models(&data);
-    if list.is_empty() {
-        return Err("La liste des modèles est vide.".to_string());
-    }
-    Ok(list)
+    fetch_models(&base_url, &secret).await
 }
 
 // ────────────────────────────── Chat ────────────────────────────────
@@ -164,8 +163,7 @@ pub async fn test_connection(
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatRequest {
-    base_url: String,
-    api_key: String,
+    profile_id: String,
     model: String,
     temperature: f32,
     max_tokens: u32,
@@ -200,9 +198,12 @@ pub async fn cancel_chat(state: State<'_, ChatState>) -> Result<(), String> {
 pub async fn chat(
     app: AppHandle,
     state: State<'_, ChatState>,
+    settings: State<'_, SettingsState>,
     req: ChatRequest,
 ) -> Result<ChatResponse, String> {
-    let url = format!("{}/chat/completions", normalize_base(&req.base_url));
+    // Résout l'URL d'inférence du profil + la clé LLM (trousseau) côté Rust.
+    let (base, llm_key) = settings::resolve(&settings, &req.profile_id, "llm")?;
+    let url = format!("{}/chat/completions", normalize_base(&base));
     let payload = json!({
         "model": req.model,
         "temperature": req.temperature,
@@ -220,13 +221,10 @@ pub async fn chat(
     // Nettoyage garanti de state.cancel à la sortie, quel que soit le chemin.
     let _guard = CancelGuard { state: st, notify: notify.clone() };
 
-    let mut request = client()?.post(&url).json(&payload);
-    let key = req.api_key.trim();
-    if !key.is_empty() {
-        request = request.bearer_auth(key);
-    }
-
-    let res = request
+    let res = client()?
+        .post(&url)
+        .json(&payload)
+        .bearer_auth(llm_key.trim())
         .send()
         .await
         .map_err(send_error)?;

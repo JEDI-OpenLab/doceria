@@ -39,6 +39,58 @@ export function enableChat(on) {
   if (on) $('prompt').focus();
 }
 
+/* ---------- Profils ---------- */
+export function renderProfiles() {
+  const sel = $('profileSelect');
+  sel.innerHTML = '';
+  const has = state.profiles.length > 0;
+  $('profileEdit').disabled = !has;
+  $('profileDelete').disabled = !has;
+  $('loadModelsBtn').disabled = !has;
+  if (!has) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '— aucun profil —';
+    o.disabled = true;
+    o.selected = true;
+    sel.appendChild(o);
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  for (const p of state.profiles) {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.hasLlmKey ? '' : ' — clé manquante');
+    sel.appendChild(o);
+  }
+  sel.value = state.activeId || state.profiles[0].id;
+}
+
+/* ---------- Bibliothèque RAG ---------- */
+export function renderCollections() {
+  const sel = $('collectionSelect');
+  sel.innerHTML = '';
+  if (!state.collections.length) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '— aucune collection —';
+    o.disabled = true;
+    o.selected = true;
+    sel.appendChild(o);
+    return;
+  }
+  for (const c of state.collections) {
+    const o = document.createElement('option');
+    o.value = String(c.id);
+    const count = typeof c.documents === 'number' ? ' (' + c.documents + ' doc.)' : '';
+    o.textContent = (c.name || '#' + c.id) + count;
+    sel.appendChild(o);
+  }
+  sel.value =
+    state.activeCollectionId != null ? String(state.activeCollectionId) : String(state.collections[0].id);
+}
+
 /* ---------- Rendu Markdown léger ---------- */
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -71,8 +123,10 @@ export function renderThread(conv) {
   inner.innerHTML = '';
   if (!conv || !conv.messages.length) {
     inner.innerHTML =
-      '<div class="empty" id="empty"><div class="big">Prêt à interroger un modèle souverain</div>' +
-      '<div>Renseignez votre clé, chargez les modèles, puis écrivez ci-dessous.</div></div>';
+      '<div class="empty" id="empty">' +
+      '<img class="hero-logo" src="/logo.png" alt="Doceria" width="84" height="84">' +
+      '<div class="big">Prêt à interroger un modèle souverain</div>' +
+      '<div>Choisissez un profil, chargez les modèles, puis écrivez ci-dessous.</div></div>';
     return;
   }
   for (const m of conv.messages) {

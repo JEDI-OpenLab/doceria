@@ -4,6 +4,7 @@
 
 mod ilaas;
 mod keychain;
+mod rag;
 mod settings;
 
 use ilaas::ChatState;
@@ -12,17 +13,27 @@ use tauri::{Manager, WindowEvent};
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
     .manage(ChatState::default())
     .invoke_handler(tauri::generate_handler![
       ilaas::list_models,
       ilaas::chat,
       ilaas::cancel_chat,
       ilaas::test_connection,
+      ilaas::test_connection_ephemeral,
       keychain::set_profile_key,
       settings::list_profiles,
       settings::upsert_profile,
       settings::delete_profile,
-      settings::set_active_profile
+      settings::set_active_profile,
+      rag::rag_list_collections,
+      rag::rag_create_collection,
+      rag::rag_delete_collection,
+      rag::rag_upload_document,
+      rag::rag_delete_document,
+      rag::rag_search,
+      rag::rag_rerank,
+      rag::list_dir_files
     ])
     .on_window_event(|window, event| {
       // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).

@@ -3,6 +3,21 @@
 > Ordre conçu pour **dé-risquer** : on prouve le socle natif + le chat avant d'attaquer l'intégration RAG.
 > Chaque phase produit un build Mac + Linux testable.
 
+## Avancement (au 2026-06-25)
+- ✅ **Phase 1 — Socle Tauri** : chat natif streaming + Stop, fenêtre (fermer = quitter), build macOS `.app`/`.dmg`. *(Build Linux à valider sur machine Linux.)*
+- ✅ **Phase 2 — Clés & profils** : trousseau OS (`keyring`), multi-profils à **deux jetons** (LLM + RAG), test de connexion, choix du modèle par menu.
+- 🔄 **RAG — pivot « géré d'abord »** (jeton RAG obtenu et validé) : le **RAG géré ILaaS** passe AVANT le local, qui devient optionnel/différé (abstraction `local ⇄ géré` conservée). Sous-étapes :
+  - ✅ **A. Client backend** OpenGateLLM (`rag.rs`) : collections, upload multipart, search hybride, rerank.
+  - 🔄 **B. UI bibliothèque** : collections (créer/sélectionner/supprimer) + ajout fichiers/dossier. *(Fiabilisation de l'upload en cours.)*
+  - ⏳ **C. Récupération dans le chat** : interrupteur « Utiliser la bibliothèque » → recherche + **citations des sources**.
+  - ⏳ **D. Finitions + revue** (phase lourde).
+- ⏳ **Phase 3 — Préférences & thème** : clair/sombre/auto + vibrance macOS — **+ refonte de la charte graphique** (palette actuelle jugée trop neutre).
+- ⏳ **Phase 5 — Conso/coût** : tokens par échange (V1) ; `GET /v1/me/usage` (RAG géré).
+
+## Notes transverses (UX)
+- **Aides contextuelles** : partout où c'est pertinent, ajouter une icône **« ? » dans un cercle** ; au survol, une infobulle s'affiche proprement **par-dessus** (sans casser la mise en page). À généraliser progressivement, toujours utile/pertinent.
+- `window.prompt()` **n'est pas géré** par la webview Tauri → toujours des **champs inline** pour les saisies (fait : création de collection ; **à migrer** : renommage de conversation).
+
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).
 - Réintégrer l'UI HTML/CSS/JS **telle quelle**.

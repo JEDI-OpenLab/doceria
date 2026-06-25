@@ -1,37 +1,76 @@
-// Client de l'API ILaaS — version NATIVE (Tauri).
-// Les appels réseau partent du Rust (pas de fetch, pas de CORS) : on passe par
-// les commandes `invoke('list_models')` et `invoke('chat')`. Le streaming arrive
-// via l'event Tauri `chat://delta` ; le « Stop » appelle `invoke('cancel_chat')`.
+// Client de l'API ILaaS — version NATIVE (Tauri), avec profils au trousseau.
 //
-// Les signatures publiques (listModels, streamChat, describeError) sont inchangées
-// pour que le reste du frontend (main.js) ne bouge pas.
+// Le frontend ne manipule plus aucune clé : il passe un identifiant de profil
+// (`state.activeId`) aux commandes Rust, qui résolvent l'URL (métadonnées du
+// profil) et la clé (trousseau OS). Le streaming arrive via l'event `chat://delta`.
 
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/plugin-dialog';
 import { state } from './state.js';
 
-const base = () => state.baseUrl.trim().replace(/\/+$/, '');
-
 // Renvoie un message lisible ; '__ABORT__' signale une interruption volontaire.
-// Les erreurs réseau/HTTP arrivent déjà sous forme de chaînes lisibles (mappées côté Rust).
 export function describeError(err) {
   if (err && err.name === 'AbortError') return '__ABORT__';
   if (typeof err === 'string') return err;
   return (err && err.message) || 'Erreur inconnue.';
 }
 
+/* ---------- Profils (secrets gérés côté Rust / trousseau) ---------- */
+// Toutes renvoient le payload { profiles:[{id,name,llmBaseUrl,llmModel,ragBaseUrl,
+// hasLlmKey,hasRagKey}], activeId } — jamais la valeur d'une clé.
+export const profilesApi = {
+  list: () => invoke('list_profiles'),
+  upsert: (profile) => invoke('upsert_profile', { profile }),
+  remove: (profileId) => invoke('delete_profile', { profileId }),
+  setActive: (profileId) => invoke('set_active_profile', { profileId }),
+  // Write-only : définit (secret non vide) ou efface (secret vide) la clé d'un rôle.
+  setKey: (profileId, role, secret) => invoke('set_profile_key', { profileId, role, secret }),
+  // Teste une cible ("llm" | "rag") d'un profil enregistré (clé au trousseau).
+  test: (profileId, target) => invoke('test_connection', { profileId, target }),
+  // Teste une URL + clé saisies SANS rien persister (validation avant enregistrement).
+  testEphemeral: (baseUrl, secret) => invoke('test_connection_ephemeral', { baseUrl, secret }),
+};
+
+/* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */
+// Toutes les commandes résolvent l'URL + la clé RAG du profil actif côté Rust.
+export const ragApi = {
+  listCollections: () => invoke('rag_list_collections', { profileId: state.activeId }),
+  createCollection: (name, description) =>
+    invoke('rag_create_collection', { profileId: state.activeId, name, description: description || null }),
+  deleteCollection: (collectionId) =>
+    invoke('rag_delete_collection', { profileId: state.activeId, collectionId }),
+  uploadDocument: (collectionId, filePath, name) =>
+    invoke('rag_upload_document', { profileId: state.activeId, collectionId, filePath, name: name || null }),
+  deleteDocument: (documentId) =>
+    invoke('rag_delete_document', { profileId: state.activeId, documentId }),
+  search: (collectionIds, query, limit, method) =>
+    invoke('rag_search', {
+      profileId: state.activeId,
+      collectionIds,
+      query,
+      limit: limit || null,
+      method: method || null,
+    }),
+  listDirFiles: (dirPath) => invoke('list_dir_files', { dirPath }),
+  // Dialogues natifs (renvoient des chemins, jamais le contenu).
+  pickFiles: () => open({ multiple: true, directory: false }),
+  pickFolder: () => open({ multiple: false, directory: true }),
+};
+
 export async function listModels() {
-  return await invoke('list_models', { baseUrl: base(), apiKey: state.apiKey });
+  if (!state.activeId) throw 'Aucun profil actif.';
+  return await invoke('list_models', { profileId: state.activeId });
 }
 
 // Envoie une requête de chat en streaming. Appelle onDelta(chunk) au fil de l'eau.
 // Renvoie { text, usage }. Lance une erreur (AbortError si le signal est annulé).
 export async function streamChat({ messages, signal, onDelta }) {
+  if (!state.activeId) throw 'Aucun profil actif.';
   const requestId =
     (globalThis.crypto && crypto.randomUUID && crypto.randomUUID()) ||
     String(Date.now()) + Math.random().toString(16).slice(2);
 
-  // Reçoit les fragments émis par le Rust ; ignore ceux d'un autre échange.
   const unlisten = await listen('chat://delta', (event) => {
     const p = event.payload;
     if (p && p.requestId === requestId) onDelta(p.content);
@@ -48,8 +87,7 @@ export async function streamChat({ messages, signal, onDelta }) {
   try {
     const res = await invoke('chat', {
       req: {
-        baseUrl: base(),
-        apiKey: state.apiKey,
+        profileId: state.activeId,
         model: state.model,
         temperature: state.temp,
         maxTokens: state.maxTokens,
@@ -59,7 +97,6 @@ export async function streamChat({ messages, signal, onDelta }) {
     });
     return { text: res.text, usage: res.usage };
   } catch (err) {
-    // Interruption volontaire : on normalise en AbortError (cf. describeError).
     if (signal && signal.aborted) {
       const e = new Error('Interrompu');
       e.name = 'AbortError';

@@ -4,15 +4,17 @@
 
 Application de bureau **native** (macOS + Linux) pour interroger l'**API ILaaS** — la
 fédération d'inférence souveraine de l'enseignement supérieur et de la recherche français
-(API compatible OpenAI ; modèle de chat `mistral-medium-latest`). Doceria fera aussi du
-**RAG** sur une bibliothèque de documents (indexation **locale** en V1).
+(API compatible OpenAI ; modèle de chat `mistral-medium-latest`). Doceria fait aussi du
+**RAG** sur une bibliothèque de documents via le **service RAG géré ILaaS** (collections
+privées OpenGateLLM ; le RAG local reste une option différée).
 
 Double-clic pour lancer : pas de terminal, pas de CORS, clés au trousseau du système.
 
-Fonctionnalités (reprises du portail web) : connexion + liste des modèles, **chat en
-streaming** avec Stop, réglages de génération (température, longueur, consigne système),
-**multi-conversations** (créer / renommer / supprimer + export Markdown), chargement de
-documents de contexte (txt, md, csv, json, pdf, docx).
+Fonctionnalités : **profils de connexion** multiples (chaque profil porte ses clés LLM + RAG
+au trousseau, son URL et son modèle), **chat en streaming** avec Stop, réglages de génération
+(température, longueur, consigne système), **multi-conversations** (créer / renommer /
+supprimer + export Markdown), **bibliothèque RAG** (collections + ajout de documents/dossier),
+chargement de documents de contexte ponctuels (txt, md, csv, json, pdf, docx).
 
 ## Stack
 
@@ -35,9 +37,10 @@ npm install
 npm run tauri dev      # ouvre la fenêtre native, rechargement à chaud du frontend
 ```
 
-La clé API se saisit dans le champ **« Clé API »** de l'interface (transmise au cœur Rust via
-`invoke`). L'URL de base par défaut est `https://llm.ilaas.fr/v1`, modifiable dans l'UI.
-Aucune variable d'environnement n'est requise (cf. `.env.example`).
+Dans l'app : crée un **profil** (rail « Connexion » → **+ Nouveau**), colle ta **clé d'inférence**
+(URL `https://llm.ilaas.fr/v1` par défaut), **Tester** récupère les modèles ; ajoute si besoin
+l'**URL + clé RAG** (`https://rag-api.ilaas.fr/v1`) pour activer la bibliothèque. Les clés vont
+au trousseau du système — aucune variable d'environnement requise (cf. `.env.example`).
 
 ## Build (application distribuable, non signée)
 
@@ -60,11 +63,14 @@ doceria/
 ├── public/logo.png         # logo affiché dans l'UI
 ├── branding/               # source du logo (icônes générées via « tauri icon »)
 ├── src/                    # UI réutilisée
-│   ├── main.js             # orchestration et événements
-│   ├── api.js              # appels natifs : invoke(list_models|chat) + listen('chat://delta')
+│   ├── main.js             # orchestration : profils, modèles, chat, bibliothèque RAG
+│   ├── api.js              # invoke(...) : chat, profils, RAG (+ listen('chat://delta'))
 │   ├── state.js  ui.js  conversations.js  documents.js  styles.css
 ├── src-tauri/              # coquille Rust (Tauri v2)
-│   ├── src/ilaas.rs        # couche réseau ILaaS : list_models, chat streaming, cancel_chat
+│   ├── src/ilaas.rs        # réseau ILaaS : list_models, chat streaming, cancel, test
+│   ├── src/keychain.rs     # secrets au trousseau OS (write-only)
+│   ├── src/settings.rs     # profils (métadonnées non sensibles, appData)
+│   ├── src/rag.rs          # RAG géré : collections, upload, search, rerank
 │   ├── src/lib.rs  main.rs # entrée, commandes, fenêtre (fermer = quitter)
 │   ├── tauri.conf.json     # config app (nom, fenêtre, identifiant, bundle)
 │   ├── capabilities/  icons/  Cargo.toml
@@ -73,10 +79,15 @@ doceria/
 
 ## Sécurité de la clé
 
-La clé ILaaS est **nominative** et **facturée**. En V1, elle est saisie dans l'UI puis passée
-au cœur Rust qui l'ajoute à l'en-tête `Authorization` (elle ne circule pas hors du process).
-La **Phase 2** la déplacera dans le **trousseau du système** (Keychain macOS / Secret Service
-Linux). Ne placez jamais de clé en clair dans un fichier versionné ; `.env` est gitignore.
+Les clés ILaaS (inférence **et** RAG) sont **nominatives** et **facturées**. Elles vivent dans
+le **trousseau du système** (Keychain macOS / Secret Service Linux), rattachées à un profil ;
+elles ne transitent jamais par le webview ni par un fichier (la résolution clé → requête se
+fait dans le cœur Rust). Ne placez jamais de clé en clair dans un fichier versionné.
+
+> ⚠️ **macOS, app non signée** : au premier accès au trousseau, macOS peut afficher
+> « Doceria souhaite utiliser le trousseau » — c'est attendu. L'app n'étant pas signée
+> (signature ad-hoc), l'autorisation peut être redemandée après une reconstruction ; une
+> signature/notarisation (hors V1) la rendrait stable.
 
 ## Licence
 

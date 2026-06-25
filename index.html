@@ -32,7 +32,7 @@
           <div class="empty" id="empty">
             <img class="hero-logo" src="/logo.png" alt="Doceria" width="84" height="84">
             <div class="big">Prêt à interroger un modèle souverain</div>
-            <div>Renseignez votre clé, chargez les modèles, puis écrivez ci-dessous.</div>
+            <div>Choisissez un profil, chargez les modèles, puis écrivez ci-dessous.</div>
           </div>
         </div>
       </div>
@@ -49,25 +49,85 @@
     <aside class="rail">
       <h2>Connexion</h2>
       <div class="field">
-        <label for="baseUrl">URL de base</label>
-        <input type="text" id="baseUrl" value="https://llm.ilaas.fr/v1" spellcheck="false">
-        <div class="hint">L'appel part de l'application en natif (pas de navigateur, pas de CORS).</div>
+        <label for="profileSelect">Profil actif</label>
+        <select id="profileSelect" aria-label="Profil actif"></select>
+        <div class="hint">Chaque profil porte ses clés (au trousseau du système) et ses URLs.</div>
       </div>
-      <div class="field">
-        <label for="apiKey">Clé API</label>
-        <input type="password" id="apiKey" placeholder="clé fournie par votre DSI" spellcheck="false" autocomplete="off">
-        <div class="hint">Clé nominative, facturée. Saisie ici en attendant le stockage au trousseau (à venir).</div>
+      <div class="profile-bar">
+        <button id="profileNew" type="button" class="filebtn">+ Nouveau</button>
+        <button id="profileEdit" type="button" class="filebtn">Modifier</button>
+        <button id="profileDelete" type="button" class="filebtn danger">Supprimer</button>
       </div>
-      <div class="field check">
-        <input type="checkbox" id="remember">
-        <label for="remember" style="margin:0;cursor:pointer">Mémoriser la clé pour cette session (déconseillé sur poste partagé)</label>
+      <button class="btnfull" id="loadModelsBtn" type="button">Charger les modèles</button>
+
+      <!-- Éditeur de profil (masqué hors édition) -->
+      <div class="profile-editor" id="profileEditor" hidden>
+        <div class="field">
+          <label for="pfName">Nom du profil</label>
+          <input type="text" id="pfName" spellcheck="false" placeholder="ex. Centrale Lille">
+        </div>
+
+        <h3 class="pf-sub">Inférence (chat)</h3>
+        <div class="field">
+          <label for="pfLlmUrl">URL d'inférence</label>
+          <input type="text" id="pfLlmUrl" spellcheck="false" value="https://llm.ilaas.fr/v1">
+        </div>
+        <div class="field">
+          <label for="pfLlmKey">Clé d'inférence</label>
+          <div class="key-row">
+            <input type="password" id="pfLlmKey" spellcheck="false" autocomplete="off" placeholder="coller la clé LLM">
+            <button type="button" id="pfLlmTest" class="filebtn">Tester</button>
+          </div>
+          <div class="hint" id="pfLlmKeyHint">Teste la clé : récupère la liste des modèles ci-dessous.</div>
+        </div>
+        <div class="field">
+          <label for="pfLlmModel">Modèle par défaut</label>
+          <select id="pfLlmModel"></select>
+        </div>
+
+        <h3 class="pf-sub">RAG (optionnel)</h3>
+        <div class="field">
+          <label for="pfRagUrl">URL RAG</label>
+          <input type="text" id="pfRagUrl" spellcheck="false" value="https://rag-api.ilaas.fr/v1">
+        </div>
+        <div class="field">
+          <label for="pfRagKey">Clé RAG</label>
+          <div class="key-row">
+            <input type="password" id="pfRagKey" spellcheck="false" autocomplete="off" placeholder="coller la clé RAG">
+            <button type="button" id="pfRagTest" class="filebtn">Tester</button>
+          </div>
+          <div class="hint" id="pfRagKeyHint"></div>
+        </div>
+
+        <div class="profile-editor-actions">
+          <button type="button" id="pfSave" class="btnfull">Enregistrer le profil</button>
+          <button type="button" id="pfCancel" class="filebtn">Annuler</button>
+        </div>
       </div>
-      <button class="btnfull" id="connectBtn" type="button">Charger les modèles</button>
 
       <h2>Modèle</h2>
       <div class="field">
         <select id="modelSelect" aria-label="Modèle" disabled><option value="" disabled selected>connectez-vous d'abord</option></select>
       </div>
+
+      <h2>Bibliothèque (RAG)</h2>
+      <div class="field">
+        <label for="collectionSelect">Collection active</label>
+        <select id="collectionSelect" aria-label="Collection active"></select>
+        <div class="hint" id="ragHint">Ajoute une URL + clé RAG au profil pour activer la bibliothèque.</div>
+      </div>
+      <div class="field">
+        <div class="key-row">
+          <input type="text" id="collectionName" spellcheck="false" placeholder="nom d'une nouvelle collection">
+          <button id="collectionNew" type="button" class="filebtn">+ Créer</button>
+        </div>
+      </div>
+      <div class="profile-bar">
+        <button id="ragAddFiles" type="button" class="filebtn">Ajouter des fichiers</button>
+        <button id="ragAddFolder" type="button" class="filebtn">Ajouter un dossier</button>
+        <button id="collectionDelete" type="button" class="filebtn danger">Supprimer</button>
+      </div>
+      <div class="hint" id="ragStatus"></div>
 
       <h2>Génération</h2>
       <div class="field">

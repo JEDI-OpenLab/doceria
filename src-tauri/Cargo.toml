@@ -23,18 +23,25 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
 # Couche réseau native : tout le trafic ILaaS part du Rust (pas de CORS, clé hors webview).
 # rustls-tls : TLS statique (pas de dépendance à OpenSSL système) → AppImage Linux portable.
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "http2", "charset"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "multipart", "rustls-tls", "http2", "charset"] }
 tokio = { version = "1", features = ["sync", "macros"] }
 futures-util = "0.3"
 
 # Trousseau OS (secrets : clés API). Backend par plateforme :
 #  - macOS : Keychain natif (apple-native).
-#  - Linux : Secret Service via D-Bus pur Rust (pas de libsecret système), chiffrement Rust
-#            (pas d'OpenSSL système) → AppImage portable.
+#  - Linux : Secret Service 100% Rust — zbus (async-secret-service + async-io) + RustCrypto
+#            (crypto-rust). PAS de libdbus-1 système ni d'OpenSSL → AppImage portable.
+#            (À valider au premier build Linux — non compilé sur la machine macOS de dev.)
+#  - Windows : credential store natif (windows-native) — non livré en V1 mais permet de
+#              compiler la cible sans refonte le jour venu.
 [target.'cfg(target_os = "macos")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-keyring = { version = "3", default-features = false, features = ["sync-secret-service", "crypto-rust"] }
+keyring = { version = "3", default-features = false, features = ["async-secret-service", "crypto-rust", "async-io"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", default-features = false, features = ["windows-native"] }
