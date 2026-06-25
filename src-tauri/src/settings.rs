@@ -139,6 +139,15 @@ pub fn upsert_profile(
     settings: State<'_, SettingsState>,
     profile: ProfileMeta,
 ) -> Result<ProfilesPayload, String> {
+    // URLs en https:// uniquement (évite un downgrade en clair sur un réseau hostile).
+    if !profile.llm_base_url.trim().starts_with("https://") {
+        return Err("L'URL d'inférence doit commencer par https://.".to_string());
+    }
+    if let Some(u) = &profile.rag_base_url {
+        if !u.trim().is_empty() && !u.trim().starts_with("https://") {
+            return Err("L'URL RAG doit commencer par https://.".to_string());
+        }
+    }
     let mut g = settings.0.lock().unwrap();
     match g.profiles.iter_mut().find(|p| p.id == profile.id) {
         Some(existing) => *existing = profile.clone(),

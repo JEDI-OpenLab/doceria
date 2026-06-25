@@ -19,9 +19,22 @@ use crate::settings::{self, SettingsState};
 /// Message d'erreur lisible à partir du code HTTP + corps ({detail} ou {message}).
 fn rag_error(code: u16, body: &str) -> String {
     let detail = serde_json::from_str::<Value>(body).ok().and_then(|j| {
-        j.get("detail").or_else(|| j.get("message")).map(|d| match d.as_str() {
-            Some(s) => s.to_string(),
-            None => d.to_string(),
+        j.get("detail").or_else(|| j.get("message")).map(|d| match d {
+            // 403/404… : detail est une chaîne → message direct.
+            Value::String(s) => s.clone(),
+            // 422 FastAPI/OpenGateLLM : detail = [{loc, msg, type}, …] → on extrait les msg.
+            Value::Array(arr) => {
+                let msgs: Vec<&str> = arr
+                    .iter()
+                    .filter_map(|e| e.get("msg").and_then(Value::as_str))
+                    .collect();
+                if msgs.is_empty() {
+                    d.to_string()
+                } else {
+                    msgs.join(" ; ")
+                }
+            }
+            _ => d.to_string(),
         })
     });
     match detail {
@@ -262,12 +275,23 @@ pub fn list_dir_files(dir_path: String) -> Result<Vec<String>, String> {
             if hidden {
                 continue;
             }
-            if path.is_dir() {
+            // file_type() (issu de read_dir) ne SUIT PAS les liens : on ignore les
+            // symlinks pour ne jamais sortir du dossier réellement choisi.
+            let ft = match entry.file_type() {
+                Ok(ft) => ft,
+                Err(_) => continue,
+            };
+            if ft.is_symlink() {
+                continue;
+            }
+            if ft.is_dir() {
                 stack.push(path);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if EXTS.contains(&ext.to_lowercase().as_str()) {
-                    if let Some(s) = path.to_str() {
-                        out.push(s.to_string());
+            } else if ft.is_file() {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if EXTS.contains(&ext.to_lowercase().as_str()) {
+                        if let Some(s) = path.to_str() {
+                            out.push(s.to_string());
+                        }
                     }
                 }
             }
