@@ -552,14 +552,33 @@ async function send() {
   // RAG : si activé, on cherche dans la bibliothèque avant de construire la requête.
   let ragContext = '';
   let ragSources = [];
+  let ragSearched = false; // true seulement si la recherche a abouti (pas d'erreur réseau)
   if (state.useLibrary && state.activeCollectionId != null) {
     try {
       const r = await retrieveFromLibrary(text);
       ragContext = r.context;
       ragSources = r.sources;
+      ragSearched = true;
     } catch (err) {
       ui.showError('Recherche RAG : ' + describeError(err) + ' — réponse sans la bibliothèque.');
     }
+  }
+
+  // Mode Requête : la recherche a abouti mais n'a ramené AUCUN extrait → on ne sollicite pas
+  // le modèle (il répondrait sur ses connaissances générales, ce que ce mode interdit). On
+  // renvoie directement le refus, comme AnythingLLM en mode « Query » — et on évite un appel
+  // facturé inutile. (Sur erreur réseau on ne court-circuite pas : le repli ci-dessus s'applique.)
+  if (state.ragMode === 'requete' && ragSearched && !ragContext) {
+    const refusal = 'Je ne trouve pas la réponse dans la bibliothèque.';
+    addMessage(conv, 'assistant', refusal);
+    ui.finalizeBubble(ui.appendMessage('assistant', ''), refusal);
+    ui.setComposerMeta('mode Requête : aucun extrait pertinent trouvé.');
+    state.busy = false;
+    ui.setSending(false);
+    ui.renderConversationList(convHandlers);
+    ui.scrollDown();
+    $('prompt').focus();
+    return;
   }
 
   // On capture les messages envoyés AVANT d'ajouter le slot assistant (sinon on enverrait
