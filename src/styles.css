@@ -142,6 +142,10 @@ body.hide-rail .rail{display:none}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .conv-item.active .conv-title{color:var(--accent-ink);font-weight:600}
+.conv-rename{
+  flex:1;min-width:0;padding:6px 7px;border:1px solid var(--accent);border-radius:6px;
+  background:var(--surface);color:var(--ink);font-family:var(--sans);font-size:13px;font-weight:500;
+}
 .conv-actions{display:flex;gap:1px;opacity:0;transition:opacity .12s}
 .conv-item:hover .conv-actions,.conv-item:focus-within .conv-actions,.conv-item.active .conv-actions{opacity:1}
 .conv-icon{

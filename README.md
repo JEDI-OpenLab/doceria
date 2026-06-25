@@ -48,10 +48,11 @@ au trousseau du système — aucune variable d'environnement requise (cf. `.env.
 npm run tauri build
 ```
 
-- **macOS** : `Doceria.app` + `Doceria_<version>_aarch64.dmg`
-  (`src-tauri/target/release/bundle/`). Build **non signé** → au 1ᵉʳ lancement :
-  clic droit sur l'app → **Ouvrir**, ou Réglages Système → Confidentialité et sécurité →
-  « Ouvrir quand même ». À faire une seule fois.
+- **macOS — Apple Silicon (arm64) uniquement** : `Doceria.app` + `Doceria_<version>_aarch64.dmg`
+  (`src-tauri/target/release/bundle/`). Le build se fait sur un Mac Apple Silicon → app **arm64**
+  native (pas d'Intel ; macOS 27 abandonne les apps Intel). Build **non signé** → au 1ᵉʳ lancement :
+  clic droit → **Ouvrir**, ou Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ».
+  Guide utilisateur pas-à-pas : [`INSTALLATION-macOS.md`](INSTALLATION-macOS.md).
 - **Linux** (à builder sur une machine Linux) : `.AppImage` (+ `.deb`/`.rpm`).
 
 ## Structure du dépôt

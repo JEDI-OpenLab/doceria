@@ -269,6 +269,7 @@ export function renderConversationList(handlers) {
   for (const conv of state.conversations) {
     const item = document.createElement('div');
     item.className = 'conv-item' + (conv.id === state.currentId ? ' active' : '');
+    item.dataset.id = conv.id;
 
     const title = document.createElement('button');
     title.className = 'conv-title';
@@ -287,6 +288,32 @@ export function renderConversationList(handlers) {
     item.appendChild(actions);
     wrap.appendChild(item);
   }
+}
+
+// Renommage inline d'une conversation (window.prompt n'est pas géré par la webview Tauri).
+// Remplace le titre par un champ ; Entrée/clic-ailleurs valide, Échap annule.
+export function startRename(id, onCommit) {
+  const item = document.querySelector('.conv-item[data-id="' + id + '"]');
+  const titleEl = item && item.querySelector('.conv-title');
+  if (!titleEl) { onCommit(null); return; }
+  const current = titleEl.textContent || '';
+  const input = document.createElement('input');
+  input.className = 'conv-rename';
+  input.value = current === 'Sans titre' ? '' : current;
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+  let done = false;
+  const commit = (save) => {
+    if (done) return;
+    done = true;
+    onCommit(save ? input.value : null);
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+  });
+  input.addEventListener('blur', () => commit(true));
 }
 
 function iconBtn(label, glyph, onClick, extra) {

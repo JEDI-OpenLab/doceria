@@ -649,12 +649,10 @@ const convHandlers = {
   },
   onRename(id) {
     if (state.busy) return;
-    const conv = state.conversations.find((c) => c.id === id);
-    const name = window.prompt('Renommer la conversation :', conv?.title || '');
-    if (name != null) {
-      renameConversation(id, name);
+    ui.startRename(id, (name) => {
+      if (name != null && name.trim()) renameConversation(id, name.trim());
       ui.renderConversationList(convHandlers);
-    }
+    });
   },
   onDelete(id) {
     if (state.busy) return;
