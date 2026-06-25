@@ -14,7 +14,7 @@ import {
   removeLastMessage,
   downloadMarkdown,
 } from './conversations.js';
-import { listModels, streamChat, describeError, profilesApi, ragApi } from './api.js';
+import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop } from './api.js';
 import { readDocument } from './documents.js';
 import * as ui from './ui.js';
 
@@ -277,6 +277,37 @@ async function onAddFolder() {
   } catch (err) {
     $('ragStatus').textContent = '✗ ' + describeError(err);
   }
+}
+
+// ───────────────────────── Glisser-déposer de fichiers ─────────────────────────
+// Déposer des fichiers sur la fenêtre les ajoute à la collection active (réutilise
+// uploadPaths, qui prend des chemins comme « Ajouter des fichiers/dossier »).
+async function onDropPaths(paths) {
+  if (!Array.isArray(paths) || !paths.length) return;
+  if (!ragEnabled() || state.activeCollectionId == null) {
+    ui.showError('Glisser-déposer : choisis d’abord une collection (Bibliothèque) où ajouter les fichiers.');
+    return;
+  }
+  const exts = ['txt', 'md', 'markdown', 'csv', 'tsv', 'json', 'log', 'pdf', 'docx'];
+  const files = paths.filter((p) => exts.includes((String(p).split('.').pop() || '').toLowerCase()));
+  if (!files.length) {
+    $('ragStatus').textContent =
+      'Aucun fichier supporté déposé (txt, md, csv, json, pdf, docx). Pour un dossier entier, utilise « Ajouter un dossier ».';
+    return;
+  }
+  await uploadPaths(files);
+}
+
+function setupDragDrop() {
+  const show = () => document.body.classList.add('dragging');
+  const hide = () => document.body.classList.remove('dragging');
+  dragDrop.onEnter(show);
+  dragDrop.onOver(show);
+  dragDrop.onLeave(hide);
+  dragDrop.onDrop((e) => {
+    hide();
+    onDropPaths((e && e.payload && e.payload.paths) || []);
+  });
 }
 
 // ───────────────────────── Synchro dossier ↔ collection ─────────────────────────
@@ -1205,6 +1236,7 @@ function wireEvents() {
   initTheme($('themeToggle'));
   setupHelpTooltips();
   setupSections();
+  setupDragDrop();
   loadPanels();
   $('toggleConvs').addEventListener('click', () => togglePanel('convs'));
   $('toggleRail').addEventListener('click', () => togglePanel('rail'));

@@ -72,6 +72,15 @@ export const ragApi = {
   pickFolder: () => open({ multiple: false, directory: true }),
 };
 
+// Glisser-déposer natif de fichiers sur la fenêtre (events cœur Tauri v2).
+// Les payloads « drag » fournissent des CHEMINS (paths), jamais le contenu.
+export const dragDrop = {
+  onEnter: (cb) => listen('tauri://drag-enter', cb),
+  onOver: (cb) => listen('tauri://drag-over', cb),
+  onLeave: (cb) => listen('tauri://drag-leave', cb),
+  onDrop: (cb) => listen('tauri://drag-drop', cb),
+};
+
 export async function listModels() {
   if (!state.activeId) throw 'Aucun profil actif.';
   return await invoke('list_models', { profileId: state.activeId });

@@ -47,6 +47,53 @@ pub fn run() {
       }
     })
     .setup(|app| {
+      // Menu natif explicite. Tauri v2 n'ajoute PAS de menu par défaut : sans lui, les
+      // raccourcis d'édition de la webview (⌘C/⌘V/⌘A…) et Quitter ne fonctionnent pas.
+      // On n'utilise que des items prédéfinis (libellés localisés par l'OS).
+      {
+        use tauri::menu::{Menu, PredefinedMenuItem, Submenu};
+        let h = app.handle().clone();
+        let app_menu = Submenu::with_items(
+          &h,
+          "Doceria",
+          true,
+          &[
+            &PredefinedMenuItem::about(&h, None, None)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &PredefinedMenuItem::hide(&h, None)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &PredefinedMenuItem::quit(&h, None)?,
+          ],
+        )?;
+        let edit_menu = Submenu::with_items(
+          &h,
+          "Édition",
+          true,
+          &[
+            &PredefinedMenuItem::undo(&h, None)?,
+            &PredefinedMenuItem::redo(&h, None)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &PredefinedMenuItem::cut(&h, None)?,
+            &PredefinedMenuItem::copy(&h, None)?,
+            &PredefinedMenuItem::paste(&h, None)?,
+            &PredefinedMenuItem::select_all(&h, None)?,
+          ],
+        )?;
+        let window_menu = Submenu::with_items(
+          &h,
+          "Fenêtre",
+          true,
+          &[
+            &PredefinedMenuItem::minimize(&h, None)?,
+            &PredefinedMenuItem::fullscreen(&h, None)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &PredefinedMenuItem::close_window(&h, None)?,
+          ],
+        )?;
+        let menu = Menu::with_items(&h, &[&app_menu, &edit_menu, &window_menu])?;
+        app.set_menu(menu)?;
+      }
+
       // Charge les profils (métadonnées non sensibles) depuis le dossier de données.
       let loaded = settings::load(app.handle());
       app.manage(settings::SettingsState(std::sync::Mutex::new(loaded)));

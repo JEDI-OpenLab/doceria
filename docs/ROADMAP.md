@@ -38,6 +38,8 @@
 - ✅ **Modèles de consigne système** (sauvegarde/rappel) + feedback « appliquée » — **fait**.
 - ✅ **Colonnes pliables** (chevrons gauche/droite) — **fait**.
 - ✅ **Sections pliables du rail droit** (chevron sur chaque titre : Connexion, Modèle, Bibliothèque, Génération, Document ; pliage clavier-accessible, mémorisé par section, non destructif vis-à-vis de l'éditeur de profil) — **fait**.
+- ✅ **Gestion documentaire** (lister + supprimer un fichier d'une collection ; `rag_list_documents` + `DELETE`, maj compteur, purge index synchro) — **fait**.
+- ✅ **Finitions natives macOS** : **menu natif explicite** (Doceria/Édition/Fenêtre — restaure ⌘C/⌘V/⌘A, À propos, Quitter ; Tauri v2 n'en met pas par défaut) + **glisser-déposer** de fichiers sur la fenêtre → ajout à la collection active (overlay « Déposez vos fichiers »). — **fait**.
 
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).
