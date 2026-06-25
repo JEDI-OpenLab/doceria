@@ -1,5 +1,6 @@
 import './styles.css';
 
+import { initTheme, applyTheme } from './theme.js';
 import { state, activeProfile, loadSettings, saveSettings, loadConversations } from './state.js';
 import {
   currentConversation,
@@ -23,6 +24,7 @@ let editingId = null; // id du profil en cours d'édition (null = création)
 
 /* ---------- Initialisation ---------- */
 async function init() {
+  applyTheme(); // au plus tôt : évite un flash clair au lancement en mode sombre
   loadSettings();
   loadConversations();
   ensureConversation();
@@ -673,6 +675,7 @@ const convHandlers = {
 
 /* ---------- Branchement des événements ---------- */
 function wireEvents() {
+  initTheme($('themeToggle'));
   $('convNew').addEventListener('click', convHandlers.onNew);
 
   // Profils
