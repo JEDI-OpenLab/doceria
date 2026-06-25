@@ -132,8 +132,21 @@ async function loadCollections() {
       state.activeCollectionId = state.collections[0] ? state.collections[0].id : null;
     }
     ui.renderCollections();
+    updateRagControls();
   } catch (err) {
     $('ragStatus').textContent = '✗ ' + describeError(err);
+  }
+}
+
+// Grise l'ajout de documents tant qu'aucune collection n'est sélectionnée :
+// on doit créer/choisir une collection AVANT d'y ajouter des fichiers.
+function updateRagControls() {
+  const hasCollection = ragEnabled() && state.activeCollectionId != null;
+  for (const id of ['ragAddFiles', 'ragAddFolder', 'collectionDelete']) {
+    $(id).disabled = !hasCollection;
+  }
+  if (ragEnabled() && !hasCollection && !state.collections.length) {
+    $('ragStatus').textContent = 'Crée d’abord une collection (champ ci-dessus → + Créer), puis ajoute des documents.';
   }
 }
 
@@ -666,6 +679,7 @@ function wireEvents() {
   // Bibliothèque RAG
   $('collectionSelect').addEventListener('change', (e) => {
     state.activeCollectionId = e.target.value ? Number(e.target.value) : null;
+    updateRagControls();
   });
   $('collectionNew').addEventListener('click', onNewCollection);
   $('collectionDelete').addEventListener('click', onDeleteCollection);

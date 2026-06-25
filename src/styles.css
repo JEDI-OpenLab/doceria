@@ -190,7 +190,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .composer button.stop{background:var(--warn);border-color:var(--warn)}
 .composer button.stop:hover{background:#8E3915}
 .composer .meta{max-width:760px;margin:8px auto 0;font-size:11.5px;color:var(--faint);font-family:var(--mono)}
-.composer-tools{max-width:760px;margin:0 auto 8px}
+.composer-tools{max-width:760px;margin:0 auto 8px;display:flex;align-items:center;gap:4px}
 .ragtoggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
 .ragtoggle input{width:auto;margin:0}
 .ragtoggle input:disabled{cursor:not-allowed;opacity:.5}
@@ -199,6 +199,30 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .sources{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
 .sources-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin-bottom:6px}
 .source-item{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+
+/* Aide contextuelle : « ? » survolable, infobulle propre par-dessus */
+.help{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;margin-left:6px;padding:0;flex:none;
+  border:1px solid var(--line-strong);border-radius:50%;background:transparent;
+  color:var(--muted);font-size:11px;font-weight:700;line-height:1;cursor:help;
+  vertical-align:middle;text-transform:none;letter-spacing:0;
+}
+.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
+.help-bubble{
+  position:absolute;top:calc(100% + 8px);right:0;z-index:60;
+  width:250px;max-width:72vw;padding:9px 11px;border-radius:8px;
+  background:var(--ink);color:#EDEFF1;
+  font-family:var(--sans);font-size:12px;font-weight:400;line-height:1.5;
+  text-align:left;text-transform:none;letter-spacing:normal;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  opacity:0;visibility:hidden;transform:translateY(-3px);
+  transition:opacity .12s,transform .12s;pointer-events:none;
+}
+.help.up .help-bubble{top:auto;bottom:calc(100% + 8px);transform:translateY(3px)}
+.help:hover .help-bubble,.help:focus .help-bubble,.help:focus-visible .help-bubble{
+  opacity:1;visibility:visible;transform:translateY(0);
+}
 
 @media (max-width:960px){
   .layout{flex-direction:column;height:auto}
