@@ -849,10 +849,53 @@ function setupHelpTooltips() {
   });
 }
 
+// Sections pliables du rail droit : clic (ou Entrée/Espace) sur un titre masque les
+// éléments jusqu'au titre suivant. État mémorisé par section dans localStorage.
+function setupSections() {
+  const KEY = 'doceria_sections';
+  let collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { /* ignore */ }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(collapsed)); } catch { /* ignore */ } };
+  document.querySelectorAll('.rail .section-head').forEach((head) => {
+    const key = head.dataset.section;
+    head.setAttribute('role', 'button');
+    head.setAttribute('tabindex', '0');
+    const apply = () => {
+      const isCol = !!collapsed[key];
+      head.classList.toggle('collapsed', isCol);
+      head.setAttribute('aria-expanded', isCol ? 'false' : 'true');
+      let el = head.nextElementSibling;
+      while (el && !el.classList.contains('section-head')) {
+        if (isCol) {
+          // On ne masque que ce qui est visible, en le marquant, pour pouvoir restaurer
+          // exactement le même état au dépliage (sans réafficher ce qui était masqué par
+          // ailleurs, ex. l'éditeur de profil #profileEditor).
+          if (!el.hidden) { el.hidden = true; el.dataset.secHidden = '1'; }
+        } else if (el.dataset.secHidden) {
+          el.hidden = false;
+          delete el.dataset.secHidden;
+        }
+        el = el.nextElementSibling;
+      }
+    };
+    const toggle = () => { collapsed[key] = !collapsed[key]; save(); apply(); };
+    head.addEventListener('click', (e) => {
+      if (e.target.closest('.help')) return; // l'aide « ? » ne plie pas la section
+      toggle();
+    });
+    head.addEventListener('keydown', (e) => {
+      if (e.target.closest('.help')) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+    apply();
+  });
+}
+
 /* ---------- Branchement des événements ---------- */
 function wireEvents() {
   initTheme($('themeToggle'));
   setupHelpTooltips();
+  setupSections();
   loadPanels();
   $('toggleConvs').addEventListener('click', () => togglePanel('convs'));
   $('toggleRail').addEventListener('click', () => togglePanel('rail'));

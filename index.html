@@ -61,7 +61,7 @@
 
     <!-- Rail de réglages -->
     <aside class="rail">
-      <h2>Connexion<button class="help" type="button" aria-label="Un profil regroupe tes clés (inférence + RAG), leurs URLs et le modèle par défaut. Les clés sont stockées au trousseau du système, jamais en clair ni affichées.">?<span class="help-bubble" aria-hidden="true">Un profil regroupe tes <strong>clés</strong> (inférence + RAG), leurs URLs et le modèle par défaut. Les clés vont au <strong>trousseau du système</strong> — jamais en clair, jamais affichées.</span></button></h2>
+      <h2 class="section-head" data-section="connexion"><span class="chevron" aria-hidden="true">▾</span>Connexion<button class="help" type="button" aria-label="Un profil regroupe tes clés (inférence + RAG), leurs URLs et le modèle par défaut. Les clés sont stockées au trousseau du système, jamais en clair ni affichées.">?<span class="help-bubble" aria-hidden="true">Un profil regroupe tes <strong>clés</strong> (inférence + RAG), leurs URLs et le modèle par défaut. Les clés vont au <strong>trousseau du système</strong> — jamais en clair, jamais affichées.</span></button></h2>
       <div class="field">
         <label for="profileSelect">Profil actif</label>
         <select id="profileSelect" aria-label="Profil actif"></select>
@@ -119,12 +119,12 @@
         </div>
       </div>
 
-      <h2>Modèle</h2>
+      <h2 class="section-head" data-section="modele"><span class="chevron" aria-hidden="true">▾</span>Modèle</h2>
       <div class="field">
         <select id="modelSelect" aria-label="Modèle" disabled><option value="" disabled selected>connectez-vous d'abord</option></select>
       </div>
 
-      <h2>Bibliothèque (RAG)<button class="help up" type="button" aria-label="Le RAG laisse l'IA répondre à partir de TES documents. 1) Crée une collection. 2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS). 3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations des sources.">?<span class="help-bubble" aria-hidden="true">Le RAG laisse l'IA répondre à partir de <strong>tes documents</strong>.<br>1) Crée une collection.<br>2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS).<br>3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations.</span></button></h2>
+      <h2 class="section-head" data-section="rag"><span class="chevron" aria-hidden="true">▾</span>Bibliothèque (RAG)<button class="help up" type="button" aria-label="Le RAG laisse l'IA répondre à partir de TES documents. 1) Crée une collection. 2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS). 3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations des sources.">?<span class="help-bubble" aria-hidden="true">Le RAG laisse l'IA répondre à partir de <strong>tes documents</strong>.<br>1) Crée une collection.<br>2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS).<br>3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations.</span></button></h2>
       <div class="field">
         <label for="collectionSelect">Collection active</label>
         <select id="collectionSelect" aria-label="Collection active"></select>
@@ -167,7 +167,7 @@
         <div class="hint">Écarte les extraits sous ce score. 0 = aucun filtre ; plus haut = plus strict (et plus de « non trouvé » en mode Requête).</div>
       </div>
 
-      <h2>Génération</h2>
+      <h2 class="section-head" data-section="generation"><span class="chevron" aria-hidden="true">▾</span>Génération</h2>
       <div class="field">
         <div class="temp-head">
           <label for="temp" style="margin:0">Température</label>
@@ -199,7 +199,7 @@
         </div>
       </div>
 
-      <h2>Document de contexte</h2>
+      <h2 class="section-head" data-section="document"><span class="chevron" aria-hidden="true">▾</span>Document de contexte</h2>
       <div class="doc" id="docBox">
         <div id="docEmpty">Aucun document. Le texte du fichier sera ajouté au contexte de la conversation.
           <div style="margin-top:10px">

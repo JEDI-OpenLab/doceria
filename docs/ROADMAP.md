@@ -14,7 +14,7 @@
   - ⏳ **D. Finitions + revue** (phase lourde).
 - ✅ **Phase 3 — Préférences & thème & DA** : charte **« Atelier »** (papier chaud, pétrole, or), thème **clair/sombre/auto**, **vibrance macOS**, mémorisation fenêtre, colonnes pliables, presets de consigne système.
 - ✅ **Finitions macOS** : renommage de conversation inline, **CSP** (à valider pdf/docx), guide `INSTALLATION-macOS.md` (app non signée, **Apple Silicon arm64**). → **macOS quasi bouclé.**
-- ⏳ **Avant Linux (demandé)** : mode **Chat/Requête** + **réglages de récupération** (top-k, seuil, méthode) + **mémoire** ; **chevrons de sections** du rail droit. *(Voir le backlog ci-dessous et `docs/POINT-DE-REPRISE.md`.)*
+- ✅ **Avant Linux (demandé) — FAIT** : mode **Chat/Requête** (+ garde-fou « Query »), **réglages de récupération** (méthode, top-k, seuil), **mémoire** (tours d'historique), **chevrons de sections** du rail droit (pliage persistant, non destructif). *(Détails dans le backlog ci-dessous.)* → **Prochaine grande étape : build & tests Linux (AppImage via SSH Ubuntu).**
 - ⏳ **Phase 5 — Conso/coût** : tokens par échange (V1) ; `GET /v1/me/usage` (RAG géré).
 - 📄 **`docs/POINT-DE-REPRISE.md`** : état complet + conventions, à lire en premier pour reprendre.
 - ✅ **Site de présentation (GitHub Pages)** — site **premium** dans `docs/` (Fraunces + IBM Plex Sans + Bootstrap + Font Awesome, palette Atelier), publié via Pages « Deploy from a branch → `main` `/docs` » (`.nojekyll`). **En ligne : https://jedi-openlab.github.io/doceria/**. Sections : hero + maquette, fonctionnalités, souveraineté, limites assumées, installation, stack/licence.
@@ -35,6 +35,7 @@
 - *(« Réinitialiser la base vectorielle » d'AnythingLLM = chez nous **suppression de collection**, déjà en place.)*
 - ✅ **Modèles de consigne système** (sauvegarde/rappel) + feedback « appliquée » — **fait**.
 - ✅ **Colonnes pliables** (chevrons gauche/droite) — **fait**.
+- ✅ **Sections pliables du rail droit** (chevron sur chaque titre : Connexion, Modèle, Bibliothèque, Génération, Document ; pliage clavier-accessible, mémorisé par section, non destructif vis-à-vis de l'éditeur de profil) — **fait**.
 
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).
