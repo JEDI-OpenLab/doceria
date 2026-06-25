@@ -36,7 +36,8 @@ pub fn run() {
       rag::rag_delete_document,
       rag::rag_search,
       rag::rag_rerank,
-      rag::list_dir_files
+      rag::list_dir_files,
+      rag::list_dir_entries
     ])
     .on_window_event(|window, event| {
       // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).

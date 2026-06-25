@@ -41,11 +41,13 @@ export const ragApi = {
     invoke('rag_create_collection', { profileId: state.activeId, name, description: description || null }),
   deleteCollection: (collectionId) =>
     invoke('rag_delete_collection', { profileId: state.activeId, collectionId }),
-  uploadDocument: (collectionId, filePath, name) =>
-    invoke('rag_upload_document', { profileId: state.activeId, collectionId, filePath, name: name || null }),
+  // profileId optionnel : la synchro le fige pour ne jamais cibler le mauvais profil si
+  // l'utilisateur change de profil pendant une tâche de fond.
+  uploadDocument: (collectionId, filePath, name, profileId) =>
+    invoke('rag_upload_document', { profileId: profileId || state.activeId, collectionId, filePath, name: name || null }),
   getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
-  deleteDocument: (documentId) =>
-    invoke('rag_delete_document', { profileId: state.activeId, documentId }),
+  deleteDocument: (documentId, profileId) =>
+    invoke('rag_delete_document', { profileId: profileId || state.activeId, documentId }),
   search: (collectionIds, query, limit, method, scoreThreshold) =>
     invoke('rag_search', {
       profileId: state.activeId,
@@ -63,6 +65,7 @@ export const ragApi = {
       topN: typeof topN === 'number' && topN > 0 ? topN : null,
     }),
   listDirFiles: (dirPath) => invoke('list_dir_files', { dirPath }),
+  listDirEntries: (dirPath) => invoke('list_dir_entries', { dirPath }),
   // Dialogues natifs (renvoient des chemins, jamais le contenu).
   pickFiles: () => open({ multiple: true, directory: false }),
   pickFolder: () => open({ multiple: false, directory: true }),

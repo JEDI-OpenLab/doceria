@@ -21,6 +21,39 @@ de similarité), chargement de documents de contexte ponctuels (txt, md, csv, js
 Interface soignée : **thème clair/sombre/auto**, **vibrance macOS**, **colonnes et sections
 pliables**, aides contextuelles.
 
+La **bibliothèque** peut aussi être **liée à un dossier local** : un bouton « Synchroniser »
+(ou une synchro automatique à l'ouverture du profil) ajoute les nouveaux fichiers, met à jour
+les modifiés et **retire** de la collection ceux supprimés du dossier — indexation incrémentale,
+sans tout re-téléverser.
+
+## Ce qui distingue Doceria
+
+Doceria s'inspire des outils de RAG de bureau (comme **AnythingLLM**) mais assume des choix
+différents, pensés pour l'**enseignement supérieur souverain** et la simplicité côté enseignant :
+
+- **Souverain par conception** — bâti pour **ILaaS / OpenGateLLM** (fédération ESR, tutelle MESR) :
+  données et vecteurs restent dans le périmètre ESR. Les outils agnostiques laissent, eux, la
+  souveraineté dépendre de votre configuration.
+- **Dossier ↔ collection** — liez une collection à un dossier local et synchronisez (ajout, mise à
+  jour, **retrait**) à la demande ou à l'ouverture du profil. La synchro de documents d'AnythingLLM
+  est, à ce jour, limitée à **un seul fichier** à la fois (« *you currently cannot watch an entire
+  directory* »).
+- **Léger & natif** — **Tauri** (webview système + cœur Rust, ~13 Mo, vibrance macOS) plutôt
+  qu'**Electron**.
+- **Clés au trousseau du système** — jamais dans un fichier de l'app ni dans la page ; réseau en
+  Rust (pas de CORS). AnythingLLM chiffre les clés au repos dans sa base SQLite applicative.
+- **Zéro télémétrie** — rien ne sort vers un tiers, par défaut. (AnythingLLM collecte une télémétrie
+  *anonyme* activée par défaut, désactivable.)
+
+En toute honnêteté, AnythingLLM reste **plus riche** sur d'autres terrains (agents, connecteurs
+multiples, multi-vector-DB, multi-utilisateur). Doceria vise la **souveraineté ESR**, la
+**simplicité** et un **flux documentaire** sans friction pour les enseignants.
+
+> Sources (vérifié en juin 2026 ; AnythingLLM évolue vite) :
+> [Automatic document sync](https://docs.anythingllm.com/beta-preview/active-features/live-document-sync),
+> [Privacy & Data](https://docs.anythingllm.com/features/privacy-and-data-handling),
+> [General Desktop Information](https://docs.anythingllm.com/installation-desktop/storage).
+
 ## Stack
 
 - **Frontend** : Vite + JavaScript vanilla (l'UI HTML/CSS/JS du portail web, réutilisée telle quelle).

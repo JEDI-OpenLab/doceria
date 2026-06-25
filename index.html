@@ -141,6 +141,21 @@
         <button id="ragAddFolder" type="button" class="filebtn">Ajouter un dossier</button>
         <button id="collectionDelete" type="button" class="filebtn danger">Supprimer</button>
       </div>
+      <div class="field is-hidden" id="folderSyncBox">
+        <label>Dossier synchronisé<button class="help" type="button" aria-label="Liez la collection à un dossier de votre disque. « Synchroniser » ajoute les nouveaux fichiers, met à jour les modifiés et retire de la collection ceux que vous avez supprimés du dossier.">?<span class="help-bubble" aria-hidden="true">Liez la collection à un <strong>dossier</strong> de votre disque.<br><strong>Synchroniser</strong> : ajoute les nouveaux, met à jour les modifiés et <strong>retire</strong> ceux supprimés du dossier.</span></button></label>
+        <div id="folderUnlinked">
+          <button id="folderLink" type="button" class="filebtn">Lier un dossier…</button>
+        </div>
+        <div id="folderLinked" hidden>
+          <div class="folder-path" id="folderPath"></div>
+          <div class="hint" id="folderSyncMeta"></div>
+          <div class="profile-bar">
+            <button id="folderSync" type="button" class="filebtn">↻ Synchroniser</button>
+            <button id="folderUnlink" type="button" class="filebtn danger">Délier</button>
+          </div>
+        </div>
+        <label class="ragtoggle" style="margin-top:8px"><input type="checkbox" id="ragAutoSync"> Synchroniser à l'ouverture du profil</label>
+      </div>
       <div class="hint" id="ragStatus"></div>
       <div class="field" style="margin-top:6px">
         <label for="ragMethod">Méthode de recherche<button class="help" type="button" aria-label="Hybride combine sens et mots-clés (recommandé). Sémantique = proximité de sens. Lexicale = correspondance exacte de termes.">?<span class="help-bubble" aria-hidden="true"><strong>Hybride</strong> : sens + mots-clés (recommandé).<br><strong>Sémantique</strong> : proximité de sens.<br><strong>Lexicale</strong> : correspondance de termes.</span></button></label>

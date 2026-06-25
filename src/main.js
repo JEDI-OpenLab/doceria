@@ -47,6 +47,7 @@ function hydrateGen() {
   $('ragThresholdVal').textContent =
     state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
   $('ragRerank').checked = state.ragRerank;
+  $('ragAutoSync').checked = state.ragAutoSync;
 }
 
 function refreshConversation() {
@@ -129,6 +130,7 @@ async function loadRag() {
     /* identité indisponible : on affichera toutes les collections en repli */
   }
   await loadCollections();
+  if (state.ragAutoSync) autoSyncProfile(); // tâche de fond, non bloquante
 }
 
 async function loadCollections() {
@@ -168,6 +170,7 @@ function updateRagControls() {
     $('ragStatus').textContent = 'Crée d’abord une collection (champ ci-dessus → + Créer), puis ajoute des documents.';
   }
   updateRagMode();
+  updateFolderSyncUI();
 }
 
 // Affiche le sélecteur Chat ⇄ Requête uniquement quand la bibliothèque est réellement
@@ -208,10 +211,16 @@ async function onNewCollection() {
 
 async function onDeleteCollection() {
   if (state.activeCollectionId == null) return;
+  if (syncing) { $('ragStatus').textContent = 'Synchronisation en cours — réessaie dans un instant.'; return; }
   const c = state.collections.find((x) => String(x.id) === String(state.activeCollectionId));
   if (!window.confirm('Supprimer la collection « ' + (c?.name || state.activeCollectionId) + ' » et ses documents chez ILaaS ? Action définitive.')) return;
+  const deletedId = Number(state.activeCollectionId);
   try {
-    await ragApi.deleteCollection(Number(state.activeCollectionId));
+    await ragApi.deleteCollection(deletedId);
+    // Purge l'éventuel lien de synchro de cette collection (sinon index fantôme).
+    const m = loadSyncMap();
+    delete m[syncMapKey(deletedId)];
+    saveSyncMap(m);
     state.activeCollectionId = null;
     await loadCollections();
     $('ragStatus').textContent = '✓ collection supprimée.';
@@ -267,6 +276,198 @@ async function onAddFolder() {
     await uploadPaths(paths);
   } catch (err) {
     $('ragStatus').textContent = '✗ ' + describeError(err);
+  }
+}
+
+// ───────────────────────── Synchro dossier ↔ collection ─────────────────────────
+// Index local (localStorage) : pour chaque collection liée à un dossier, on mémorise le
+// dossier et, par fichier, son document_id côté ILaaS + taille/mtime (détection des
+// changements). Clé = « profil::collection » (les id de collection sont propres au RAG).
+const SYNC_KEY = 'doceria_sync_v1';
+let syncing = false;
+
+function loadSyncMap() {
+  try { return JSON.parse(localStorage.getItem(SYNC_KEY) || '{}') || {}; } catch { return {}; }
+}
+function saveSyncMap(m) {
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
+function syncMapKey(collectionId, profileId = state.activeId) { return profileId + '::' + collectionId; }
+function syncRecord(collectionId, profileId = state.activeId) { return loadSyncMap()[syncMapKey(collectionId, profileId)] || null; }
+
+// Extrait l'id du document créé, en tolérant les variantes de schéma OpenGateLLM
+// (id / document_id, éventuellement imbriqué sous data / data.document).
+function extractDocId(created) {
+  if (created == null) return null;
+  if (typeof created === 'number') return created;
+  const d = created.data || {};
+  return (
+    created.id ?? created.document_id ??
+    d.id ?? d.document_id ?? (d.document && d.document.id) ?? null
+  );
+}
+
+// Compare le dossier lié à l'index et applique les différences (ajout / maj / suppression).
+// `profileId` est FIGÉ par l'appelant : toutes les écritures d'index et tous les appels
+// réseau ciblent ce profil, même si l'utilisateur change de profil pendant la synchro.
+async function syncCollection(collectionId, profileId, opts = {}) {
+  const silent = !!opts.silent;
+  const map = loadSyncMap();
+  const key = syncMapKey(collectionId, profileId);
+  const rec = map[key];
+  if (!rec || !rec.folder) return { skipped: true };
+  const status = (t) => { if (!silent) $('ragStatus').textContent = t; };
+
+  let entries;
+  try {
+    status('Analyse du dossier…');
+    entries = await ragApi.listDirEntries(rec.folder);
+  } catch (e) {
+    status('✗ Dossier illisible : ' + describeError(e));
+    return { error: describeError(e) };
+  }
+  // On rattache `files` à l'enregistrement et on sauvegarde APRÈS CHAQUE opération : si
+  // l'app se ferme en cours de synchro, les document_id déjà obtenus ne sont pas perdus.
+  const files = rec.files || {};
+  rec.files = files;
+  map[key] = rec;
+  const persist = () => saveSyncMap(map);
+  const current = new Map(entries.map((e) => [e.path, e]));
+  let added = 0, updated = 0, removed = 0, failed = 0;
+
+  // 1) Suppressions : connu de l'index mais disparu du disque → retirer de la collection.
+  for (const p of Object.keys(files)) {
+    if (current.has(p)) continue;
+    const docId = files[p] && files[p].documentId;
+    if (docId != null) {
+      try { await ragApi.deleteDocument(Number(docId), profileId); } catch { /* déjà absent : on nettoie l'index */ }
+    }
+    delete files[p];
+    removed++;
+    persist();
+  }
+
+  // 2) Ajouts / modifications (taille ou date changée → suppr + ré-upload).
+  const list = [...current.values()];
+  for (let i = 0; i < list.length; i++) {
+    const e = list[i];
+    const known = files[e.path];
+    const changed = known && (known.size !== e.size || known.mtime !== e.mtime);
+    if (known && !changed) continue; // inchangé → on saute
+    status('Synchronisation ' + (i + 1) + '/' + list.length + '…');
+    try {
+      if (changed && known.documentId != null) {
+        try { await ragApi.deleteDocument(Number(known.documentId), profileId); } catch { /* ignore */ }
+      }
+      const created = await ragApi.uploadDocument(collectionId, e.path, null, profileId);
+      const docId = extractDocId(created);
+      files[e.path] = { documentId: docId, size: e.size, mtime: e.mtime };
+      persist();
+      if (changed) updated++; else added++;
+    } catch {
+      failed++;
+    }
+  }
+
+  persist();
+  if (!silent) {
+    $('ragStatus').textContent =
+      '✓ Sync : ' + added + ' ajout(s), ' + updated + ' maj, ' + removed + ' retiré(s)' +
+      (failed ? ', ' + failed + ' échec(s)' : '') + '.';
+  }
+  return { added, updated, removed, failed };
+}
+
+// Verrou global anti-concurrence (partagé avec autoSyncProfile) + grisage des boutons.
+async function runSync(collectionId) {
+  if (syncing) return;
+  syncing = true;
+  const pid = state.activeId; // profil figé pour toute la synchro
+  for (const id of ['folderSync', 'folderLink', 'folderUnlink']) { const el = $(id); if (el) el.disabled = true; }
+  try {
+    await syncCollection(collectionId, pid);
+    if (state.activeId === pid) await loadCollections();
+  } finally {
+    syncing = false;
+    for (const id of ['folderSync', 'folderLink', 'folderUnlink']) { const el = $(id); if (el) el.disabled = false; }
+    updateFolderSyncUI();
+  }
+}
+
+async function onLinkFolder() {
+  if (state.activeCollectionId == null) return;
+  let dir;
+  try { dir = await ragApi.pickFolder(); } catch (e) { $('ragStatus').textContent = '✗ ' + describeError(e); return; }
+  if (!dir) return;
+  const map = loadSyncMap();
+  const key = syncMapKey(state.activeCollectionId);
+  map[key] = { collectionId: Number(state.activeCollectionId), folder: dir, files: (map[key] && map[key].files) || {} };
+  saveSyncMap(map);
+  updateFolderSyncUI();
+  await runSync(Number(state.activeCollectionId)); // import initial
+}
+
+async function onSyncFolder() {
+  if (state.activeCollectionId != null) await runSync(Number(state.activeCollectionId));
+}
+
+function onUnlinkFolder() {
+  if (state.activeCollectionId == null) return;
+  if (!window.confirm('Délier le dossier de cette collection ? Les documents déjà importés restent dans la collection (ils ne seront simplement plus synchronisés).')) return;
+  const map = loadSyncMap();
+  delete map[syncMapKey(state.activeCollectionId)];
+  saveSyncMap(map);
+  updateFolderSyncUI();
+  $('ragStatus').textContent = '✓ Dossier délié (documents conservés).';
+}
+
+// Reflète l'état de liaison de la collection active + l'option de synchro auto.
+function updateFolderSyncUI() {
+  const box = $('folderSyncBox');
+  if (!box) return;
+  const cb = $('ragAutoSync');
+  if (cb) cb.checked = state.ragAutoSync;
+  const enabled = ragEnabled() && state.activeCollectionId != null;
+  box.classList.toggle('is-hidden', !enabled);
+  if (!enabled) return;
+  const rec = syncRecord(state.activeCollectionId);
+  const linked = !!(rec && rec.folder);
+  $('folderLinked').hidden = !linked;
+  $('folderUnlinked').hidden = linked;
+  if (linked) {
+    $('folderPath').textContent = rec.folder;
+    const n = rec.files ? Object.keys(rec.files).length : 0;
+    $('folderSyncMeta').textContent = n + ' fichier(s) suivi(s)';
+  }
+}
+
+// Synchronise en arrière-plan toutes les collections liées du profil actif (si l'option
+// est activée). On abandonne proprement si l'utilisateur change de profil entre-temps.
+async function autoSyncProfile() {
+  if (syncing) return; // une synchro (manuelle ou auto) est déjà en cours
+  const pid = state.activeId;
+  const map = loadSyncMap();
+  const prefix = pid + '::';
+  const recs = Object.keys(map)
+    .filter((k) => k.startsWith(prefix) && map[k] && map[k].folder && map[k].collectionId != null)
+    .map((k) => map[k]);
+  if (!recs.length) return;
+  syncing = true;
+  $('ragStatus').textContent = '↻ Synchronisation automatique…';
+  let touched = false;
+  try {
+    for (const rec of recs) {
+      if (state.activeId !== pid) return; // profil changé : on abandonne
+      try {
+        const r = await syncCollection(Number(rec.collectionId), pid, { silent: true });
+        if (r && (r.added || r.updated || r.removed)) touched = true;
+      } catch { /* on continue avec les autres collections */ }
+    }
+    if (state.activeId !== pid) return;
+    await loadCollections();
+    $('ragStatus').textContent = touched ? '↻ Synchronisation automatique terminée.' : '';
+  } finally {
+    syncing = false;
   }
 }
 
@@ -986,6 +1187,14 @@ function wireEvents() {
   $('ragThreshold').addEventListener('change', saveSettings);
   $('ragRerank').addEventListener('change', (e) => {
     state.ragRerank = e.target.checked;
+    saveSettings();
+  });
+  // Synchro dossier ↔ collection
+  $('folderLink').addEventListener('click', onLinkFolder);
+  $('folderSync').addEventListener('click', onSyncFolder);
+  $('folderUnlink').addEventListener('click', onUnlinkFolder);
+  $('ragAutoSync').addEventListener('change', (e) => {
+    state.ragAutoSync = e.target.checked;
     saveSettings();
   });
 

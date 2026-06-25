@@ -246,15 +246,23 @@ fn guess_mime(path: &str) -> &'static str {
     }
 }
 
-/// Énumère récursivement les fichiers supportés d'un dossier (pour l'ajout « dossier
-/// entier » à une collection). Ne lit pas le contenu ; renvoie juste les chemins.
-#[tauri::command]
-pub fn list_dir_files(dir_path: String) -> Result<Vec<String>, String> {
+/// Métadonnées d'un fichier supporté (pour la synchronisation dossier ↔ collection).
+#[derive(serde::Serialize)]
+pub struct DirEntry {
+    pub path: String,
+    pub size: u64,
+    pub mtime: u64, // date de modification, epoch millisecondes
+}
+
+/// Parcourt récursivement un dossier et renvoie les fichiers supportés avec leur taille
+/// et leur date de modification. Ne lit pas le contenu. Ignore les fichiers cachés et NE
+/// SUIT PAS les liens symboliques (pour ne jamais sortir du dossier réellement choisi).
+fn walk_supported(dir_path: &str) -> Vec<DirEntry> {
     const EXTS: &[&str] = &[
         "txt", "md", "markdown", "csv", "tsv", "json", "log", "pdf", "docx",
     ];
     let mut out = Vec::new();
-    let mut stack = vec![std::path::PathBuf::from(&dir_path)];
+    let mut stack = vec![std::path::PathBuf::from(dir_path)];
     let mut dirs_seen = 0usize;
     while let Some(dir) = stack.pop() {
         dirs_seen += 1;
@@ -275,8 +283,6 @@ pub fn list_dir_files(dir_path: String) -> Result<Vec<String>, String> {
             if hidden {
                 continue;
             }
-            // file_type() (issu de read_dir) ne SUIT PAS les liens : on ignore les
-            // symlinks pour ne jamais sortir du dossier réellement choisi.
             let ft = match entry.file_type() {
                 Ok(ft) => ft,
                 Err(_) => continue,
@@ -286,18 +292,51 @@ pub fn list_dir_files(dir_path: String) -> Result<Vec<String>, String> {
             }
             if ft.is_dir() {
                 stack.push(path);
-            } else if ft.is_file() {
-                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                    if EXTS.contains(&ext.to_lowercase().as_str()) {
-                        if let Some(s) = path.to_str() {
-                            out.push(s.to_string());
-                        }
-                    }
+                continue;
+            }
+            if ft.is_file() {
+                let ext_ok = path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| EXTS.contains(&e.to_lowercase().as_str()))
+                    .unwrap_or(false);
+                if !ext_ok {
+                    continue;
+                }
+                let meta = match entry.metadata() {
+                    Ok(m) => m,
+                    Err(_) => continue,
+                };
+                let mtime = meta
+                    .modified()
+                    .ok()
+                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0);
+                if let Some(s) = path.to_str() {
+                    out.push(DirEntry {
+                        path: s.to_string(),
+                        size: meta.len(),
+                        mtime,
+                    });
                 }
             }
         }
     }
-    Ok(out)
+    out
+}
+
+/// Énumère récursivement les fichiers supportés d'un dossier (chemins seuls).
+#[tauri::command]
+pub fn list_dir_files(dir_path: String) -> Result<Vec<String>, String> {
+    Ok(walk_supported(&dir_path).into_iter().map(|e| e.path).collect())
+}
+
+/// Comme `list_dir_files`, mais renvoie taille + date de modif par fichier (pour détecter
+/// ajouts / modifications / suppressions lors d'une synchronisation dossier ↔ collection).
+#[tauri::command]
+pub fn list_dir_entries(dir_path: String) -> Result<Vec<DirEntry>, String> {
+    Ok(walk_supported(&dir_path))
 }
 
 // ─────────────────────────── Recherche / rerank ───────────────────────────
