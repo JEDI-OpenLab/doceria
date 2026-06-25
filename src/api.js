@@ -55,6 +55,13 @@ export const ragApi = {
       method: method || null,
       scoreThreshold: typeof scoreThreshold === 'number' && scoreThreshold > 0 ? scoreThreshold : null,
     }),
+  rerank: (query, documents, topN) =>
+    invoke('rag_rerank', {
+      profileId: state.activeId,
+      query,
+      documents,
+      topN: typeof topN === 'number' && topN > 0 ? topN : null,
+    }),
   listDirFiles: (dirPath) => invoke('list_dir_files', { dirPath }),
   // Dialogues natifs (renvoient des chemins, jamais le contenu).
   pickFiles: () => open({ multiple: true, directory: false }),

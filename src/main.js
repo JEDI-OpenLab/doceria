@@ -46,6 +46,7 @@ function hydrateGen() {
   $('ragThreshold').value = state.ragThreshold;
   $('ragThresholdVal').textContent =
     state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
+  $('ragRerank').checked = state.ragRerank;
 }
 
 function refreshConversation() {
@@ -500,14 +501,40 @@ function buildMessages(conv, ragContext) {
 async function retrieveFromLibrary(query) {
   if (!state.useLibrary || state.activeCollectionId == null) return { context: '', sources: [] };
   ui.setComposerMeta('recherche dans la bibliothèque…');
+  // Pipeline état de l'art : recherche (hybride/…) → rerank optionnel → top-k.
+  // En rerank on récupère un vivier plus large, puis on le réordonne avant d'écrêter.
+  const topK = state.ragTopK;
+  const wantRerank = state.ragRerank;
+  const fetchLimit = wantRerank ? Math.min(20, Math.max(topK * 3, 10)) : topK;
   const res = await ragApi.search(
     [Number(state.activeCollectionId)],
     query,
-    state.ragTopK,
+    fetchLimit,
     state.ragMethod,
     state.ragThreshold
   );
-  const items = res && Array.isArray(res.data) ? res.data : [];
+  const pool = res && Array.isArray(res.data) ? res.data : [];
+  // Rerank : réordonne par pertinence (bge-reranker) ; repli silencieux sur l'ordre de
+  // recherche si le service est indisponible ou ne renvoie rien.
+  let ranked = pool;
+  if (wantRerank && pool.length > 1) {
+    try {
+      ui.setComposerMeta('reranking des extraits…');
+      const docs = pool.map((it) => (it.chunk && it.chunk.content) || '');
+      const rr = await ragApi.rerank(query, docs, topK);
+      const results = rr && Array.isArray(rr.results) ? rr.results : [];
+      if (results.length) {
+        ranked = results
+          .slice()
+          .sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0))
+          .map((r) => pool[r.index])
+          .filter(Boolean);
+      }
+    } catch {
+      /* rerank indisponible : on conserve l'ordre de la recherche */
+    }
+  }
+  const items = ranked.slice(0, topK);
   const sources = items.map((it, i) => ({
     n: i + 1,
     content: (it.chunk && it.chunk.content) || '',
@@ -957,6 +984,10 @@ function wireEvents() {
       state.ragThreshold > 0 ? state.ragThreshold.toFixed(2) : 'désactivé';
   });
   $('ragThreshold').addEventListener('change', saveSettings);
+  $('ragRerank').addEventListener('change', (e) => {
+    state.ragRerank = e.target.checked;
+    saveSettings();
+  });
 
   // Génération
   $('modelSelect').addEventListener('change', (e) => {

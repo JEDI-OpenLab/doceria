@@ -22,6 +22,7 @@ export const state = {
   ragMethod: 'hybrid', // méthode de recherche RAG : 'semantic' | 'lexical' | 'hybrid'
   ragTopK: 5, // nombre d'extraits récupérés (limit de /search)
   ragThreshold: 0, // seuil de similarité (score_threshold) ; 0 = désactivé
+  ragRerank: true, // réordonner les extraits par pertinence (bge-reranker) après la recherche
   memoryTurns: 0, // tours d'historique envoyés à chaque message ; 0 = illimité
   // Modèles
   models: [],
@@ -58,6 +59,7 @@ export function loadSettings() {
       if (d.ragMethod === 'hybrid' || d.ragMethod === 'semantic' || d.ragMethod === 'lexical') state.ragMethod = d.ragMethod;
       if (typeof d.ragTopK === 'number') state.ragTopK = d.ragTopK;
       if (typeof d.ragThreshold === 'number') state.ragThreshold = d.ragThreshold;
+      if (typeof d.ragRerank === 'boolean') state.ragRerank = d.ragRerank;
       if (typeof d.memoryTurns === 'number') state.memoryTurns = d.memoryTurns;
     }
   } catch { /* stockage illisible : on ignore */ }
@@ -76,6 +78,7 @@ export function saveSettings() {
         ragMethod: state.ragMethod,
         ragTopK: state.ragTopK,
         ragThreshold: state.ragThreshold,
+        ragRerank: state.ragRerank,
         memoryTurns: state.memoryTurns,
       })
     );

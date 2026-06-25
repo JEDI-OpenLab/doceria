@@ -12,9 +12,14 @@ Double-clic pour lancer : pas de terminal, pas de CORS, clés au trousseau du sy
 
 Fonctionnalités : **profils de connexion** multiples (chaque profil porte ses clés LLM + RAG
 au trousseau, son URL et son modèle), **chat en streaming** avec Stop, réglages de génération
-(température, longueur, consigne système), **multi-conversations** (créer / renommer /
-supprimer + export Markdown), **bibliothèque RAG** (collections + ajout de documents/dossier),
-chargement de documents de contexte ponctuels (txt, md, csv, json, pdf, docx).
+(température, longueur, consigne système + **modèles de consigne** enregistrables), **mémoire
+ajustable** (nombre de tours d'historique envoyés), **multi-conversations** (créer / renommer /
+supprimer + export Markdown), **bibliothèque RAG** (collections + ajout de documents/dossier)
+avec **modes Chat ⇄ Requête** (réponse strictement fondée sur les documents, sinon « non trouvé »)
+et **réglages de récupération** (méthode `hybrid`/`semantic`/`lexical`, nombre d'extraits, seuil
+de similarité), chargement de documents de contexte ponctuels (txt, md, csv, json, pdf, docx).
+Interface soignée : **thème clair/sombre/auto**, **vibrance macOS**, **colonnes et sections
+pliables**, aides contextuelles.
 
 ## Stack
 

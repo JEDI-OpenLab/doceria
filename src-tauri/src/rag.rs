@@ -348,12 +348,15 @@ pub async fn rag_rerank(
 ) -> Result<Value, String> {
     let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
     let url = format!("{}/rerank", normalize_base(&base));
-    let payload = json!({
+    let mut payload = json!({
         "model": "bge-reranker-v2-m3",
         "query": query,
         "documents": documents,
-        "top_n": top_n,
     });
+    // On n'envoie `top_n` que s'il est demandé (le tri/écrêtage final se fait aussi côté client).
+    if let Some(n) = top_n {
+        payload["top_n"] = json!(n);
+    }
     let res = client()?
         .post(&url)
         .bearer_auth(key.trim())

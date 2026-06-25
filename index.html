@@ -166,6 +166,10 @@
         <input type="range" id="ragThreshold" min="0" max="1" step="0.05" value="0">
         <div class="hint">Écarte les extraits sous ce score. 0 = aucun filtre ; plus haut = plus strict (et plus de « non trouvé » en mode Requête).</div>
       </div>
+      <div class="field">
+        <label class="ragtoggle"><input type="checkbox" id="ragRerank"> Reranking des extraits<button class="help" type="button" aria-label="Réordonne les passages par pertinence (modèle bge-reranker) après la recherche, puis garde les meilleurs. Améliore nettement la qualité ; ajoute un appel facturé.">?<span class="help-bubble" aria-hidden="true">Réordonne les passages par <strong>pertinence</strong> (bge-reranker) après la recherche, puis garde les meilleurs. État de l'art du RAG.<br>Améliore la qualité — <strong>ajoute un appel</strong> facturé.</span></button></label>
+        <div class="hint">Recommandé. Recherche un vivier plus large, le réordonne, puis ne garde que le top-k ci-dessus.</div>
+      </div>
 
       <h2 class="section-head" data-section="generation"><span class="chevron" aria-hidden="true">▾</span>Génération</h2>
       <div class="field">
