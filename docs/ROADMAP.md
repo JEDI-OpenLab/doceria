@@ -40,6 +40,7 @@
 - ✅ **Sections pliables du rail droit** (chevron sur chaque titre : Connexion, Modèle, Bibliothèque, Génération, Document ; pliage clavier-accessible, mémorisé par section, non destructif vis-à-vis de l'éditeur de profil) — **fait**.
 - ✅ **Gestion documentaire** (lister + supprimer un fichier d'une collection ; `rag_list_documents` + `DELETE`, maj compteur, purge index synchro) — **fait**.
 - ✅ **Finitions natives macOS** : **menu natif explicite** (Doceria/Édition/Fenêtre — restaure ⌘C/⌘V/⌘A, À propos, Quitter ; Tauri v2 n'en met pas par défaut) + **glisser-déposer** de fichiers sur la fenêtre → ajout à la collection active (overlay « Déposez vos fichiers »). — **fait**.
+- ✅ **Vérif de mise à jour (légère)** : au démarrage, `check_update` (Rust, API GitHub Releases, hors CSP) compare la version → bandeau « Nouvelle version · Télécharger » qui ouvre le `.dmg` (`open_url`, https only). **N'auto-installe pas.** *(L'updater Tauri complet — auto-téléchargement + install — nécessite une paire de clés de signature Tauri + artefacts signés + `latest.json` dans la release : à faire quand le pipeline de release sera en place.)* — **fait**.
 
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).

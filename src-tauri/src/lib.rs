@@ -6,6 +6,7 @@ mod ilaas;
 mod keychain;
 mod rag;
 mod settings;
+mod update;
 
 use ilaas::ChatState;
 use tauri::{Manager, WindowEvent};
@@ -38,7 +39,9 @@ pub fn run() {
       rag::rag_search,
       rag::rag_rerank,
       rag::list_dir_files,
-      rag::list_dir_entries
+      rag::list_dir_entries,
+      update::check_update,
+      update::open_url
     ])
     .on_window_event(|window, event| {
       // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).

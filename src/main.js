@@ -14,7 +14,7 @@ import {
   removeLastMessage,
   downloadMarkdown,
 } from './conversations.js';
-import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop } from './api.js';
+import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop, updater } from './api.js';
 import { readDocument } from './documents.js';
 import * as ui from './ui.js';
 
@@ -32,6 +32,38 @@ async function init() {
   wireEvents();
   await refreshProfiles();
   refreshConversation();
+  checkForUpdate(); // vérif de mise à jour en arrière-plan (silencieuse si indisponible)
+}
+
+// Compare deux versions « x.y.z » : > 0 si a est plus récente que b.
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
+// Au démarrage : interroge la dernière release GitHub. Si une version plus récente existe,
+// affiche un bandeau « Télécharger » (ouvre le .dmg de la release). Échec → silencieux.
+async function checkForUpdate() {
+  try {
+    const info = await updater.check();
+    if (!info || !info.latest || !info.current) return;
+    if (compareVersions(info.latest, info.current) <= 0) return;
+    const bar = $('updateBar');
+    if (!bar) return;
+    $('updateText').textContent =
+      'Nouvelle version ' + info.latest + ' disponible (vous avez ' + info.current + ').';
+    $('updateGet').onclick = () => updater.openUrl(info.dmgUrl || info.htmlUrl);
+    $('updateGet').hidden = !(info.dmgUrl || info.htmlUrl);
+    $('updateDismiss').onclick = () => { bar.hidden = true; };
+    bar.hidden = false;
+  } catch {
+    /* hors-ligne / pas de release / quota GitHub : on n'affiche rien */
+  }
 }
 
 function hydrateGen() {

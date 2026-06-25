@@ -81,6 +81,12 @@ export const dragDrop = {
   onDrop: (cb) => listen('tauri://drag-drop', cb),
 };
 
+// Mise à jour : vérifie la dernière release GitHub (réseau en Rust). openUrl ouvre le .dmg.
+export const updater = {
+  check: () => invoke('check_update'),
+  openUrl: (url) => invoke('open_url', { url }),
+};
+
 export async function listModels() {
   if (!state.activeId) throw 'Aucun profil actif.';
   return await invoke('list_models', { profileId: state.activeId });
