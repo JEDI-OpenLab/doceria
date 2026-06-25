@@ -101,12 +101,19 @@ body{
   border-radius:6px;padding:3px 10px;margin-left:2px;cursor:pointer;
 }
 .console .themebtn:hover{border-color:var(--bar-endpoint);color:var(--bar-strong)}
+.console .paneltgl{
+  font-size:12px;line-height:1;color:var(--bar-text);background:transparent;
+  border:1px solid var(--bar-faint);border-radius:6px;padding:4px 8px;margin-left:2px;cursor:pointer;
+}
+.console .paneltgl:hover{border-color:var(--bar-endpoint);color:var(--bar-strong)}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--faint);vertical-align:middle;margin-right:6px}
 .dot.on{background:#46C48A;box-shadow:0 0 0 3px rgba(70,196,138,.18)}
 .dot.err{background:#E0683F;box-shadow:0 0 0 3px rgba(224,104,63,.18)}
 .status{color:var(--bar-text)}
 
 .layout{display:flex;flex:1;min-height:0}
+body.hide-convs .convs{display:none}
+body.hide-rail .rail{display:none}
 
 /* Colonne des conversations */
 .convs{

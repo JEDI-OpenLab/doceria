@@ -22,6 +22,15 @@
 - **Build Linux** : à produire/tester sur **Ubuntu Studio** (accès SSH fourni par l'utilisateur quand prêt) — valider l'AppImage, le backend trousseau Linux (`async-secret-service`, pas de libdbus C) et les deps `webkit2gtk-4.1`.
 - **Données locales** : l'app n'écrit que `settings.json` (métadonnées profils) en appData + conversations/réglages en `localStorage` (webview). **Aucun cache de documents ni index vectoriel local** (RAG géré côté ILaaS). Supprimer une collection = `DELETE` serveur, rien à purger localement.
 
+## Backlog — réglages avancés chat & RAG (inspiré d'AnythingLLM)
+- **Mode RAG : Chat ⇄ Requête** — « Chat » = s'appuie sur les documents **+** connaissances générales (comportement actuel) ; « Requête » = répond **uniquement** à partir des extraits, sinon « non trouvé » (change la consigne système injectée). Petit contrôle segmenté.
+- **Réglages de récupération** : nombre d'extraits (**top-k**, figé à 5 aujourd'hui), **seuil de similarité** (`score_threshold` de `/v1/search`), méthode (`semantic`/`lexical`/`hybrid`).
+- **Mémoire** : limiter le nombre de tours précédents envoyés (coût ; au-delà de ~45, risque d'échec) — on envoie actuellement tout l'historique de la conversation.
+- *(« Mode Agent » = appels d'outils/fonctions par le modèle : **gros chantier séparé**, conditionné au support function-calling d'ILaaS/Mistral.)*
+- *(« Réinitialiser la base vectorielle » d'AnythingLLM = chez nous **suppression de collection**, déjà en place.)*
+- ✅ **Modèles de consigne système** (sauvegarde/rappel) + feedback « appliquée » — **fait**.
+- ✅ **Colonnes pliables** (chevrons gauche/droite) — **fait**.
+
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).
 - Réintégrer l'UI HTML/CSS/JS **telle quelle**.

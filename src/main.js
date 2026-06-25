@@ -673,9 +673,108 @@ const convHandlers = {
   },
 };
 
+/* ---------- Panneaux pliables (colonnes gauche/droite) ---------- */
+const PANELS_KEY = 'doceria_panels';
+
+function updatePanelButtons() {
+  $('toggleConvs').textContent = document.body.classList.contains('hide-convs') ? '❯' : '❮';
+  $('toggleRail').textContent = document.body.classList.contains('hide-rail') ? '❮' : '❯';
+}
+function loadPanels() {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(PANELS_KEY) || '{}') || {}; } catch { /* ignore */ }
+  document.body.classList.toggle('hide-convs', !!p.hideConvs);
+  document.body.classList.toggle('hide-rail', !!p.hideRail);
+  updatePanelButtons();
+}
+function togglePanel(which) {
+  document.body.classList.toggle(which === 'convs' ? 'hide-convs' : 'hide-rail');
+  updatePanelButtons();
+  try {
+    localStorage.setItem(PANELS_KEY, JSON.stringify({
+      hideConvs: document.body.classList.contains('hide-convs'),
+      hideRail: document.body.classList.contains('hide-rail'),
+    }));
+  } catch { /* ignore */ }
+}
+
+/* ---------- Modèles de consigne système (presets) ---------- */
+const SYS_PRESETS_KEY = 'doceria_sys_presets';
+let sysHintTimer = null;
+
+function loadSysPresets() {
+  try {
+    const a = JSON.parse(localStorage.getItem(SYS_PRESETS_KEY) || '[]');
+    return Array.isArray(a) ? a : [];
+  } catch { return []; }
+}
+function saveSysPresets(a) {
+  try { localStorage.setItem(SYS_PRESETS_KEY, JSON.stringify(a)); } catch { /* ignore */ }
+}
+function renderSysPresets() {
+  const sel = $('sysPresetSelect');
+  const presets = loadSysPresets();
+  sel.innerHTML = '';
+  const o0 = document.createElement('option');
+  o0.value = '';
+  o0.textContent = presets.length ? '— charger un modèle —' : '— aucun modèle enregistré —';
+  sel.appendChild(o0);
+  for (const p of presets) {
+    const o = document.createElement('option');
+    o.value = p.name;
+    o.textContent = p.name;
+    sel.appendChild(o);
+  }
+}
+function flashSysHint(msg) {
+  const h = $('sysHint');
+  h.textContent = msg;
+  clearTimeout(sysHintTimer);
+  sysHintTimer = setTimeout(() => {
+    h.textContent = 'Appliquée automatiquement à chaque message envoyé.';
+  }, 2600);
+}
+function onSysPresetSave() {
+  const name = $('sysPresetName').value.trim();
+  if (!name) { $('sysPresetName').focus(); return; }
+  const text = $('sysPrompt').value;
+  const presets = loadSysPresets();
+  const i = presets.findIndex((p) => p.name === name);
+  if (i >= 0) presets[i].text = text;
+  else presets.push({ name, text });
+  saveSysPresets(presets);
+  $('sysPresetName').value = '';
+  renderSysPresets();
+  $('sysPresetSelect').value = name;
+  flashSysHint('✓ modèle « ' + name + ' » enregistré.');
+}
+function onSysPresetLoad(name) {
+  if (!name) return;
+  const p = loadSysPresets().find((x) => x.name === name);
+  if (!p) return;
+  $('sysPrompt').value = p.text;
+  state.sys = p.text;
+  saveSettings();
+  flashSysHint('✓ « ' + name + ' » chargée et appliquée.');
+}
+function onSysPresetDelete() {
+  const name = $('sysPresetSelect').value;
+  if (!name) return;
+  saveSysPresets(loadSysPresets().filter((p) => p.name !== name));
+  renderSysPresets();
+  flashSysHint('Modèle supprimé.');
+}
+
 /* ---------- Branchement des événements ---------- */
 function wireEvents() {
   initTheme($('themeToggle'));
+  loadPanels();
+  $('toggleConvs').addEventListener('click', () => togglePanel('convs'));
+  $('toggleRail').addEventListener('click', () => togglePanel('rail'));
+  renderSysPresets();
+  $('sysPresetSelect').addEventListener('change', (e) => onSysPresetLoad(e.target.value));
+  $('sysPresetSave').addEventListener('click', onSysPresetSave);
+  $('sysPresetDelete').addEventListener('click', onSysPresetDelete);
   $('convNew').addEventListener('click', convHandlers.onNew);
 
   // Profils
@@ -724,6 +823,7 @@ function wireEvents() {
   $('sysPrompt').addEventListener('change', (e) => {
     state.sys = e.target.value;
     saveSettings();
+    flashSysHint('✓ consigne enregistrée et appliquée.');
   });
 
   // Bouton fichier (activable au clavier puisque c'est un vrai <button>).
