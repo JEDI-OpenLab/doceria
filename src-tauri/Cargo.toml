@@ -1,0 +1,30 @@
+[package]
+name = "doceria"
+version = "0.1.0"
+description = "Doceria — Enseigner avec l'IA. Coquille native (Tauri) du portail ILaaS."
+authors = ["JEDI-OpenLab"]
+license = ""
+repository = "https://github.com/JEDI-OpenLab/doceria"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "doceria_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2"
+# Couche réseau native : tout le trafic ILaaS part du Rust (pas de CORS, clé hors webview).
+# rustls-tls : TLS statique (pas de dépendance à OpenSSL système) → AppImage Linux portable.
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "http2", "charset"] }
+tokio = { version = "1", features = ["sync", "macros"] }
+futures-util = "0.3"

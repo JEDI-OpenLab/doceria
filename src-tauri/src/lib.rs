@@ -1,0 +1,37 @@
+// Coquille native Doceria (Tauri v2).
+// Enregistre les commandes réseau ILaaS et l'état partagé (jeton d'annulation du chat).
+// Fenêtre native : fermer = quitter (y compris macOS).
+
+mod ilaas;
+
+use ilaas::ChatState;
+use tauri::{Manager, WindowEvent};
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  tauri::Builder::default()
+    .manage(ChatState::default())
+    .invoke_handler(tauri::generate_handler![
+      ilaas::list_models,
+      ilaas::chat,
+      ilaas::cancel_chat
+    ])
+    .on_window_event(|window, event| {
+      // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).
+      if let WindowEvent::CloseRequested { .. } = event {
+        window.app_handle().exit(0);
+      }
+    })
+    .setup(|app| {
+      if cfg!(debug_assertions) {
+        app.handle().plugin(
+          tauri_plugin_log::Builder::default()
+            .level(log::LevelFilter::Info)
+            .build(),
+        )?;
+      }
+      Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}

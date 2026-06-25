@@ -1,0 +1,13 @@
+# Dépendances et build
+node_modules/
+dist/
+
+# Secrets — ne jamais committer la clé API
+.env
+.env.local
+.env.*.local
+
+# Système
+.DS_Store
+*.log
+npm-debug.log*

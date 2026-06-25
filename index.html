@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doceria — Enseigner avec l'IA</title>
+  <meta name="description" content="Doceria — Enseigner avec l'IA. Application pour interroger l'API ILaaS, fédération d'inférence souveraine de l'enseignement supérieur et de la recherche.">
+</head>
+<body>
+  <div class="console">
+    <img class="brandmark" src="/logo.png" alt="" width="20" height="20" aria-hidden="true">
+    <span class="brand">Doceria</span>
+    <span class="sep">/</span>
+    <span class="endpoint" id="cEndpoint">llm.ilaas.fr</span>
+    <span class="spacer"></span>
+    <span><span class="dot" id="cDot"></span><span class="status" id="cStatus">non connecté</span></span>
+    <span class="sep" id="cModelSep" style="display:none">/</span>
+    <span class="model" id="cModel"></span>
+  </div>
+
+  <div class="layout">
+    <!-- Colonne des conversations -->
+    <aside class="convs">
+      <button class="btnfull" id="convNew" type="button">+ Nouvelle conversation</button>
+      <div class="conv-list" id="convList"></div>
+    </aside>
+
+    <!-- Zone de conversation -->
+    <main class="main">
+      <div class="thread" id="thread">
+        <div class="thread-inner" id="threadInner" aria-live="polite" aria-relevant="additions text">
+          <div class="empty" id="empty">
+            <img class="hero-logo" src="/logo.png" alt="Doceria" width="84" height="84">
+            <div class="big">Prêt à interroger un modèle souverain</div>
+            <div>Renseignez votre clé, chargez les modèles, puis écrivez ci-dessous.</div>
+          </div>
+        </div>
+      </div>
+      <div class="composer">
+        <div class="composer-inner">
+          <textarea id="prompt" rows="1" placeholder="Votre message…" aria-label="Votre message" disabled></textarea>
+          <button id="sendBtn" type="button" disabled>Envoyer</button>
+        </div>
+        <div class="meta" id="composerMeta"></div>
+      </div>
+    </main>
+
+    <!-- Rail de réglages -->
+    <aside class="rail">
+      <h2>Connexion</h2>
+      <div class="field">
+        <label for="baseUrl">URL de base</label>
+        <input type="text" id="baseUrl" value="https://llm.ilaas.fr/v1" spellcheck="false">
+        <div class="hint">L'appel part de l'application en natif (pas de navigateur, pas de CORS).</div>
+      </div>
+      <div class="field">
+        <label for="apiKey">Clé API</label>
+        <input type="password" id="apiKey" placeholder="clé fournie par votre DSI" spellcheck="false" autocomplete="off">
+        <div class="hint">Clé nominative, facturée. Saisie ici en attendant le stockage au trousseau (à venir).</div>
+      </div>
+      <div class="field check">
+        <input type="checkbox" id="remember">
+        <label for="remember" style="margin:0;cursor:pointer">Mémoriser la clé pour cette session (déconseillé sur poste partagé)</label>
+      </div>
+      <button class="btnfull" id="connectBtn" type="button">Charger les modèles</button>
+
+      <h2>Modèle</h2>
+      <div class="field">
+        <select id="modelSelect" aria-label="Modèle" disabled><option value="" disabled selected>connectez-vous d'abord</option></select>
+      </div>
+
+      <h2>Génération</h2>
+      <div class="field">
+        <div class="temp-head">
+          <label for="temp" style="margin:0">Température</label>
+          <span class="temp-val" id="tempVal">0.30</span>
+        </div>
+        <input type="range" id="temp" min="0" max="1.5" step="0.05" value="0.3">
+        <div class="hint">Bas pour des réponses stables et factuelles, haut pour plus de variété.</div>
+      </div>
+      <div class="field">
+        <label for="maxTokens">Longueur max (tokens)</label>
+        <input type="number" id="maxTokens" value="1024" min="1" max="32000">
+      </div>
+      <div class="field">
+        <label for="sysPrompt">Consigne système (facultatif)</label>
+        <textarea id="sysPrompt" rows="2" placeholder="Ex. : Réponds de façon concise et en français."></textarea>
+      </div>
+
+      <h2>Document de contexte</h2>
+      <div class="doc" id="docBox">
+        <div id="docEmpty">Aucun document. Le texte du fichier sera ajouté au contexte de la conversation.
+          <div style="margin-top:10px">
+            <button type="button" class="filebtn" id="docPick">Charger un fichier</button>
+            <input type="file" id="fileInput" accept=".txt,.md,.markdown,.json,.csv,.tsv,.log,.pdf,.docx" style="display:none">
+          </div>
+          <div class="hint">txt, md, csv, json, pdf, docx — max 25 Mo</div>
+        </div>
+        <div id="docLoaded" style="display:none">
+          <div class="name" id="docName"></div>
+          <div class="meta" id="docMeta"></div>
+          <button class="clear" id="docClear" type="button">Retirer</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
