@@ -21,9 +21,10 @@ tauri-build = { version = "2.6.3", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.11.3", features = [] }
+tauri = { version = "2.11.3", features = ["macos-private-api"] }
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
 # Couche réseau native : tout le trafic ILaaS part du Rust (pas de CORS, clé hors webview).
 # rustls-tls : TLS statique (pas de dépendance à OpenSSL système) → AppImage Linux portable.
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "multipart", "rustls-tls", "http2", "charset"] }

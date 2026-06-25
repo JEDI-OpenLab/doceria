@@ -765,9 +765,36 @@ function onSysPresetDelete() {
   flashSysHint('Modèle supprimé.');
 }
 
+/* ---------- Aide contextuelle : positionnement « fixed » (échappe au rognage du rail) ---------- */
+function setupHelpTooltips() {
+  const W = 250;
+  document.querySelectorAll('.help').forEach((help) => {
+    const bubble = help.querySelector('.help-bubble');
+    if (!bubble) return;
+    const place = () => {
+      const r = help.getBoundingClientRect();
+      bubble.style.position = 'fixed';
+      bubble.style.width = W + 'px';
+      bubble.style.right = 'auto';
+      const left = Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8));
+      bubble.style.left = left + 'px';
+      if (help.classList.contains('up')) {
+        bubble.style.top = 'auto';
+        bubble.style.bottom = window.innerHeight - r.top + 8 + 'px';
+      } else {
+        bubble.style.bottom = 'auto';
+        bubble.style.top = r.bottom + 8 + 'px';
+      }
+    };
+    help.addEventListener('mouseenter', place);
+    help.addEventListener('focus', place);
+  });
+}
+
 /* ---------- Branchement des événements ---------- */
 function wireEvents() {
   initTheme($('themeToggle'));
+  setupHelpTooltips();
   loadPanels();
   $('toggleConvs').addEventListener('click', () => togglePanel('convs'));
   $('toggleRail').addEventListener('click', () => togglePanel('rail'));
