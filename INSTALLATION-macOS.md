@@ -30,6 +30,25 @@ Comme l'app n'est pas signée, un double-clic affichera un message du type
 3. Tout en bas, à côté de « Doceria a été bloqué… », cliquez sur **« Ouvrir quand même »**.
 4. Confirmez par **Ouvrir**.
 
+## 2bis. Si macOS dit que l'app est « endommagée »
+
+Sur macOS récent, au lieu du message ci-dessus, vous pourriez voir
+« *Doceria est endommagé et ne peut pas être ouvert. Placez-le dans la corbeille.* ».
+**Ce n'est pas un vrai dommage** : c'est la « quarantaine » que macOS pose sur une app
+non signée téléchargée. Pour la lever, une seule fois :
+
+1. Ouvrez **Terminal** (Applications → Utilitaires).
+2. Copiez-collez cette ligne, puis appuyez sur **Entrée** :
+
+   ```
+   xattr -dr com.apple.quarantine /Applications/Doceria.app
+   ```
+
+3. Relancez Doceria (double-clic).
+
+*(Sur macOS récent — Sequoia/Tahoe —, le parcours le plus fiable reste de toute façon
+Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ».)*
+
 ## 3. Au premier accès au trousseau
 
 Quand vous enregistrez votre première clé, macOS affiche

@@ -12,8 +12,11 @@
   - ⏳ **C. Récupération dans le chat** : interrupteur « Utiliser la bibliothèque » → recherche + **citations des sources**.
   - ⏳ **Sync dossier ↔ collection** : une collection peut être **liée à un dossier local** ; **bouton « Synchroniser »** (ajoute le nouveau/modifié, retire le supprimé — **indexation incrémentale** par empreinte hash/mtime, on ne re-téléverse pas tout) + **sync auto** au lancement de l'app et/ou à la sélection du profil. *(À trancher : le moment le plus pertinent — ne re-scanner que si quelque chose a changé ; cf. « watch temps réel » en P1.)*
   - ⏳ **D. Finitions + revue** (phase lourde).
-- ⏳ **Phase 3 — Préférences & thème** : clair/sombre/auto + vibrance macOS — **+ refonte de la charte graphique** (palette actuelle jugée trop neutre).
+- ✅ **Phase 3 — Préférences & thème & DA** : charte **« Atelier »** (papier chaud, pétrole, or), thème **clair/sombre/auto**, **vibrance macOS**, mémorisation fenêtre, colonnes pliables, presets de consigne système.
+- ✅ **Finitions macOS** : renommage de conversation inline, **CSP** (à valider pdf/docx), guide `INSTALLATION-macOS.md` (app non signée, **Apple Silicon arm64**). → **macOS quasi bouclé.**
+- ⏳ **Avant Linux (demandé)** : mode **Chat/Requête** + **réglages de récupération** (top-k, seuil, méthode) + **mémoire** ; **chevrons de sections** du rail droit. *(Voir le backlog ci-dessous et `docs/POINT-DE-REPRISE.md`.)*
 - ⏳ **Phase 5 — Conso/coût** : tokens par échange (V1) ; `GET /v1/me/usage` (RAG géré).
+- 📄 **`docs/POINT-DE-REPRISE.md`** : état complet + conventions, à lire en premier pour reprendre.
 - ⏳ **Site de présentation (GitHub Pages)** : mini-site pour présenter et documenter Doceria — objectif, fonctionnalités, captures, installation, **et faiblesses/limites assumées** (RAG géré = documents sur l'infra ESR souveraine ≠ 100 % local ; app non signée ; bêta OpenGateLLM ; prompt-injection possible via documents…). À planifier.
 
 ## Notes transverses (UX)

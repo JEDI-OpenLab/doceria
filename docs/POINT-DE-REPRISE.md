@@ -1,0 +1,55 @@
+# Doceria — Point de reprise (handoff)
+
+> **But : permettre à une NOUVELLE conversation de reprendre exactement ici.**
+> À lire en premier, puis `SPEC.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `RAG-V2-ilaas.md`.
+> Mis à jour : 2026-06-25.
+
+## 1. Ce qu'est Doceria
+App de bureau **Tauri v2** (macOS Apple Silicon ; Linux à venir), « Enseigner avec l'IA ».
+Interroge l'**API ILaaS** (fédération d'inférence souveraine ESR, compatible OpenAI) : **chat
+en streaming** + **RAG géré ILaaS** (OpenGateLLM). Frontend web réutilisé (Vite + JS vanilla)
+dans une coquille Rust.
+
+## 2. État global
+- **macOS : fonctionnellement complet et soigné.** Reste 1 validation utilisateur (CSP + pdf/docx, voir §8).
+- **Linux : non commencé** (build AppImage via SSH Ubuntu prévu).
+- **Distribution** : app **non signée** (pas de compte Apple), **Apple Silicon arm64 uniquement**. Guide : `INSTALLATION-macOS.md`.
+
+## 3. Fait, par domaine
+**Socle (Phase 1)** — fenêtre native (fermer = quitter), chat streaming SSE (events `chat://delta`) + Stop, couche réseau Rust (reqwest rustls, sans CORS), timeouts.
+**Clés & profils (Phase 2)** — trousseau OS (`keyring`). Multi-profils nommés à **deux jetons** (LLM + RAG) + URL + modèle. Clé **jamais** dans le webview (résolue en Rust). `test_connection` (+ version éphémère sans persistance). Choix du modèle par menu (rempli au test de la clé).
+**RAG géré ILaaS** — `rag.rs` : `rag_me`, collections (créer/lister **filtré « mes collections »**/supprimer), upload multipart (+ MIME), get/delete document, `search` hybride, `rerank`, `list_dir_files` (récursif, ignore symlinks). Plugin **dialog** natif. UI « Bibliothèque (RAG) » : collection active, création **inline**, ajout fichiers/dossier avec progression, garde-fou « crée une collection d'abord ». Chat : interrupteur **« Utiliser la bibliothèque »** → `search` → injection des extraits (balisés `<<<EXTRAIT>>>`, **anti prompt-injection**) + **citations [n]** + bloc **Sources** (nom de doc résolu).
+**DA & thème (Phase 3) — FAIT** — charte **« Atelier »** (papier chaud, pétrole, or) en variables CSS, **claire + sombre**. Thème **clair/sombre/auto** (suit le système), bouton dans la barre, persisté (`theme.js`). **Vibrance macOS** (fenêtre `transparent` + `windowEffects` sidebar, `macOSPrivateApi` ; colonnes translucides `--panel-bg`, centre opaque). **Mémorisation fenêtre** (`tauri-plugin-window-state`). **Colonnes pliables** (chevrons ❮/❯ dans la barre, persisté). Aide **« ? »** (gras, infobulle en `position:fixed` calculée en JS → jamais rognée). **Modèles de consigne système** (presets) + feedback « appliquée ».
+**Finitions macOS** — **renommage de conversation inline** (le `window.prompt` n'est pas géré par la webview Tauri — règle générale : toujours des champs inline). **CSP** stricte (à valider, §8). `INSTALLATION-macOS.md`.
+
+## 4. Carte du code
+**Front** (`src/`) : `main.js` (orchestration), `api.js` (invoke : chat/profils/RAG + dialog), `state.js`, `ui.js`, `theme.js`, `conversations.js`, `documents.js` (pdf.js/mammoth), `styles.css` (variables Atelier clair+sombre).
+**Rust** (`src-tauri/src/`) : `lib.rs` (commandes, plugins, fenêtre, charge les profils), `ilaas.rs` (chat/list_models/test + helpers HTTP `pub(crate)` : client/send_error/http_error/normalize_base), `keychain.rs` (secrets, write-only), `settings.rs` (profils en `appDataDir/settings.json` + `resolve(profil, "llm"|"rag")`), `rag.rs` (client OpenGateLLM).
+**Config** : `Cargo.toml` (reqwest rustls+multipart ; keyring par plateforme : apple-native macOS / async-secret-service+crypto-rust Linux / windows-native ; plugins dialog + window-state ; `tauri` feature `macos-private-api`). `tauri.conf.json` (identifiant `fr.jedi-openlab.doceria`, vibrance, CSP, bundle « all »). `capabilities/default.json` (`core:default` + `dialog:default`).
+
+## 5. API ILaaS (vérifié en live)
+- **Inférence** : `https://llm.ilaas.fr/v1`, modèle de chat **`mistral-medium-latest`**. *(Catalogue maj : `gpt-oss-120b`/llama retirés le 2026-10-01 ; nouveaux `qwen-3.6-35b-instruct`, `gemma-4-31b`, `mistral-small-4-119b`.)*
+- **RAG** : `https://rag-api.ilaas.fr/v1` (OpenGateLLM, ex-Albert). **DEUX clés distinctes** (jamais réutiliser la clé d'inférence sur le RAG). Contrat complet : `docs/RAG-V2-ilaas.md`.
+  - Collections : `visibility` `private`/`public`, champ `owner` (email). On ne liste que `private` || owned.
+  - `POST /search` : `{collection_ids, query, method:semantic|lexical|hybrid, limit, score_threshold, rff_k}` → `data:[{score, chunk:{content, document_id, metadata}}]`.
+  - `GET /me/usage` (conso, cost+tokens) ; `GET /me/info` (id, email, permissions, limits).
+
+## 6. Conventions de travail (IMPORTANT — à respecter dès la reprise)
+- **Git** : **l'utilisateur pousse LUI-MÊME via SourceTree**, jamais l'assistant. **AUCUN trailer `Co-Authored-By: Claude`.** Donner un **message de commit court** à chaque jalon. **Cocher les NOUVEAUX fichiers** dans SourceTree (piège récurrent : ils ne sont pas cochés par défaut → build cassé). Identité : compte **JEDI-OpenLab** (jamais DrJohn).
+- **Build (outil Bash)** : préfixer `export PATH="$HOME/.cargo/bin:$PATH"` (cargo absent du shell non-interactif). **Frontend modifié → rechargement à chaud** (`npm run tauri dev` déjà lancé par l'utilisateur). **Rust/config modifié → REDÉMARRER** `tauri dev`. Réseau/build → `dangerouslyDisableSandbox: true`.
+- **Clés API** : **ne jamais persister** (ni mémoire, ni fichier). L'utilisateur les colle dans l'app (trousseau). Pour un test live de l'API, usage transitoire uniquement, puis effacer.
+- **SSH Linux** : alias `lcn-ubuntu` (`jean@192.168.1.171`, clé `~/.ssh/id_ed25519_lcn`) **déjà autorisé** sur l'Ubuntu Studio 24.04 (Apple… non, Ubuntu). Mais **demander un feu vert explicite « connecte-toi »** avant chaque connexion (le garde-fou bloque sinon). Pas de mot de passe (clé only).
+- **Revue** : lancer un **workflow adversarial** (Workflow tool) avant de clore les phases lourdes (fait : clés, RAG, macOS).
+- **Webview Tauri** : `window.prompt()` **ne marche pas** → toujours des champs inline.
+
+## 7. Prochaines étapes (demandées par l'utilisateur, AVANT Linux)
+1. **Mode Chat ⇄ Requête** (façon AnythingLLM) : contrôle segmenté. *Requête* = consigne « réponds **uniquement** à partir des extraits, sinon dis ‘non trouvé’ » (ajuster `buildMessages`/`ragContext` dans `main.js`). *Chat* = comportement actuel.
+2. **Réglages de récupération** : exposer **top-k** (`rag_search` limit, figé à 5), **seuil de similarité** (`score_threshold`), **méthode** (`semantic`/`lexical`/`hybrid`). + **Mémoire** : limiter le nombre de tours envoyés (tronquer `conv.messages` dans `buildMessages`).
+3. **Chevrons de SECTIONS du rail droit** : envelopper chaque section (`<h2>` + contenu) dans un bloc **pliable**, chevron sur le titre, état persisté (comme les colonnes).
+4. **Linux** : build AppImage sur Ubuntu (SSH), valider trousseau `async-secret-service`, `webkit2gtk-4.1`, pdf/docx, et la CSP.
+- **Backlog** : mode Agent (function-calling), **sync dossier↔collection** incrémentale (hash/mtime), **site GitHub Pages** (présentation + limites), signature/notarisation (si distribution).
+
+## 8. En attente de validation
+- **Test utilisateur (macOS)** après redémarrage : l'app **se lance** (CSP ne casse pas l'écran), **chat + RAG** OK, et **charger un PDF puis un DOCX** (« Document de contexte ») fonctionne (point sensible de la CSP). Si écran blanc / PDF KO → ajuster/retirer la CSP (`tauri.conf.json` `security.csp`).
+- **Vérif macOS** (workflow lancé) : CSP / renommage / packaging — intégrer ses trouvailles confirmées.
+- **Vibrance** : validée par l'utilisateur (« ça rend super bien »). Alpha réglable via `--panel-bg` (2 valeurs clair/sombre).
