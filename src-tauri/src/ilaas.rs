@@ -17,6 +17,8 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Notify;
 
+use crate::settings::{self, SettingsState};
+
 /// État partagé : jeton d'annulation (`Notify`) du chat en cours.
 #[derive(Default)]
 pub struct ChatState {
@@ -100,8 +102,16 @@ pub async fn list_models(base_url: String, api_key: String) -> Result<Vec<String
         .json()
         .await
         .map_err(|e| format!("Réponse illisible : {e}"))?;
-    let list: Vec<String> = data
-        .get("data")
+    let list = parse_models(&data);
+    if list.is_empty() {
+        return Err("La liste des modèles est vide.".to_string());
+    }
+    Ok(list)
+}
+
+/// Extrait les ids de modèles d'une réponse `/models` (`data[].id|name`).
+fn parse_models(data: &Value) -> Vec<String> {
+    data.get("data")
         .or_else(|| data.get("models"))
         .and_then(|v| v.as_array())
         .map(|items| {
@@ -115,8 +125,34 @@ pub async fn list_models(base_url: String, api_key: String) -> Result<Vec<String
                 })
                 .collect()
         })
-        .unwrap_or_default();
+        .unwrap_or_default()
+}
 
+/// Teste la connexion d'un profil pour une cible ("llm" | "rag") : GET /models.
+/// Résout l'URL (métadonnées du profil) + la clé (trousseau) côté Rust.
+#[tauri::command]
+pub async fn test_connection(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    target: String,
+) -> Result<Vec<String>, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, &target)?;
+    let url = format!("{}/models", normalize_base(&base));
+    let res = client()?
+        .get(&url)
+        .bearer_auth(key.trim())
+        .send()
+        .await
+        .map_err(send_error)?;
+    let status = res.status();
+    if !status.is_success() {
+        return Err(http_error(status.as_u16()));
+    }
+    let data: Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Réponse illisible : {e}"))?;
+    let list = parse_models(&data);
     if list.is_empty() {
         return Err("La liste des modèles est vide.".to_string());
     }

@@ -28,3 +28,13 @@ tauri-plugin-log = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "http2", "charset"] }
 tokio = { version = "1", features = ["sync", "macros"] }
 futures-util = "0.3"
+
+# Trousseau OS (secrets : clés API). Backend par plateforme :
+#  - macOS : Keychain natif (apple-native).
+#  - Linux : Secret Service via D-Bus pur Rust (pas de libsecret système), chiffrement Rust
+#            (pas d'OpenSSL système) → AppImage portable.
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", default-features = false, features = ["apple-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", default-features = false, features = ["sync-secret-service", "crypto-rust"] }

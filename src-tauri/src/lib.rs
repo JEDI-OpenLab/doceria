@@ -3,6 +3,8 @@
 // Fenêtre native : fermer = quitter (y compris macOS).
 
 mod ilaas;
+mod keychain;
+mod settings;
 
 use ilaas::ChatState;
 use tauri::{Manager, WindowEvent};
@@ -14,7 +16,13 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       ilaas::list_models,
       ilaas::chat,
-      ilaas::cancel_chat
+      ilaas::cancel_chat,
+      ilaas::test_connection,
+      keychain::set_profile_key,
+      settings::list_profiles,
+      settings::upsert_profile,
+      settings::delete_profile,
+      settings::set_active_profile
     ])
     .on_window_event(|window, event| {
       // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).
@@ -23,6 +31,9 @@ pub fn run() {
       }
     })
     .setup(|app| {
+      // Charge les profils (métadonnées non sensibles) depuis le dossier de données.
+      let loaded = settings::load(app.handle());
+      app.manage(settings::SettingsState(std::sync::Mutex::new(loaded)));
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()

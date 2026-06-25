@@ -80,5 +80,9 @@ Linux). Ne placez jamais de clé en clair dans un fichier versionné ; `.env` es
 
 ## Licence
 
-Projet interne JEDI-OpenLab. L'API ILaaS, les modèles et les bibliothèques tierces
-(pdf.js, mammoth, Tauri) conservent leurs licences propres.
+Doceria est publié sous **double licence** (voir [`LICENSE`](LICENSE)) :
+- **Code source** : licence **MIT**.
+- **Contenus originaux JEDI-OpenLab** (documentation, ressources) : **CC BY 4.0**.
+
+L'API ILaaS, les modèles et les bibliothèques tierces (pdf.js, mammoth, Tauri) conservent
+leurs licences propres.
