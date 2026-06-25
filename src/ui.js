@@ -91,6 +91,38 @@ export function renderCollections() {
     state.activeCollectionId != null ? String(state.activeCollectionId) : String(state.collections[0].id);
 }
 
+// Liste des documents d'une collection, avec un bouton de suppression par ligne.
+// `onDelete(doc, rowElement)` est appelé au clic sur la croix.
+export function renderDocuments(docs, onDelete) {
+  const box = $('docList');
+  box.innerHTML = '';
+  if (!docs.length) {
+    const empty = document.createElement('div');
+    empty.className = 'doc-row';
+    empty.style.color = 'var(--muted)';
+    empty.textContent = 'Aucun document dans cette collection.';
+    box.appendChild(empty);
+    return;
+  }
+  for (const d of docs) {
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    const name = document.createElement('span');
+    name.className = 'doc-row-name';
+    name.textContent = d.name || 'document #' + d.id;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'doc-row-del';
+    del.title = 'Supprimer ce document de la collection';
+    del.setAttribute('aria-label', 'Supprimer ' + (d.name || 'document #' + d.id));
+    del.textContent = '✕';
+    del.addEventListener('click', () => onDelete(d, row));
+    row.appendChild(name);
+    row.appendChild(del);
+    box.appendChild(row);
+  }
+}
+
 /* ---------- Rendu Markdown léger ---------- */
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

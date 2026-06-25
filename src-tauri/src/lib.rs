@@ -34,6 +34,7 @@ pub fn run() {
       rag::rag_upload_document,
       rag::rag_get_document,
       rag::rag_delete_document,
+      rag::rag_list_documents,
       rag::rag_search,
       rag::rag_rerank,
       rag::list_dir_files,

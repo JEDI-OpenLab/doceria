@@ -429,6 +429,10 @@ function updateFolderSyncUI() {
   if (cb) cb.checked = state.ragAutoSync;
   const enabled = ragEnabled() && state.activeCollectionId != null;
   box.classList.toggle('is-hidden', !enabled);
+  // Gestion documentaire : même visibilité ; on replie la liste si la collection a changé.
+  const dm = $('docManageBox');
+  if (dm) dm.classList.toggle('is-hidden', !enabled);
+  if (!enabled || (docListLoadedFor !== null && docListLoadedFor !== state.activeCollectionId)) collapseDocList();
   if (!enabled) return;
   const rec = syncRecord(state.activeCollectionId);
   const linked = !!(rec && rec.folder);
@@ -469,6 +473,83 @@ async function autoSyncProfile() {
   } finally {
     syncing = false;
   }
+}
+
+// ───────────────────────── Gestion documentaire (lister / supprimer) ─────────────────────────
+let docListLoadedFor = null; // id de la collection dont la liste est actuellement affichée
+
+function documentsFrom(payload) {
+  let arr = [];
+  if (Array.isArray(payload)) arr = payload;
+  else if (payload && Array.isArray(payload.data)) arr = payload.data;
+  else if (payload && payload.data && Array.isArray(payload.data.data)) arr = payload.data.data;
+  return arr.map((d) => ({
+    id: d.id ?? d.document_id,
+    name: d.name || null,
+    collectionId: d.collection_id ?? (d.collection && d.collection.id) ?? (typeof d.collection === 'number' ? d.collection : null),
+  }));
+}
+
+function collapseDocList() {
+  const box = $('docList');
+  if (box) { box.hidden = true; box.innerHTML = ''; }
+  const btn = $('docListToggle');
+  if (btn) btn.textContent = 'Gérer les documents…';
+  docListLoadedFor = null;
+}
+
+async function onToggleDocList() {
+  const box = $('docList');
+  if (!box.hidden) { collapseDocList(); return; }
+  if (state.activeCollectionId == null) return;
+  const cid = Number(state.activeCollectionId);
+  const btn = $('docListToggle');
+  btn.disabled = true;
+  $('ragStatus').textContent = 'Chargement des documents…';
+  try {
+    const payload = await ragApi.listDocuments(cid);
+    let docs = documentsFrom(payload);
+    // Re-filtre par collection si le serveur n'a pas filtré (champ présent dans les docs).
+    if (docs.some((d) => d.collectionId != null)) docs = docs.filter((d) => Number(d.collectionId) === cid);
+    docs = docs.filter((d) => d.id != null);
+    ui.renderDocuments(docs, onDeleteDocument);
+    box.hidden = false;
+    btn.textContent = 'Masquer les documents';
+    docListLoadedFor = cid;
+    $('ragStatus').textContent = docs.length + ' document(s).';
+  } catch (e) {
+    $('ragStatus').textContent = '✗ ' + describeError(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function onDeleteDocument(doc, row) {
+  if (state.activeCollectionId == null) return;
+  if (!window.confirm('Supprimer « ' + (doc.name || 'document #' + doc.id) + ' » de la collection ? Action définitive.')) return;
+  try {
+    await ragApi.deleteDocument(Number(doc.id));
+    if (row) row.remove();
+    pruneSyncDoc(Number(state.activeCollectionId), Number(doc.id)); // si suivi par la synchro
+    await loadCollections(); // met à jour le compteur « (N doc.) »
+    $('ragStatus').textContent = '✓ document supprimé.';
+  } catch (e) {
+    $('ragStatus').textContent = '✗ ' + describeError(e);
+  }
+}
+
+// Retire un document de l'index de synchro (s'il y figure) après une suppression manuelle,
+// pour ne pas re-tenter sa suppression ; si le fichier est encore sur le disque, une future
+// synchro le considérera comme nouveau et le ré-importera (le dossier reste la référence).
+function pruneSyncDoc(collectionId, documentId) {
+  const map = loadSyncMap();
+  const rec = map[syncMapKey(collectionId)];
+  if (!rec || !rec.files) return;
+  let changed = false;
+  for (const p of Object.keys(rec.files)) {
+    if (Number(rec.files[p].documentId) === documentId) { delete rec.files[p]; changed = true; }
+  }
+  if (changed) saveSyncMap(map);
 }
 
 async function loadModels() {
@@ -1197,6 +1278,7 @@ function wireEvents() {
     state.ragAutoSync = e.target.checked;
     saveSettings();
   });
+  $('docListToggle').addEventListener('click', onToggleDocList);
 
   // Génération
   $('modelSelect').addEventListener('change', (e) => {

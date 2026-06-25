@@ -288,6 +288,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 #folderSyncBox.is-hidden{display:none}
 .folder-path{font-family:var(--mono);font-size:11px;color:var(--accent-ink);word-break:break-all;margin-bottom:4px}
 
+/* Gestion documentaire (liste + suppression unitaire) */
+#docManageBox.is-hidden{display:none}
+#docList{margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:7px}
+#docList[hidden]{display:none}
+.doc-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-bottom:1px solid var(--line);font-size:12.5px}
+.doc-row:last-child{border-bottom:none}
+.doc-row-name{flex:1;color:var(--ink);word-break:break-all}
+.doc-row-del{flex:0 0 auto;width:22px;height:22px;padding:0;font-size:13px;line-height:1;border-radius:6px;background:transparent;color:var(--muted);border:1px solid var(--line-strong)}
+.doc-row-del:hover{background:var(--warn);color:#fff;border-color:var(--warn)}
+
 /* Citations RAG sous une réponse */
 .sources{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
 .sources-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin-bottom:6px}

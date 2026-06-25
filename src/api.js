@@ -46,6 +46,7 @@ export const ragApi = {
   uploadDocument: (collectionId, filePath, name, profileId) =>
     invoke('rag_upload_document', { profileId: profileId || state.activeId, collectionId, filePath, name: name || null }),
   getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
+  listDocuments: (collectionId) => invoke('rag_list_documents', { profileId: state.activeId, collectionId }),
   deleteDocument: (documentId, profileId) =>
     invoke('rag_delete_document', { profileId: profileId || state.activeId, documentId }),
   search: (collectionIds, query, limit, method, scoreThreshold) =>

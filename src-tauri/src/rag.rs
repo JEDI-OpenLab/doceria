@@ -228,6 +228,29 @@ pub async fn rag_delete_document(
     Ok(())
 }
 
+/// Liste les documents d'une collection (GET /documents?collection_id=…). Le filtre serveur
+/// n'étant pas garanti selon le millésime, l'appelant re-filtre côté client par sécurité.
+#[tauri::command]
+pub async fn rag_list_documents(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    collection_id: i64,
+) -> Result<Value, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
+    let url = format!(
+        "{}/documents?collection_id={}&limit=100",
+        normalize_base(&base),
+        collection_id
+    );
+    let res = client()?
+        .get(&url)
+        .bearer_auth(key.trim())
+        .send()
+        .await
+        .map_err(send_error)?;
+    json_or_error(res).await
+}
+
 /// Devine le type MIME d'un fichier d'après son extension (pour l'upload multipart).
 fn guess_mime(path: &str) -> &'static str {
     let ext = std::path::Path::new(path)
