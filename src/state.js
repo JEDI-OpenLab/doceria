@@ -19,6 +19,10 @@ export const state = {
   ragOwner: null, // email du propriétaire RAG (filtrage « mes collections »)
   useLibrary: false, // interrupteur « Utiliser la bibliothèque » dans le chat
   ragMode: 'chat', // mode RAG : 'chat' (extraits + connaissances) | 'requete' (extraits seuls)
+  ragMethod: 'hybrid', // méthode de recherche RAG : 'semantic' | 'lexical' | 'hybrid'
+  ragTopK: 5, // nombre d'extraits récupérés (limit de /search)
+  ragThreshold: 0, // seuil de similarité (score_threshold) ; 0 = désactivé
+  memoryTurns: 0, // tours d'historique envoyés à chaque message ; 0 = illimité
   // Modèles
   models: [],
   model: '',
@@ -51,6 +55,10 @@ export function loadSettings() {
       if (typeof d.sys === 'string') state.sys = d.sys;
       if (typeof d.model === 'string') state.model = d.model;
       if (d.ragMode === 'chat' || d.ragMode === 'requete') state.ragMode = d.ragMode;
+      if (d.ragMethod === 'hybrid' || d.ragMethod === 'semantic' || d.ragMethod === 'lexical') state.ragMethod = d.ragMethod;
+      if (typeof d.ragTopK === 'number') state.ragTopK = d.ragTopK;
+      if (typeof d.ragThreshold === 'number') state.ragThreshold = d.ragThreshold;
+      if (typeof d.memoryTurns === 'number') state.memoryTurns = d.memoryTurns;
     }
   } catch { /* stockage illisible : on ignore */ }
 }
@@ -59,7 +67,17 @@ export function saveSettings() {
   try {
     localStorage.setItem(
       SETTINGS_KEY,
-      JSON.stringify({ temp: state.temp, maxTokens: state.maxTokens, sys: state.sys, model: state.model, ragMode: state.ragMode })
+      JSON.stringify({
+        temp: state.temp,
+        maxTokens: state.maxTokens,
+        sys: state.sys,
+        model: state.model,
+        ragMode: state.ragMode,
+        ragMethod: state.ragMethod,
+        ragTopK: state.ragTopK,
+        ragThreshold: state.ragThreshold,
+        memoryTurns: state.memoryTurns,
+      })
     );
   } catch { /* on ignore */ }
 }

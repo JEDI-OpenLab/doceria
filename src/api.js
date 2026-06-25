@@ -46,13 +46,14 @@ export const ragApi = {
   getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
   deleteDocument: (documentId) =>
     invoke('rag_delete_document', { profileId: state.activeId, documentId }),
-  search: (collectionIds, query, limit, method) =>
+  search: (collectionIds, query, limit, method, scoreThreshold) =>
     invoke('rag_search', {
       profileId: state.activeId,
       collectionIds,
       query,
       limit: limit || null,
       method: method || null,
+      scoreThreshold: typeof scoreThreshold === 'number' && scoreThreshold > 0 ? scoreThreshold : null,
     }),
   listDirFiles: (dirPath) => invoke('list_dir_files', { dirPath }),
   // Dialogues natifs (renvoient des chemins, jamais le contenu).

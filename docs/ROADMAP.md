@@ -29,8 +29,8 @@
 
 ## Backlog — réglages avancés chat & RAG (inspiré d'AnythingLLM)
 - ✅ **Mode RAG : Chat ⇄ Requête** — contrôle segmenté à côté de l'interrupteur (visible quand la bibliothèque est active). « Chat » = s'appuie sur les documents **+** connaissances générales ; « Requête » = répond **uniquement** à partir des extraits, sinon « Je ne trouve pas la réponse dans la bibliothèque. ». Bascule la consigne système injectée (`buildMessages`), persisté. — **fait**.
-- **Réglages de récupération** : nombre d'extraits (**top-k**, figé à 5 aujourd'hui), **seuil de similarité** (`score_threshold` de `/v1/search`), méthode (`semantic`/`lexical`/`hybrid`).
-- **Mémoire** : limiter le nombre de tours précédents envoyés (coût ; au-delà de ~45, risque d'échec) — on envoie actuellement tout l'historique de la conversation.
+- ✅ **Réglages de récupération** : **méthode** (`hybrid`/`semantic`/`lexical`), **top-k** (curseur 1–20), **seuil de similarité** (`score_threshold`, 0 = désactivé) — UI dans la section Bibliothèque, transmis à `/search` (param Rust `score_threshold` ajouté à `rag_search`), persisté. — **fait**.
+- ✅ **Mémoire** : champ « tours précédents » dans Génération (0 = tout l'historique ; sinon on borne aux N derniers échanges dans `buildMessages`), persisté. — **fait**.
 - *(« Mode Agent » = appels d'outils/fonctions par le modèle : **gros chantier séparé**, conditionné au support function-calling d'ILaaS/Mistral.)*
 - *(« Réinitialiser la base vectorielle » d'AnythingLLM = chez nous **suppression de collection**, déjà en place.)*
 - ✅ **Modèles de consigne système** (sauvegarde/rappel) + feedback « appliquée » — **fait**.

@@ -312,15 +312,20 @@ pub async fn rag_search(
     query: String,
     limit: Option<u32>,
     method: Option<String>,
+    score_threshold: Option<f32>,
 ) -> Result<Value, String> {
     let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
     let url = format!("{}/search", normalize_base(&base));
-    let payload = json!({
+    let mut payload = json!({
         "collection_ids": collection_ids,
         "query": query,
         "method": method.unwrap_or_else(|| "hybrid".to_string()),
         "limit": limit.unwrap_or(5),
     });
+    // Seuil de similarité : on ne l'envoie que s'il est demandé (sinon défaut serveur).
+    if let Some(t) = score_threshold {
+        payload["score_threshold"] = json!(t);
+    }
     let res = client()?
         .post(&url)
         .bearer_auth(key.trim())

@@ -39,6 +39,13 @@ function hydrateGen() {
   $('tempVal').textContent = Number(state.temp).toFixed(2);
   $('maxTokens').value = state.maxTokens;
   $('sysPrompt').value = state.sys;
+  $('memoryTurns').value = state.memoryTurns;
+  $('ragMethod').value = state.ragMethod;
+  $('ragTopK').value = state.ragTopK;
+  $('ragTopKVal').textContent = state.ragTopK;
+  $('ragThreshold').value = state.ragThreshold;
+  $('ragThresholdVal').textContent =
+    state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
 }
 
 function refreshConversation() {
@@ -478,7 +485,14 @@ function buildMessages(conv, ragContext) {
     sys = sys ? sys + '\n\n' + rag : rag;
   }
   if (sys) msgs.push({ role: 'system', content: sys });
-  msgs.push(...conv.messages);
+  // Mémoire : 0 = tout l'historique ; sinon on ne garde que les N derniers tours
+  // (N paires user/assistant) + le message courant, pour borner le coût et éviter
+  // les échecs sur conversations très longues.
+  let history = conv.messages;
+  if (state.memoryTurns > 0) {
+    history = history.slice(-(state.memoryTurns * 2 + 1));
+  }
+  msgs.push(...history);
   return msgs;
 }
 
@@ -486,7 +500,13 @@ function buildMessages(conv, ragContext) {
 async function retrieveFromLibrary(query) {
   if (!state.useLibrary || state.activeCollectionId == null) return { context: '', sources: [] };
   ui.setComposerMeta('recherche dans la bibliothèque…');
-  const res = await ragApi.search([Number(state.activeCollectionId)], query, 5, 'hybrid');
+  const res = await ragApi.search(
+    [Number(state.activeCollectionId)],
+    query,
+    state.ragTopK,
+    state.ragMethod,
+    state.ragThreshold
+  );
   const items = res && Array.isArray(res.data) ? res.data : [];
   const sources = items.map((it, i) => ({
     n: i + 1,
@@ -878,6 +898,23 @@ function wireEvents() {
     });
   });
 
+  // Réglages de récupération (RAG)
+  $('ragMethod').addEventListener('change', (e) => {
+    state.ragMethod = e.target.value;
+    saveSettings();
+  });
+  $('ragTopK').addEventListener('input', (e) => {
+    state.ragTopK = parseInt(e.target.value, 10) || 5;
+    $('ragTopKVal').textContent = state.ragTopK;
+  });
+  $('ragTopK').addEventListener('change', saveSettings);
+  $('ragThreshold').addEventListener('input', (e) => {
+    state.ragThreshold = parseFloat(e.target.value) || 0;
+    $('ragThresholdVal').textContent =
+      state.ragThreshold > 0 ? state.ragThreshold.toFixed(2) : 'désactivé';
+  });
+  $('ragThreshold').addEventListener('change', saveSettings);
+
   // Génération
   $('modelSelect').addEventListener('change', (e) => {
     state.model = e.target.value;
@@ -891,6 +928,10 @@ function wireEvents() {
   $('temp').addEventListener('change', saveSettings);
   $('maxTokens').addEventListener('change', (e) => {
     state.maxTokens = parseInt(e.target.value, 10) || 1024;
+    saveSettings();
+  });
+  $('memoryTurns').addEventListener('change', (e) => {
+    state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0);
     saveSettings();
   });
   $('sysPrompt').addEventListener('change', (e) => {

@@ -142,6 +142,30 @@
         <button id="collectionDelete" type="button" class="filebtn danger">Supprimer</button>
       </div>
       <div class="hint" id="ragStatus"></div>
+      <div class="field" style="margin-top:6px">
+        <label for="ragMethod">Méthode de recherche<button class="help" type="button" aria-label="Hybride combine sens et mots-clés (recommandé). Sémantique = proximité de sens. Lexicale = correspondance exacte de termes.">?<span class="help-bubble" aria-hidden="true"><strong>Hybride</strong> : sens + mots-clés (recommandé).<br><strong>Sémantique</strong> : proximité de sens.<br><strong>Lexicale</strong> : correspondance de termes.</span></button></label>
+        <select id="ragMethod" aria-label="Méthode de recherche">
+          <option value="hybrid">Hybride (recommandé)</option>
+          <option value="semantic">Sémantique (sens)</option>
+          <option value="lexical">Lexicale (mots-clés)</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="temp-head">
+          <label for="ragTopK" style="margin:0">Extraits récupérés (top-k)</label>
+          <span class="temp-val" id="ragTopKVal">5</span>
+        </div>
+        <input type="range" id="ragTopK" min="1" max="20" step="1" value="5">
+        <div class="hint">Nombre maximum de passages fournis au modèle à chaque question.</div>
+      </div>
+      <div class="field">
+        <div class="temp-head">
+          <label for="ragThreshold" style="margin:0">Seuil de similarité</label>
+          <span class="temp-val" id="ragThresholdVal">désactivé</span>
+        </div>
+        <input type="range" id="ragThreshold" min="0" max="1" step="0.05" value="0">
+        <div class="hint">Écarte les extraits sous ce score. 0 = aucun filtre ; plus haut = plus strict (et plus de « non trouvé » en mode Requête).</div>
+      </div>
 
       <h2>Génération</h2>
       <div class="field">
@@ -155,6 +179,10 @@
       <div class="field">
         <label for="maxTokens">Longueur max (tokens)</label>
         <input type="number" id="maxTokens" value="1024" min="1" max="32000">
+      </div>
+      <div class="field">
+        <label for="memoryTurns">Mémoire — tours précédents<button class="help" type="button" aria-label="Nombre d'échanges passés renvoyés à chaque message. 0 = tout l'historique. Réduire si la conversation devient très longue (au-delà de ~45 tours, risque d'échec côté API).">?<span class="help-bubble" aria-hidden="true">Nombre d'échanges passés renvoyés à chaque message.<br><strong>0 = tout l'historique.</strong><br>À réduire si la conversation devient très longue (au-delà de ~45, risque d'échec).</span></button></label>
+        <input type="number" id="memoryTurns" value="0" min="0" max="100">
       </div>
       <div class="field">
         <label for="sysPrompt">Consigne système (facultatif)</label>
