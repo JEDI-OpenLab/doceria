@@ -266,6 +266,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .ragtoggle input{width:auto;margin:0}
 .ragtoggle input:disabled{cursor:not-allowed;opacity:.5}
 
+/* Contrôle segmenté Chat ⇄ Requête (visible quand la bibliothèque est active) */
+.ragmode{display:inline-flex;align-items:center;gap:4px;margin-left:6px}
+.ragmode[hidden]{display:none}
+.seg-group{display:inline-flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
+.seg{font-family:var(--sans);font-size:12px;font-weight:600;line-height:1;color:var(--muted);background:transparent;border:0;border-radius:0;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
+.seg + .seg{border-left:1px solid var(--line-strong)}
+.seg:hover{background:var(--surface);color:var(--accent)}
+.seg.active{background:var(--accent);color:#fff}
+.seg.active:hover{background:var(--accent);color:#fff}
+
 /* Citations RAG sous une réponse */
 .sources{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
 .sources-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin-bottom:6px}

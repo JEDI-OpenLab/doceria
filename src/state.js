@@ -18,6 +18,7 @@ export const state = {
   activeCollectionId: null,
   ragOwner: null, // email du propriétaire RAG (filtrage « mes collections »)
   useLibrary: false, // interrupteur « Utiliser la bibliothèque » dans le chat
+  ragMode: 'chat', // mode RAG : 'chat' (extraits + connaissances) | 'requete' (extraits seuls)
   // Modèles
   models: [],
   model: '',
@@ -49,6 +50,7 @@ export function loadSettings() {
       if (typeof d.maxTokens === 'number') state.maxTokens = d.maxTokens;
       if (typeof d.sys === 'string') state.sys = d.sys;
       if (typeof d.model === 'string') state.model = d.model;
+      if (d.ragMode === 'chat' || d.ragMode === 'requete') state.ragMode = d.ragMode;
     }
   } catch { /* stockage illisible : on ignore */ }
 }
@@ -57,7 +59,7 @@ export function saveSettings() {
   try {
     localStorage.setItem(
       SETTINGS_KEY,
-      JSON.stringify({ temp: state.temp, maxTokens: state.maxTokens, sys: state.sys, model: state.model })
+      JSON.stringify({ temp: state.temp, maxTokens: state.maxTokens, sys: state.sys, model: state.model, ragMode: state.ragMode })
     );
   } catch { /* on ignore */ }
 }

@@ -28,7 +28,7 @@
 - **Données locales** : l'app n'écrit que `settings.json` (métadonnées profils) en appData + conversations/réglages en `localStorage` (webview). **Aucun cache de documents ni index vectoriel local** (RAG géré côté ILaaS). Supprimer une collection = `DELETE` serveur, rien à purger localement.
 
 ## Backlog — réglages avancés chat & RAG (inspiré d'AnythingLLM)
-- **Mode RAG : Chat ⇄ Requête** — « Chat » = s'appuie sur les documents **+** connaissances générales (comportement actuel) ; « Requête » = répond **uniquement** à partir des extraits, sinon « non trouvé » (change la consigne système injectée). Petit contrôle segmenté.
+- ✅ **Mode RAG : Chat ⇄ Requête** — contrôle segmenté à côté de l'interrupteur (visible quand la bibliothèque est active). « Chat » = s'appuie sur les documents **+** connaissances générales ; « Requête » = répond **uniquement** à partir des extraits, sinon « Je ne trouve pas la réponse dans la bibliothèque. ». Bascule la consigne système injectée (`buildMessages`), persisté. — **fait**.
 - **Réglages de récupération** : nombre d'extraits (**top-k**, figé à 5 aujourd'hui), **seuil de similarité** (`score_threshold` de `/v1/search`), méthode (`semantic`/`lexical`/`hybrid`).
 - **Mémoire** : limiter le nombre de tours précédents envoyés (coût ; au-delà de ~45, risque d'échec) — on envoie actuellement tout l'historique de la conversation.
 - *(« Mode Agent » = appels d'outils/fonctions par le modèle : **gros chantier séparé**, conditionné au support function-calling d'ILaaS/Mistral.)*
