@@ -50,6 +50,9 @@ export const ragApi = {
     invoke('rag_upload_text', { profileId: profileId || state.activeId, collectionId, name, content }),
   // Octets bruts d'un fichier local (ArrayBuffer) → pour l'extraction locale PDF/DOCX.
   readFile: (path) => invoke('read_file', { path }),
+  // OCR d'un PDF/image scanné (POST /v1/ocr) → texte markdown. Repli quand l'extraction
+  // locale ne donne rien (PDF sans couche texte).
+  ocr: (path, profileId) => invoke('rag_ocr', { profileId: profileId || state.activeId, path }),
   getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
   listDocuments: (collectionId) => invoke('rag_list_documents', { profileId: state.activeId, collectionId }),
   deleteDocument: (documentId, profileId) =>

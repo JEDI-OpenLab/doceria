@@ -961,6 +961,7 @@ dependencies = [
 name = "doceria"
 version = "20260626.1.0"
 dependencies = [
+ "base64 0.22.1",
  "futures-util",
  "keyring",
  "log",

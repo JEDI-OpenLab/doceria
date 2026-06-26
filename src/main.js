@@ -298,16 +298,26 @@ async function onDeleteCollection() {
 }
 
 // Téléverse un fichier vers une collection. PDF/DOCX : extraction du texte EN LOCAL
-// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Les formats
-// texte partent en direct. Lève si un PDF est scanné (aucun texte → relève de l'OCR).
-async function uploadFileSmart(collectionId, path, profileId) {
+// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Si un PDF
+// n'a pas de couche texte (scanné), repli automatique sur l'OCR ILaaS (POST /v1/ocr).
+// Les formats texte partent en direct. `onStatus(msg)` (optionnel) remonte l'étape OCR.
+async function uploadFileSmart(collectionId, path, profileId, onStatus) {
   const name = String(path).split(/[\\/]/).pop() || 'document';
   const ext = (name.split('.').pop() || '').toLowerCase();
   if (ext === 'pdf' || ext === 'docx') {
     const raw = await ragApi.readFile(path); // IPC binaire (ArrayBuffer ou Uint8Array)
     const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
     const file = new File([part], name);
-    const { text } = await readDocument(file);
+    let text;
+    try {
+      text = (await readDocument(file)).text;
+    } catch (e) {
+      // Pas de texte extractible. Pour un PDF (scanné), on tente l'OCR côté ILaaS.
+      if (ext !== 'pdf') throw e;
+      if (onStatus) onStatus('OCR de ' + name + '… (peut prendre un moment)');
+      text = (await ragApi.ocr(path, profileId)).trim();
+      if (!text) throw new Error('OCR : aucun texte reconnu dans ce PDF.');
+    }
     const mdName = name.replace(/\.(pdf|docx)$/i, '') + '.md';
     return await ragApi.uploadText(collectionId, mdName, text, profileId);
   }
@@ -330,7 +340,10 @@ async function uploadPaths(paths) {
     ui.uploadBusy(msg + '…');
     $('ragStatus').textContent = msg + '…';
     try {
-      await uploadFileSmart(cid, paths[i]);
+      await uploadFileSmart(cid, paths[i], undefined, (m) => {
+        ui.uploadBusy(m);
+        $('ragStatus').textContent = m;
+      });
       ok++;
     } catch (e) {
       fail++;

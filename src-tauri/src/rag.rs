@@ -229,6 +229,55 @@ pub async fn rag_upload_text(
     json_or_error(res).await
 }
 
+/// OCR d'un PDF/image scanné via `POST /v1/ocr` (document envoyé en data-URL base64).
+/// Renvoie le texte (markdown de toutes les pages concaténé). Sert de repli quand
+/// l'extraction locale ne donne rien (PDF sans couche texte). Timeout long (OCR lent).
+#[tauri::command]
+pub async fn rag_ocr(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    path: String,
+) -> Result<String, String> {
+    use base64::Engine;
+    let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
+    let url = format!("{}/ocr", normalize_base(&base));
+    let bytes = std::fs::read(&path).map_err(|e| format!("Lecture du fichier : {e}"))?;
+    let mime = guess_mime(&path);
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    let data_url = format!("data:{};base64,{}", mime, b64);
+    let document = if mime.starts_with("image/") {
+        json!({ "type": "image_url", "image_url": data_url })
+    } else {
+        json!({ "type": "document_url", "document_url": data_url })
+    };
+    // Client dédié à timeout long : l'OCR d'un document multipage peut prendre du temps.
+    let http = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(300))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let res = http
+        .post(&url)
+        .bearer_auth(key.trim())
+        .json(&json!({ "document": document }))
+        .send()
+        .await
+        .map_err(send_error)?;
+    let body = json_or_error(res).await?;
+    let text = body
+        .get("pages")
+        .and_then(|p| p.as_array())
+        .map(|pages| {
+            pages
+                .iter()
+                .filter_map(|pg| pg.get("markdown").and_then(Value::as_str))
+                .collect::<Vec<_>>()
+                .join("\n\n")
+        })
+        .unwrap_or_default();
+    Ok(text)
+}
+
 /// Récupère un document (GET /documents/{id}) — pour résoudre son nom dans les citations.
 #[tauri::command]
 pub async fn rag_get_document(

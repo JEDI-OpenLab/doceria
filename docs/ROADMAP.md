@@ -41,6 +41,7 @@
 - ✅ **Gestion documentaire** (lister + supprimer un fichier d'une collection ; `rag_list_documents` + `DELETE`, maj compteur, purge index synchro) — **fait**.
 - ✅ **Finitions natives macOS** : **menu natif explicite** (Doceria/Édition/Fenêtre — restaure ⌘C/⌘V/⌘A, À propos, Quitter ; Tauri v2 n'en met pas par défaut) + **glisser-déposer** de fichiers sur la fenêtre → ajout à la collection active (overlay « Déposez vos fichiers »). — **fait**.
 - ✅ **Vérif de mise à jour (légère)** : au démarrage, `check_update` (Rust, API GitHub Releases, hors CSP) compare la version → bandeau « Nouvelle version · Télécharger » qui ouvre le `.dmg` (`open_url`, https only). **N'auto-installe pas.** *(L'updater Tauri complet — auto-téléchargement + install — nécessite une paire de clés de signature Tauri + artefacts signés + `latest.json` dans la release : à faire quand le pipeline de release sera en place.)* — **fait**.
+- ✅ **Ingestion PDF/DOCX robuste + OCR** : ILaaS 502 sur l'upload PDF → Doceria **extrait le texte en local** (pdf.js/mammoth) et l'envoie en `.md` ; **PDF scanné** → **repli OCR** (`rag_ocr` → `POST /v1/ocr`). Toast d'upload global (progression/erreur). — **fait**. *(À valider en live : que `/v1/ocr` répond chez ILaaS.)*
 
 ## Phase 1 — Socle Tauri (le chat marche en natif)
 - Scaffolder Tauri autour du projet Vite existant (`src-tauri/`).
