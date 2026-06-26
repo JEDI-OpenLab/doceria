@@ -121,3 +121,25 @@ code{background:var(--gold-soft);color:var(--petrol-ink);padding:.1rem .4rem;bor
   .footer-links a{margin:0 14px 0 0}
   .footer-links{margin-top:6px}
 }
+
+/* Mode d'emploi (accordéon) */
+.doc-guide{max-width:840px;margin:0 auto}
+.doc-group{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:12px;overflow:hidden}
+.doc-group>summary{cursor:pointer;list-style:none;padding:16px 22px;font-family:var(--serif);font-size:1.16rem;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:13px}
+.doc-group>summary::-webkit-details-marker{display:none}
+.doc-group>summary>i{color:var(--petrol);width:22px;text-align:center;font-size:1rem}
+.doc-group>summary::after{content:"\f078";font-family:"Font Awesome 6 Free";font-weight:900;margin-left:auto;color:var(--muted);font-size:.78rem;transition:transform .2s}
+.doc-group[open]>summary::after{transform:rotate(180deg)}
+.doc-group[open]>summary{border-bottom:1px solid var(--line)}
+.doc-group dl{margin:0;padding:6px 22px 20px}
+.doc-group dt{font-weight:600;color:var(--petrol-ink);margin-top:15px;font-size:.99rem}
+.doc-group dd{margin:3px 0 0;color:var(--muted);font-size:.95rem;line-height:1.58}
+.doc-group dd code,.doc-group dd strong{color:var(--ink)}
+.doc-group dd code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86em;background:var(--gold-soft);padding:1px 5px;border-radius:5px}
+
+/* Lightbox (clic sur une capture) */
+#lightbox{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:28px;background:rgba(17,48,46,.86);cursor:zoom-out}
+#lightbox[hidden]{display:none}
+#lightbox img{max-width:95vw;max-height:90vh;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+#lightbox-close{position:absolute;top:16px;right:24px;width:42px;height:42px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:26px;line-height:1;border-radius:50%;cursor:pointer}
+#lightbox-close:hover{background:rgba(255,255,255,.22)}

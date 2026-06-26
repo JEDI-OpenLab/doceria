@@ -24,7 +24,17 @@ pliables**, aides contextuelles.
 La **bibliothèque** peut aussi être **liée à un dossier local** : un bouton « Synchroniser »
 (ou une synchro automatique à l'ouverture du profil) ajoute les nouveaux fichiers, met à jour
 les modifiés et **retire** de la collection ceux supprimés du dossier — indexation incrémentale,
-sans tout re-téléverser.
+sans tout re-téléverser. Les **PDF/DOCX sont extraits en texte localement** (pdf.js/mammoth) avant
+l'envoi, ce qui contourne les limites du parseur serveur.
+
+Également : **glisser-déposer** de fichiers vers une collection (avec barre de progression),
+**gestion documentaire** (lister / supprimer un document), **suivi de consommation** (requêtes,
+tokens, coût et impact CO₂ via `GET /me/usage`), **sélecteur de modèle** directement dans le chat,
+et **vérification de mise à jour** au démarrage (GitHub Releases). Direction artistique
+**façon macOS** (gris système, accent teal du logo), clair et sombre.
+
+> 📖 **Mode d'emploi complet** (chaque fonction et chaque réglage expliqués) sur le site :
+> <https://jedi-openlab.github.io/doceria/#guide>
 
 ## Ce qui distingue Doceria
 
@@ -86,6 +96,8 @@ au trousseau du système — aucune variable d'environnement requise (cf. `.env.
 npm run tauri build
 ```
 
+Le numéro de version suit le schéma **`AAAAMMJJ.ii.0`** (date · itération du jour · 0), valide semver — voir `src-tauri/Cargo.toml`. Pour une release, taguer `vAAAAMMJJ.ii.0` (le bouton « Télécharger » du site et la vérification de mise à jour s'appuient dessus).
+
 - **macOS — Apple Silicon (arm64) uniquement** : `Doceria.app` + `Doceria_<version>_aarch64.dmg`
   (`src-tauri/target/release/bundle/`). Le build se fait sur un Mac Apple Silicon → app **arm64**
   native (pas d'Intel — cible arm64 conforme au matériel Apple Silicon visé). Build **non signé** → au 1ᵉʳ lancement :
@@ -113,7 +125,7 @@ doceria/
 │   ├── src/lib.rs  main.rs # entrée, commandes, fenêtre (fermer = quitter)
 │   ├── tauri.conf.json     # config app (nom, fenêtre, identifiant, bundle)
 │   ├── capabilities/  icons/  Cargo.toml
-└── docs/                   # SPEC, ARCHITECTURE, ROADMAP, SETUP, RAG-V2-ilaas, KICKOFF
+└── docs/                   # index.html (site), SPEC, ARCHITECTURE, ROADMAP, SETUP, RAG-V2-ilaas, POINT-DE-REPRISE
 ```
 
 ## Sécurité de la clé

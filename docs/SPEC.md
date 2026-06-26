@@ -2,6 +2,8 @@
 
 > Document de passation. Lu en début de la conversation de développement.
 > État : **spec figée**, décisions actées. Voir aussi `ARCHITECTURE.md`, `ROADMAP.md`, `SETUP.md`.
+>
+> **⚠️ Doc de cadrage (historique).** L'application est désormais **réalisée**. Le **RAG géré ILaaS** est le mode implémenté (le RAG local est resté optionnel/différé). Pour l'état courant et le mode d'emploi : `../README.md` et le site (section « Mode d'emploi »).
 
 ## 1. Problème & objectif
 Le portail ILaaS existe en application web (Vite + JS vanilla, fonctionnelle), mais son usage

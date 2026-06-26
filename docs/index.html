@@ -35,6 +35,7 @@
       <div class="collapse navbar-collapse" id="nav">
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
           <li class="nav-item"><a class="nav-link" href="#fonctionnalites">Fonctionnalités</a></li>
+          <li class="nav-item"><a class="nav-link" href="#guide">Mode d'emploi</a></li>
           <li class="nav-item"><a class="nav-link" href="#souverainete">Souveraineté</a></li>
           <li class="nav-item"><a class="nav-link" href="#limites">Transparence</a></li>
           <li class="nav-item"><a class="nav-link" href="#installer">Installer</a></li>
@@ -265,6 +266,102 @@
     </div>
   </section>
 
+  <!-- Mode d'emploi -->
+  <section id="guide" class="band-surface">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="kicker">Mode d'emploi</span>
+        <h2 class="section-serif">Chaque fonction, chaque réglage — expliqué.</h2>
+        <p class="section-lead">Le guide complet : à quoi sert chaque bouton, chaque curseur, chaque option. Dépliez une rubrique.</p>
+      </div>
+      <div class="doc-guide">
+
+        <details class="doc-group" open>
+          <summary><i class="fa-solid fa-key"></i> Démarrer : connexion &amp; profils</summary>
+          <dl>
+            <dt>Profil</dt><dd>Un profil regroupe vos clés, vos URLs et un modèle par défaut. Créez-en plusieurs (par exemple un par établissement ou par clé). Bascule en deux clics depuis le menu « Profil actif ».</dd>
+            <dt>Clé d'inférence (chat)</dt><dd>Votre clé ILaaS pour discuter (URL par défaut <code>https://llm.ilaas.fr/v1</code>). Le bouton <strong>Tester</strong> vérifie la clé et récupère la liste des modèles. Les clés sont stockées dans le <strong>trousseau du système</strong> — jamais en clair, jamais dans la page.</dd>
+            <dt>Clé RAG (optionnelle)</dt><dd>Une <strong>seconde</strong> clé, distincte, pour la bibliothèque de documents (URL <code>https://rag-api.ilaas.fr/v1</code>). Sans elle, la bibliothèque reste désactivée.</dd>
+            <dt>Modèle par défaut</dt><dd>Le modèle pré-sélectionné à l'ouverture du profil.</dd>
+            <dt>Charger les modèles</dt><dd>Remplit la liste des modèles disponibles. Une fois fait, vous pouvez discuter.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-comments"></i> Discuter</summary>
+          <dl>
+            <dt>Message &amp; Envoyer</dt><dd>Tapez votre question, puis <strong>Envoyer</strong> (ou Entrée). La réponse s'affiche au fil de l'eau ; <strong>Stop</strong> l'interrompt.</dd>
+            <dt>Sélecteur de modèle</dt><dd>Au-dessus de la zone de message : changez le modèle interrogé sans quitter le chat. Il est synchronisé avec le menu « Modèle » du panneau de droite.</dd>
+            <dt>Conversations</dt><dd>Créez, renommez (icône crayon) et supprimez des conversations ; exportez-en une en <strong>Markdown</strong>. L'historique reste sur votre machine.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-book-open-reader"></i> Bibliothèque (RAG) : vos documents</summary>
+          <dl>
+            <dt>Collection active</dt><dd>Une collection est un ensemble de documents indexés en <strong>privé</strong> chez ILaaS. Choisissez celle que vos questions interrogeront.</dd>
+            <dt>Créer une collection</dt><dd>Saisissez un nom dans le champ, puis <strong>+ Créer</strong>.</dd>
+            <dt>Ajouter des fichiers / un dossier</dt><dd>Indexe des documents (txt, md, csv, json, pdf, docx). Les <strong>PDF et DOCX sont extraits en texte localement</strong> avant l'envoi (rendu fiable, indépendant du parseur serveur).</dd>
+            <dt>Glisser-déposer</dt><dd>Déposez des fichiers directement sur la fenêtre : ils sont ajoutés à la collection active. Une <strong>barre de progression</strong> confirme l'ajout (ou affiche l'erreur), même panneau replié.</dd>
+            <dt>Gérer les documents</dt><dd>Liste les fichiers de la collection ; la croix en supprime un, sans toucher au reste.</dd>
+            <dt>Dossier synchronisé</dt><dd>Liez une collection à un <strong>dossier de votre disque</strong>. <strong>Synchroniser</strong> ajoute les nouveaux fichiers, met à jour les modifiés et <strong>retire</strong> ceux supprimés du dossier. Option « Synchroniser à l'ouverture du profil » pour une mise à jour automatique. <strong>Délier</strong> conserve les documents.</dd>
+            <dt>Supprimer la collection</dt><dd>Supprime la collection et ses documents côté ILaaS. Action définitive.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-magnifying-glass"></i> Bibliothèque (RAG) : interroger</summary>
+          <dl>
+            <dt>Utiliser la bibliothèque</dt><dd>À cocher (sous la zone de message) pour que chaque question cherche dans la collection active et <strong>cite ses sources</strong> sous la réponse.</dd>
+            <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales. <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit (« non trouvé »).</dd>
+            <dt>Méthode de recherche</dt><dd><strong>Hybride</strong> (sens + mots-clés, recommandé), <strong>Sémantique</strong> (proximité de sens), <strong>Lexicale</strong> (correspondance de termes).</dd>
+            <dt>Extraits récupérés (top-k)</dt><dd>Nombre maximum de passages fournis au modèle à chaque question (défaut 5).</dd>
+            <dt>Seuil de similarité</dt><dd>Écarte les passages sous ce score. 0 = aucun filtre ; plus haut = plus strict (et davantage de « non trouvé » en mode Requête).</dd>
+            <dt>Reranking</dt><dd>Réordonne les passages par <strong>pertinence</strong> (modèle bge-reranker) avant de ne garder que le top-k. Améliore nettement la qualité ; ajoute un appel.</dd>
+            <dt>Citations [n] &amp; Sources</dt><dd>Les passages utilisés apparaissent numérotés dans la réponse et listés en dessous, avec le nom du document.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-sliders"></i> Génération</summary>
+          <dl>
+            <dt>Température</dt><dd>Basse pour des réponses stables et factuelles, haute pour davantage de variété et de créativité.</dd>
+            <dt>Longueur max (tokens)</dt><dd>Plafond de longueur de la réponse.</dd>
+            <dt>Mémoire — tours précédents</dt><dd>Combien d'échanges passés sont renvoyés à chaque message. <strong>0 = tout l'historique</strong> ; à réduire si la conversation devient très longue (au-delà de ~45 tours, risque d'échec côté API).</dd>
+            <dt>Consigne système</dt><dd>Instruction appliquée automatiquement à chaque message (ex. « Réponds en français, de façon concise »).</dd>
+            <dt>Modèles de consigne</dt><dd>Enregistrez vos consignes récurrentes et rappelez-les en un clic.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-file-lines"></i> Document de contexte</summary>
+          <dl>
+            <dt>Charger un fichier</dt><dd>Ajoute ponctuellement le <strong>texte</strong> d'un fichier (PDF, DOCX, txt, md, csv, json…) au contexte de la conversation en cours, <strong>sans</strong> l'indexer dans une collection. Idéal pour un document à usage unique.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-gauge-high"></i> Conso &amp; coût</summary>
+          <dl>
+            <dt>Actualiser la consommation</dt><dd>Agrège votre usage ILaaS (environ 30 derniers jours) : nombre de requêtes, tokens entrée/sortie, <strong>coût cumulé</strong> et <strong>empreinte carbone</strong> estimée. L'API expose le consommé, pas un quota restant.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
+          <summary><i class="fa-solid fa-wand-magic-sparkles"></i> Interface &amp; confort</summary>
+          <dl>
+            <dt>Thème</dt><dd>Icône en haut à droite : <strong>clair</strong> (soleil), <strong>sombre</strong> (lune) ou <strong>automatique</strong> (demi-cercle, suit le système).</dd>
+            <dt>Colonnes pliables</dt><dd>Chevrons dans la barre du haut pour masquer la liste des conversations (gauche) ou le panneau de réglages (droite).</dd>
+            <dt>Sections pliables</dt><dd>Cliquez le titre d'une section du panneau (Connexion, Bibliothèque, Génération…) pour la replier. L'état est mémorisé.</dd>
+            <dt>Aides « ? »</dt><dd>Survolez les points d'interrogation pour une explication contextuelle.</dd>
+            <dt>Mises à jour</dt><dd>Au démarrage, Doceria vérifie s'il existe une version plus récente sur GitHub et propose de la télécharger.</dd>
+          </dl>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
   <!-- Transparence / limites -->
   <section id="limites" class="band-surface">
     <div class="container">
@@ -374,6 +471,11 @@
     </div>
   </footer>
 
+  <div id="lightbox" hidden aria-hidden="true">
+    <button id="lightbox-close" type="button" aria-label="Fermer">&times;</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Masque la section « Aperçu » si aucune capture n'est présente dans assets/.
@@ -381,6 +483,20 @@
       const sec = document.querySelector('[data-shots]');
       if (sec && !sec.querySelectorAll('.shot').length) sec.remove();
     });
+    // Lightbox : clic sur une capture → affichage en grand (clic n'importe où ou Échap pour fermer).
+    (() => {
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lightbox-img');
+      if (!lb || !img) return;
+      const open = (src, alt) => { img.src = src; img.alt = alt || ''; lb.hidden = false; document.body.style.overflow = 'hidden'; };
+      const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; };
+      document.querySelectorAll('.shot-img').forEach((el) => {
+        el.style.cursor = 'zoom-in';
+        el.addEventListener('click', () => open(el.currentSrc || el.src, el.alt));
+      });
+      lb.addEventListener('click', close);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lb.hidden) close(); });
+    })();
   </script>
 </body>
 </html>

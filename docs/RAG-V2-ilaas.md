@@ -1,7 +1,6 @@
 # RAG géré ILaaS (V2) — accès & contrat d'API
 
-> **Statut : V2, en attente d'un jeton RAG.** La V1 fait le RAG **en local** (voir `SPEC.md` / `ARCHITECTURE.md`).
-> Ce document prépare la bascule vers le **RAG géré ILaaS** dès que le jeton RAG sera obtenu.
+> **Statut : RAG géré ILaaS IMPLÉMENTÉ et en service** (jeton RAG obtenu). C'est le mode RAG retenu de l'application ; le RAG **local** reste une option différée (non implémentée). Ce document sert de **contrat d'API de référence**.
 > Contrat **vérifié** contre l'`openapi.json` live + le code source OpenGateLLM (passe de vérification adverse).
 > Tout ce qui reste incertain est marqué *(à valider en live)*.
 

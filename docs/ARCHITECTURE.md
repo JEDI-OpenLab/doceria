@@ -1,6 +1,8 @@
 # Doceria — Architecture technique (cible Tauri)
 
 > Document de passation. Détaille les choix techniques et la migration depuis l'app web existante.
+>
+> **⚠️ Doc de cadrage (historique).** L'application est réalisée ; le **RAG géré ILaaS** est implémenté (le RAG local est resté optionnel). État courant : `../README.md` + site (section « Mode d'emploi »).
 
 ## 1. Pourquoi Tauri
 - App **légère** (~10–15 Mo) et **démarrage quasi instantané** → ressenti premium.

@@ -2,7 +2,9 @@
 
 > **But : permettre à une NOUVELLE conversation de reprendre exactement ici.**
 > À lire en premier, puis `SPEC.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `RAG-V2-ilaas.md`.
-> Mis à jour : 2026-06-25.
+> Mis à jour : 2026-06-26.
+>
+> **Récents (juin 2026)** : ingestion **PDF/DOCX par extraction locale** (pdf.js/mammoth → `.md` ; le parseur PDF d'ILaaS renvoie 502), **gestion documentaire** + **synchro dossier ↔ collection**, **conso/coût** (`/me/usage`), **sélecteur de modèle dans le chat**, **vérif de mise à jour** (GitHub Releases). **OCR retiré** (ILaaS n'a pas de modèle OCR — gardé en roadmap). **DA refaite façon macOS** (gris système, accent **teal du logo `#075057`**, rouge système). ⚠️ **Correctif clé** : la règle générique `:root[data-theme="dark"] button:hover{background:var(--accent)}` (spécificité > `.filebtn.danger:hover`) forçait un fond accent sur TOUS les boutons en sombre → survols illisibles ; remplacée par un simple `filter:brightness`. **Versionnage** : `AAAAMMJJ.ii.0`. **Site** : section « Mode d'emploi » exhaustive + **lightbox** sur l'Aperçu. **Supprimé** : `KICKOFF.md` (périmé).
 
 ## 1. Ce qu'est Doceria
 App de bureau **Tauri v2** (macOS Apple Silicon ; Linux à venir), « Enseigner avec l'IA ».
