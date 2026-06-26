@@ -959,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "doceria"
-version = "0.1.0"
+version = "20260626.1.0"
 dependencies = [
  "futures-util",
  "keyring",

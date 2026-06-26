@@ -43,6 +43,7 @@ dans une coquille Rust.
   - `GET /me/usage` (conso, cost+tokens) ; `GET /me/info` (id, email, permissions, limits).
 
 ## 6. Conventions de travail (IMPORTANT — à respecter dès la reprise)
+- **Versionnage** : schéma **`AAAAMMJJ.ii.0`** (date du jour · itération du jour · 0), p. ex. `20260626.1.0` puis `20260626.2.0`, lendemain `20260627.1.0`. **Doit rester du semver valide** (3 parties, sans zéro initial) → mis dans `tauri.conf.json` ET `Cargo.toml`. La vérif de mise à jour compare ce numéro au tag de release GitHub (taguer `vAAAAMMJJ.ii.0`).
 - **Git** : **l'utilisateur pousse LUI-MÊME via SourceTree**, jamais l'assistant. **AUCUN trailer `Co-Authored-By: Claude`.** Donner un **message de commit court** à chaque jalon. **Cocher les NOUVEAUX fichiers** dans SourceTree (piège récurrent : ils ne sont pas cochés par défaut → build cassé). Identité : compte **JEDI-OpenLab** (jamais DrJohn).
 - **Build (outil Bash)** : préfixer `export PATH="$HOME/.cargo/bin:$PATH"` (cargo absent du shell non-interactif). **Frontend modifié → rechargement à chaud** (`npm run tauri dev` déjà lancé par l'utilisateur). **Rust/config modifié → REDÉMARRER** `tauri dev`. Réseau/build → `dangerouslyDisableSandbox: true`.
 - **Clés API** : **ne jamais persister** (ni mémoire, ni fichier). L'utilisateur les colle dans l'app (trousseau). Pour un test live de l'API, usage transitoire uniquement, puis effacer.

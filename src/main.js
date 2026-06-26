@@ -1237,13 +1237,16 @@ function setupHelpTooltips() {
   document.querySelectorAll('.help').forEach((help) => {
     const bubble = help.querySelector('.help-bubble');
     if (!bubble) return;
-    const place = () => {
+    // On déplace la bulle dans <body> : sinon un ancêtre translucide/transformé (la vibrance
+    // du rail) devient le bloc englobant du position:fixed et la bulle est clippée/hors écran.
+    // L'affichage n'est donc plus piloté par le :hover CSS mais entièrement en JS.
+    document.body.appendChild(bubble);
+    bubble.style.position = 'fixed';
+    bubble.style.width = W + 'px';
+    bubble.style.right = 'auto';
+    const show = () => {
       const r = help.getBoundingClientRect();
-      bubble.style.position = 'fixed';
-      bubble.style.width = W + 'px';
-      bubble.style.right = 'auto';
-      const left = Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8));
-      bubble.style.left = left + 'px';
+      bubble.style.left = Math.max(8, Math.min(r.left, window.innerWidth - W - 8)) + 'px';
       if (help.classList.contains('up')) {
         bubble.style.top = 'auto';
         bubble.style.bottom = window.innerHeight - r.top + 8 + 'px';
@@ -1251,9 +1254,18 @@ function setupHelpTooltips() {
         bubble.style.bottom = 'auto';
         bubble.style.top = r.bottom + 8 + 'px';
       }
+      bubble.style.opacity = '1';
+      bubble.style.visibility = 'visible';
+      bubble.style.transform = 'none';
     };
-    help.addEventListener('mouseenter', place);
-    help.addEventListener('focus', place);
+    const hide = () => {
+      bubble.style.opacity = '0';
+      bubble.style.visibility = 'hidden';
+    };
+    help.addEventListener('mouseenter', show);
+    help.addEventListener('mouseleave', hide);
+    help.addEventListener('focus', show);
+    help.addEventListener('blur', hide);
   });
 }
 
