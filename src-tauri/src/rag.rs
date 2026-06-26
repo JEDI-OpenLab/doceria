@@ -428,3 +428,100 @@ pub async fn rag_rerank(
         .map_err(send_error)?;
     json_or_error(res).await
 }
+
+// ─────────────────────────── Consommation / coût ───────────────────────────
+
+/// Coerce une valeur JSON en f64 : nombre direct, ou objet `{ value|mean|total|amount }`,
+/// ou intervalle `{ min, max }` (les impacts ecologits peuvent prendre ces formes).
+fn coerce_f64(v: &Value) -> Option<f64> {
+    if let Some(n) = v.as_f64() {
+        return Some(n);
+    }
+    if let Some(o) = v.as_object() {
+        for k in ["value", "mean", "total", "amount"] {
+            if let Some(n) = o.get(k).and_then(coerce_f64) {
+                return Some(n);
+            }
+        }
+        if let (Some(min), Some(max)) = (
+            o.get("min").and_then(|x| x.as_f64()),
+            o.get("max").and_then(|x| x.as_f64()),
+        ) {
+            return Some((min + max) / 2.0);
+        }
+    }
+    None
+}
+
+/// Empreinte carbone d'une requête (`impacts.gwp`, en kgCO2eq chez ecologits) → grammes.
+/// 0 si l'information est absente (best-effort : le schéma exact peut varier).
+fn impacts_co2_g(impacts: Option<&Value>) -> f64 {
+    impacts
+        .and_then(|i| i.get("gwp"))
+        .and_then(coerce_f64)
+        .map(|kg| kg * 1000.0)
+        .unwrap_or(0.0)
+}
+
+/// Agrège la consommation (`GET /me/usage`, paginé) pour un rôle (« llm » ou « rag »).
+/// Fenêtre par défaut du serveur (30 derniers jours). Pas de notion de quota côté API :
+/// on additionne `cost` + tokens (+ CO2 best-effort). Plafonné à 30 pages (3000 requêtes).
+#[tauri::command]
+pub async fn fetch_usage(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    role: String,
+) -> Result<Value, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, &role)?;
+    let http = client()?;
+    let limit: u32 = 100;
+    let mut offset: u32 = 0;
+    let (mut requests, mut prompt, mut completion, mut total) = (0u64, 0i64, 0i64, 0i64);
+    let (mut cost, mut co2) = (0f64, 0f64);
+    let mut pages = 0;
+    loop {
+        let url = format!(
+            "{}/me/usage?limit={}&offset={}",
+            normalize_base(&base),
+            limit,
+            offset
+        );
+        let res = http
+            .get(&url)
+            .bearer_auth(key.trim())
+            .send()
+            .await
+            .map_err(send_error)?;
+        let body = json_or_error(res).await?;
+        let rows = body
+            .get("data")
+            .and_then(|d| d.as_array())
+            .cloned()
+            .unwrap_or_default();
+        let n = rows.len();
+        for row in &rows {
+            requests += 1;
+            if let Some(u) = row.get("usage") {
+                prompt += u.get("prompt_tokens").and_then(Value::as_i64).unwrap_or(0);
+                completion += u.get("completion_tokens").and_then(Value::as_i64).unwrap_or(0);
+                total += u.get("total_tokens").and_then(Value::as_i64).unwrap_or(0);
+                cost += u.get("cost").and_then(Value::as_f64).unwrap_or(0.0);
+                co2 += impacts_co2_g(u.get("impacts"));
+            }
+        }
+        pages += 1;
+        if n < limit as usize || pages >= 30 {
+            break;
+        }
+        offset += limit;
+    }
+    Ok(json!({
+        "role": role,
+        "requests": requests,
+        "promptTokens": prompt,
+        "completionTokens": completion,
+        "totalTokens": total,
+        "cost": cost,
+        "co2g": co2
+    }))
+}

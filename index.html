@@ -237,6 +237,13 @@
           <button class="clear" id="docClear" type="button">Retirer</button>
         </div>
       </div>
+
+      <h2 class="section-head" data-section="conso"><span class="chevron" aria-hidden="true">▾</span>Conso &amp; coût<button class="help" type="button" aria-label="Consommation agrégée depuis ILaaS (environ 30 derniers jours) : requêtes, tokens, coût cumulé et empreinte carbone estimée. L'API ne fournit pas de quota restant, seulement le consommé.">?<span class="help-bubble" aria-hidden="true">Consommation agrégée depuis ILaaS (≈ 30 derniers jours) : requêtes, tokens, <strong>coût cumulé</strong> et <strong>CO₂</strong> estimé.<br>L'API n'expose pas de quota restant, seulement le consommé.</span></button></h2>
+      <div class="field">
+        <button id="usageRefresh" type="button" class="filebtn btnfull">Actualiser la consommation</button>
+        <div class="hint" id="usageHint">Inférence (+ RAG si configuré). Clique pour récupérer.</div>
+        <div id="usageOut" hidden></div>
+      </div>
     </aside>
   </div>
 

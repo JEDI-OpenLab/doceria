@@ -40,6 +40,7 @@ pub fn run() {
       rag::rag_rerank,
       rag::list_dir_files,
       rag::list_dir_entries,
+      rag::fetch_usage,
       update::check_update,
       update::open_url
     ])

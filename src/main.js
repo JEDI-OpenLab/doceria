@@ -14,7 +14,7 @@ import {
   removeLastMessage,
   downloadMarkdown,
 } from './conversations.js';
-import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop, updater } from './api.js';
+import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop, updater, usageApi } from './api.js';
 import { readDocument } from './documents.js';
 import * as ui from './ui.js';
 
@@ -66,6 +66,41 @@ async function checkForUpdate() {
   }
 }
 
+// ───────────────────────── Conso / coût ─────────────────────────
+function resetUsageView() {
+  const box = $('usageOut');
+  if (box) { box.hidden = true; box.innerHTML = ''; }
+  const hint = $('usageHint');
+  if (hint) hint.textContent = 'Inférence (+ RAG si configuré). Clique pour récupérer.';
+}
+
+// Agrège GET /me/usage pour l'inférence (et le RAG si configuré) et l'affiche.
+async function loadUsage() {
+  if (!state.activeId) { $('usageHint').textContent = 'Sélectionne d’abord un profil.'; return; }
+  const btn = $('usageRefresh');
+  btn.disabled = true;
+  $('usageHint').textContent = 'Récupération…';
+  try {
+    const parts = [];
+    const llm = await usageApi.fetch('llm').catch(() => null);
+    if (llm) parts.push(llm);
+    if (ragEnabled()) {
+      const rag = await usageApi.fetch('rag').catch(() => null);
+      if (rag) parts.push(rag);
+    }
+    if (!parts.length) {
+      $('usageHint').textContent = '✗ Consommation indisponible (l’endpoint /me/usage a peut-être échoué).';
+      return;
+    }
+    ui.renderUsage(parts);
+    $('usageHint').textContent = '≈ 30 derniers jours · coût cumulé (l’API n’expose pas de quota restant).';
+  } catch (e) {
+    $('usageHint').textContent = '✗ ' + describeError(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function hydrateGen() {
   $('temp').value = state.temp;
   $('tempVal').textContent = Number(state.temp).toFixed(2);
@@ -105,6 +140,7 @@ async function refreshProfiles() {
 }
 
 function applyActiveProfile() {
+  resetUsageView(); // la conso affichée dépend du profil
   const p = activeProfile();
   ui.setEndpoint(p ? p.llmBaseUrl : '');
   if (p && !state.model) state.model = p.llmModel || '';
@@ -1343,6 +1379,7 @@ function wireEvents() {
     saveSettings();
   });
   $('docListToggle').addEventListener('click', onToggleDocList);
+  $('usageRefresh').addEventListener('click', loadUsage);
 
   // Génération
   $('modelSelect').addEventListener('change', (e) => {

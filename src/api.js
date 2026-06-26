@@ -87,6 +87,11 @@ export const updater = {
   openUrl: (url) => invoke('open_url', { url }),
 };
 
+// Consommation / coût : agrège GET /me/usage côté Rust pour un rôle (« llm » | « rag »).
+export const usageApi = {
+  fetch: (role) => invoke('fetch_usage', { profileId: state.activeId, role }),
+};
+
 export async function listModels() {
   if (!state.activeId) throw 'Aucun profil actif.';
   return await invoke('list_models', { profileId: state.activeId });

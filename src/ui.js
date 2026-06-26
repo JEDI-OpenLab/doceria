@@ -91,6 +91,54 @@ export function renderCollections() {
     state.activeCollectionId != null ? String(state.activeCollectionId) : String(state.collections[0].id);
 }
 
+// Tableau de bord de consommation : agrège un ou plusieurs résumés de rôle
+// ({ role, requests, promptTokens, completionTokens, totalTokens, cost, co2g }).
+export function renderUsage(parts) {
+  const box = $('usageOut');
+  box.innerHTML = '';
+  const sum = (k) => parts.reduce((a, p) => a + (Number(p[k]) || 0), 0);
+  const tin = sum('promptTokens');
+  const tout = sum('completionTokens');
+  const ttot = sum('totalTokens') || tin + tout;
+  const cost = sum('cost');
+  const co2 = sum('co2g');
+  const n = (x) => Number(x).toLocaleString('fr-FR');
+  const money = (x) => Number(x).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+  const co2fmt = (g) =>
+    g >= 1000
+      ? (g / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' kg'
+      : Math.round(g).toLocaleString('fr-FR') + ' g';
+  const roleLabel = (r) => (r === 'rag' ? 'RAG' : 'Inférence');
+  const row = (label, val, cls) => {
+    const r = document.createElement('div');
+    r.className = 'usage-row' + (cls ? ' ' + cls : '');
+    const l = document.createElement('span');
+    l.className = 'u-label';
+    l.textContent = label;
+    const v = document.createElement('span');
+    v.className = 'u-val';
+    v.textContent = val;
+    r.appendChild(l);
+    r.appendChild(v);
+    box.appendChild(r);
+  };
+  row('Requêtes', n(sum('requests')));
+  row('Tokens entrée', n(tin));
+  row('Tokens sortie', n(tout));
+  row('Tokens total', n(ttot));
+  row('Coût cumulé', money(cost), 'u-total');
+  if (co2 > 0) row('CO₂ estimé', co2fmt(co2));
+  if (parts.length > 1) {
+    const sub = document.createElement('div');
+    sub.className = 'usage-sub';
+    sub.textContent = parts
+      .map((p) => roleLabel(p.role) + ' : ' + n(Number(p.totalTokens) || Number(p.promptTokens) + Number(p.completionTokens)) + ' tok · ' + money(p.cost))
+      .join('  ·  ');
+    box.appendChild(sub);
+  }
+  box.hidden = false;
+}
+
 // Liste des documents d'une collection, avec un bouton de suppression par ligne.
 // `onDelete(doc, rowElement)` est appelé au clic sur la croix.
 export function renderDocuments(docs, onDelete) {
