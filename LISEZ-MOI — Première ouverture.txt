@@ -1,0 +1,52 @@
+DOCERIA — Première ouverture sur macOS (à lire)
+================================================
+
+Doceria est une application pour Mac Apple Silicon (M1, M2, M3, M4…),
+NON signée par Apple (projet interne, sans compte développeur payant).
+Ce n'est PAS dangereux. Voici comment l'ouvrir et l'autoriser.
+
+
+1) INSTALLER
+------------
+Glissez l'icône « Doceria » sur le dossier « Applications » (à droite),
+puis éjectez cette fenêtre.
+
+
+2) PREMIÈRE OUVERTURE — « Ouvrir quand même »
+---------------------------------------------
+Au premier double-clic, macOS peut afficher :
+  « Doceria ne peut pas être ouverte car Apple ne peut pas vérifier… »
+C'est normal pour une application non signée. Pour l'autoriser UNE FOIS :
+
+  • Méthode simple : dans Applications, faites un CLIC DROIT sur Doceria
+    → Ouvrir → Ouvrir. Les fois suivantes, un double-clic suffira.
+
+  • Si « Ouvrir » n'apparaît pas : ouvrez Réglages Système →
+    « Confidentialité et sécurité » → tout en bas, à côté de
+    « Doceria a été bloqué… », cliquez « OUVRIR QUAND MÊME », puis Ouvrir.
+
+  • Si macOS dit « Doceria est endommagé » : ouvrez Terminal
+    (Applications → Utilitaires), collez la ligne ci-dessous, Entrée :
+        xattr -dr com.apple.quarantine /Applications/Doceria.app
+    puis relancez Doceria.
+
+
+3) ACCÈS AU TROUSSEAU — « Toujours autoriser »
+----------------------------------------------
+Quand vous enregistrez votre clé ILaaS, macOS demande :
+  « Doceria souhaite utiliser des informations confidentielles
+    stockées dans le trousseau ».
+Cliquez « TOUJOURS AUTORISER ».
+
+Pourquoi c'est sans danger :
+  • C'est VOTRE clé ILaaS que Doceria range dans le trousseau du système
+    — l'endroit sûr et prévu pour ça — au lieu de la laisser en clair.
+  • Doceria n'accède qu'à SES propres entrées (vos clés), rien d'autre.
+  • La demande peut RÉAPPARAÎTRE après une mise à jour de l'application :
+    c'est normal pour une app non signée (sa signature change à chaque
+    version), ce n'est pas un signe de danger. « Toujours autoriser »
+    évite qu'elle revienne à chaque démarrage.
+
+
+Bonne utilisation — et merci d'enseigner avec l'IA.
+JEDI-OpenLab · https://jedi-openlab.github.io/doceria/

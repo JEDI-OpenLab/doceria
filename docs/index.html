@@ -261,7 +261,6 @@
       <div class="row g-4 justify-content-center">
         <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-1.png" alt="Doceria — chat" loading="lazy" onerror="this.closest('.shot').remove()"></div>
         <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-2.png" alt="Doceria — bibliothèque RAG" loading="lazy" onerror="this.closest('.shot').remove()"></div>
-        <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-3.png" alt="Doceria — profils" loading="lazy" onerror="this.closest('.shot').remove()"></div>
       </div>
     </div>
   </section>
@@ -278,6 +277,7 @@
 
         <details class="doc-group" open>
           <summary><i class="fa-solid fa-key"></i> Démarrer : connexion &amp; profils</summary>
+          <img class="doc-shot" src="assets/connexion.png" alt="Section Connexion : profil actif, clés, tester, charger les modèles" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Profil</dt><dd>Un profil regroupe vos clés, vos URLs et un modèle par défaut. Créez-en plusieurs (par exemple un par établissement ou par clé). Bascule en deux clics depuis le menu « Profil actif ».</dd>
             <dt>Clé d'inférence (chat)</dt><dd>Votre clé ILaaS pour discuter (URL par défaut <code>https://llm.ilaas.fr/v1</code>). Le bouton <strong>Tester</strong> vérifie la clé et récupère la liste des modèles. Les clés sont stockées dans le <strong>trousseau du système</strong> — jamais en clair, jamais dans la page.</dd>
@@ -289,6 +289,8 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-comments"></i> Discuter</summary>
+          <img class="doc-shot" src="assets/nouvelleconversation.png" alt="Liste des conversations et bouton Nouvelle conversation" loading="lazy" onerror="this.remove()">
+          <img class="doc-shot" src="assets/votremessage+envoyer+selectionmodele.png" alt="Zone de message, bouton Envoyer et sélecteur de modèle" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Message &amp; Envoyer</dt><dd>Tapez votre question, puis <strong>Envoyer</strong> (ou Entrée). La réponse s'affiche au fil de l'eau ; <strong>Stop</strong> l'interrompt.</dd>
             <dt>Sélecteur de modèle</dt><dd>Au-dessus de la zone de message : changez le modèle interrogé sans quitter le chat. Il est synchronisé avec le menu « Modèle » du panneau de droite.</dd>
@@ -298,6 +300,7 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-book-open-reader"></i> Bibliothèque (RAG) : vos documents</summary>
+          <img class="doc-shot" src="assets/bibliotheque-rag.png" alt="Section Bibliothèque (RAG) : collection, ajout de documents, dossier synchronisé" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Collection active</dt><dd>Une collection est un ensemble de documents indexés en <strong>privé</strong> chez ILaaS. Choisissez celle que vos questions interrogeront.</dd>
             <dt>Créer une collection</dt><dd>Saisissez un nom dans le champ, puis <strong>+ Créer</strong>.</dd>
@@ -311,6 +314,7 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-magnifying-glass"></i> Bibliothèque (RAG) : interroger</summary>
+          <img class="doc-shot" src="assets/mod%C3%A8le+bibliothequerag.png" alt="Modèle et réglages de recherche de la bibliothèque (méthode, top-k, seuil, reranking)" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Utiliser la bibliothèque</dt><dd>À cocher (sous la zone de message) pour que chaque question cherche dans la collection active et <strong>cite ses sources</strong> sous la réponse.</dd>
             <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales. <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit (« non trouvé »).</dd>
@@ -324,6 +328,7 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-sliders"></i> Génération</summary>
+          <img class="doc-shot" src="assets/generation.png" alt="Section Génération : température, longueur max, mémoire, consigne système" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Température</dt><dd>Basse pour des réponses stables et factuelles, haute pour davantage de variété et de créativité.</dd>
             <dt>Longueur max (tokens)</dt><dd>Plafond de longueur de la réponse.</dd>
@@ -335,6 +340,7 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-file-lines"></i> Document de contexte</summary>
+          <img class="doc-shot" src="assets/documentdecontexte.png" alt="Section Document de contexte : charger un fichier ponctuel" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Charger un fichier</dt><dd>Ajoute ponctuellement le <strong>texte</strong> d'un fichier (PDF, DOCX, txt, md, csv, json…) au contexte de la conversation en cours, <strong>sans</strong> l'indexer dans une collection. Idéal pour un document à usage unique.</dd>
           </dl>
@@ -342,6 +348,7 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-gauge-high"></i> Conso &amp; coût</summary>
+          <img class="doc-shot" src="assets/consoetcout.png" alt="Section Conso & coût : requêtes, tokens, coût et impact CO2" loading="lazy" onerror="this.remove()">
           <dl>
             <dt>Actualiser la consommation</dt><dd>Agrège votre usage ILaaS (environ 30 derniers jours) : nombre de requêtes, tokens entrée/sortie, <strong>coût cumulé</strong> et <strong>empreinte carbone</strong> estimée. L'API expose le consommé, pas un quota restant.</dd>
           </dl>
@@ -419,6 +426,14 @@
         <div class="col-md-4"><div class="step"><span class="step-n">2</span><p>1ᵉʳ lancement : <strong>clic droit → Ouvrir</strong> (ou Réglages → Confidentialité et sécurité → « Ouvrir quand même »).</p></div></div>
         <div class="col-md-4"><div class="step"><span class="step-n">3</span><p>Créez un profil, collez votre <strong>clé ILaaS</strong>, et c'est parti.</p></div></div>
       </div>
+      <div class="row justify-content-center mt-4">
+        <div class="col-lg-9">
+          <div class="install-note">
+            <p><i class="fa-solid fa-shield-halved"></i> <strong>« Ouvrir quand même » — c'est normal et sans danger.</strong> Doceria n'est pas signée par Apple (projet interne, sans compte développeur payant) : macOS demande donc une autorisation <strong>une seule fois</strong>. Faites un <strong>clic droit</strong> sur l'app → <strong>Ouvrir</strong> ; ou Réglages Système → <strong>Confidentialité et sécurité</strong> → tout en bas, <strong>« Ouvrir quand même »</strong>. <span class="muted-inline">(Si macOS dit « endommagé » : Terminal → <code>xattr -dr com.apple.quarantine /Applications/Doceria.app</code>.)</span></p>
+            <p><i class="fa-solid fa-key"></i> <strong>« Toujours autoriser » l'accès au trousseau.</strong> En enregistrant votre clé ILaaS, macOS demande l'accès au trousseau : cliquez <strong>« Toujours autoriser »</strong>. C'est <strong>votre</strong> clé que Doceria range au bon endroit — le <strong>trousseau du système</strong> — plutôt que de la laisser en clair ; l'app n'accède qu'à <strong>ses propres entrées</strong>. La demande peut réapparaître après une mise à jour : c'est normal pour une app non signée (sa signature change à chaque version), <strong>ce n'est pas un signe de danger</strong>.</p>
+          </div>
+        </div>
+      </div>
       <div class="text-center mt-5">
         <a class="btn btn-accent btn-lg" href="https://github.com/JEDI-OpenLab/doceria/releases/latest" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> Télécharger la dernière version</a>
         <div class="mt-3"><a href="https://github.com/JEDI-OpenLab/doceria/blob/main/INSTALLATION-macOS.md" target="_blank" rel="noopener">Guide d'installation détaillé <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></div>
@@ -490,7 +505,7 @@
       if (!lb || !img) return;
       const open = (src, alt) => { img.src = src; img.alt = alt || ''; lb.hidden = false; document.body.style.overflow = 'hidden'; };
       const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; };
-      document.querySelectorAll('.shot-img').forEach((el) => {
+      document.querySelectorAll('.shot-img, .doc-shot').forEach((el) => {
         el.style.cursor = 'zoom-in';
         el.addEventListener('click', () => open(el.currentSrc || el.src, el.alt));
       });

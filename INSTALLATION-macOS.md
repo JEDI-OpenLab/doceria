@@ -49,11 +49,20 @@ non signée téléchargée. Pour la lever, une seule fois :
 *(Sur macOS récent — Sequoia/Tahoe —, le parcours le plus fiable reste de toute façon
 Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ».)*
 
-## 3. Au premier accès au trousseau
+## 3. Au premier accès au trousseau — « Toujours autoriser »
 
 Quand vous enregistrez votre première clé, macOS affiche
 « *Doceria souhaite utiliser vos informations confidentielles… du trousseau* ».
-Cliquez sur **« Toujours autoriser »** pour ne plus être redemandé.
+Cliquez sur **« Toujours autoriser »**.
+
+**Pourquoi c'est sans danger :** c'est **votre** clé ILaaS que Doceria range dans le
+**trousseau du système** (l'endroit sûr et prévu pour ça) plutôt que de la laisser en
+clair ; l'app n'accède qu'à **ses propres entrées** (vos clés), rien d'autre du trousseau.
+
+**Si la demande réapparaît** (par exemple après une mise à jour), c'est **normal** pour une
+application non signée : sa signature change à chaque version, donc macOS redemande
+l'autorisation. **Ce n'est pas un signe de danger.** « Toujours autoriser » évite qu'elle
+revienne à chaque démarrage.
 
 ---
 
