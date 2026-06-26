@@ -29,6 +29,8 @@ export const state = {
   // Modèles
   models: [],
   model: '',
+  compareMode: false, // « comparer deux modèles côte à côte » (transitoire, non persisté)
+  compareModelB: '', // second modèle de comparaison (le premier = state.model) ; persisté
   // Génération
   temp: 0.3,
   maxTokens: 1024,
@@ -57,6 +59,7 @@ export function loadSettings() {
       if (typeof d.maxTokens === 'number') state.maxTokens = d.maxTokens;
       if (typeof d.sys === 'string') state.sys = d.sys;
       if (typeof d.model === 'string') state.model = d.model;
+      if (typeof d.compareModelB === 'string') state.compareModelB = d.compareModelB;
       if (d.ragMode === 'chat' || d.ragMode === 'requete') state.ragMode = d.ragMode;
       if (d.ragMethod === 'hybrid' || d.ragMethod === 'semantic' || d.ragMethod === 'lexical') state.ragMethod = d.ragMethod;
       if (typeof d.ragTopK === 'number') state.ragTopK = d.ragTopK;
@@ -78,6 +81,7 @@ export function saveSettings() {
         maxTokens: state.maxTokens,
         sys: state.sys,
         model: state.model,
+        compareModelB: state.compareModelB,
         ragMode: state.ragMode,
         ragMethod: state.ragMethod,
         ragTopK: state.ragTopK,

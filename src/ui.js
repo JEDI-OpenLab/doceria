@@ -384,6 +384,51 @@ export function messageIndex(node) {
   return all.indexOf(node.closest('.msg'));
 }
 
+// Bloc de comparaison multi-modèles : une grille de colonnes (une par modèle), chacune avec
+// son en-tête (nom + bouton « Garder ») et sa bulle de streaming. Renvoie { wrap, cols }.
+// onKeep(i) est appelé au clic sur « Garder » de la colonne i.
+export function appendComparison(models, onKeep) {
+  $('empty')?.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'msg assistant comparison';
+  const who = document.createElement('div');
+  who.className = 'who';
+  who.textContent = 'Comparaison — ' + models.length + ' modèles';
+  wrap.appendChild(who);
+  const grid = document.createElement('div');
+  grid.className = 'compare-grid';
+  grid.style.setProperty('--cols', Math.min(models.length, 3));
+  const cols = [];
+  models.forEach((m, i) => {
+    const col = document.createElement('div');
+    col.className = 'compare-col';
+    const head = document.createElement('div');
+    head.className = 'compare-col-head';
+    const name = document.createElement('span');
+    name.className = 'compare-col-name';
+    name.textContent = m;
+    name.title = m;
+    const keep = document.createElement('button');
+    keep.type = 'button';
+    keep.className = 'compare-keep';
+    keep.textContent = 'Garder';
+    keep.disabled = true; // activé quand la réponse de cette colonne est prête
+    keep.addEventListener('click', () => onKeep(i));
+    head.appendChild(name);
+    head.appendChild(keep);
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    col.appendChild(head);
+    col.appendChild(bubble);
+    grid.appendChild(col);
+    cols.push({ bubble, keep, col });
+  });
+  wrap.appendChild(grid);
+  threadInner().appendChild(wrap);
+  scrollDown();
+  return { wrap, cols };
+}
+
 // Retour visuel « copié » : l'icône passe en coche ~1,2 s.
 export function flashCopied(btn) {
   const prev = btn.innerHTML;

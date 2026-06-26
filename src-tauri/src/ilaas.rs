@@ -9,6 +9,7 @@
 //                   renvoie le texte complet + l'objet `usage` à la fin.
 // - `cancel_chat` : déclenche le « Stop » (annule le chat en cours).
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use futures_util::StreamExt;
@@ -19,27 +20,25 @@ use tokio::sync::Notify;
 
 use crate::settings::{self, SettingsState};
 
-/// État partagé : jeton d'annulation (`Notify`) du chat en cours.
+/// État partagé : un jeton d'annulation (`Notify`) PAR échange en cours, indexé par
+/// `request_id`. Permet d'avoir plusieurs chats CONCURRENTS (mode « comparer des modèles
+/// côte à côte ») et de les annuler individuellement ou tous d'un coup.
 #[derive(Default)]
 pub struct ChatState {
-    cancel: Mutex<Option<Arc<Notify>>>,
+    cancels: Mutex<HashMap<String, Arc<Notify>>>,
 }
 
-/// Garde RAII : remet `state.cancel` à None à la sortie de `chat()` (succès, erreur
-/// ou abort), mais seulement si le jeton stocké est TOUJOURS le sien — `Arc::ptr_eq`
-/// évite d'effacer le jeton d'un échange concurrent qui aurait déjà pris la place.
-/// Maintient l'invariant « cancel non-None ⟺ un chat est en cours ».
+/// Garde RAII : retire l'entrée de CET échange (sa clé `request_id`) à la sortie de
+/// `chat()` (succès, erreur ou abort). Chaque échange a sa propre clé, donc aucun risque
+/// d'effacer le jeton d'un échange concurrent.
 struct CancelGuard<'a> {
     state: &'a ChatState,
-    notify: Arc<Notify>,
+    request_id: String,
 }
 
 impl Drop for CancelGuard<'_> {
     fn drop(&mut self) {
-        let mut slot = self.state.cancel.lock().unwrap();
-        if slot.as_ref().is_some_and(|n| Arc::ptr_eq(n, &self.notify)) {
-            *slot = None;
-        }
+        self.state.cancels.lock().unwrap().remove(&self.request_id);
     }
 }
 
@@ -186,10 +185,26 @@ struct DeltaEvent {
     content: String,
 }
 
+/// Annule UN échange (si `request_id` est fourni) ou TOUS les échanges en cours
+/// (`request_id` absent → « Stop » global, utile quand plusieurs modèles répondent
+/// en parallèle). Ne retire rien : c'est le `CancelGuard` de chaque `chat()` qui nettoie.
 #[tauri::command]
-pub async fn cancel_chat(state: State<'_, ChatState>) -> Result<(), String> {
-    if let Some(notify) = state.cancel.lock().unwrap().take() {
-        notify.notify_one();
+pub async fn cancel_chat(
+    state: State<'_, ChatState>,
+    request_id: Option<String>,
+) -> Result<(), String> {
+    let map = state.cancels.lock().unwrap();
+    match request_id {
+        Some(id) => {
+            if let Some(notify) = map.get(&id) {
+                notify.notify_one();
+            }
+        }
+        None => {
+            for notify in map.values() {
+                notify.notify_one();
+            }
+        }
     }
     Ok(())
 }
@@ -214,12 +229,12 @@ pub async fn chat(
         "messages": req.messages,
     });
 
-    // Jeton d'annulation pour CET échange (remplace tout précédent).
+    // Jeton d'annulation propre à CET échange, indexé par request_id → chats concurrents OK.
     let st: &ChatState = &state;
     let notify = Arc::new(Notify::new());
-    *st.cancel.lock().unwrap() = Some(notify.clone());
-    // Nettoyage garanti de state.cancel à la sortie, quel que soit le chemin.
-    let _guard = CancelGuard { state: st, notify: notify.clone() };
+    st.cancels.lock().unwrap().insert(req.request_id.clone(), notify.clone());
+    // Nettoyage garanti de l'entrée à la sortie, quel que soit le chemin.
+    let _guard = CancelGuard { state: st, request_id: req.request_id.clone() };
 
     let res = client()?
         .post(&url)

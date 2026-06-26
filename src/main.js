@@ -21,6 +21,7 @@ import * as ui from './ui.js';
 
 const $ = ui.$;
 let abortController = null;
+let compareCtx = null; // contexte de la comparaison multi-modèles en cours (null si aucune)
 let editingId = null; // id du profil en cours d'édition (null = création)
 
 /* ---------- Initialisation ---------- */
@@ -712,6 +713,7 @@ async function loadModels() {
     saveSettings();
     ui.setStatus('connecté', 'on');
     ui.enableChat(true);
+    syncCompareUI();
   } catch (err) {
     ui.setStatus('échec', 'err');
     ui.showError(describeError(err));
@@ -993,7 +995,8 @@ async function retrieveFromLibrary(query) {
 /* ---------- Envoi (streaming) ---------- */
 function onSendOrStop() {
   if (state.busy) {
-    abortController?.abort();
+    if (compareCtx) cancelComparison();
+    else abortController?.abort();
     return;
   }
   send();
@@ -1008,7 +1011,11 @@ async function send() {
     return;
   }
   readGenerationFromInputs();
-  if (!state.model) {
+  const compareModels = state.compareMode ? [state.model, state.compareModelB] : [];
+  if (state.compareMode) {
+    if (!state.model || !state.compareModelB) { ui.showError('Choisis deux modèles à comparer.'); return; }
+    if (state.model === state.compareModelB) { ui.showError('Choisis deux modèles différents.'); return; }
+  } else if (!state.model) {
     ui.showError('Sélectionnez un modèle (chargez les modèles d’abord).');
     return;
   }
@@ -1024,7 +1031,8 @@ async function send() {
   ui.resizePrompt();
   ui.clearError();
 
-  await runGeneration(conv, text);
+  if (state.compareMode) await runComparison(conv, text, compareModels);
+  else await runGeneration(conv, text);
 }
 
 // Cœur de génération : recherche RAG puis streaming. Suppose que le verrou (state.busy)
@@ -1221,6 +1229,185 @@ function refreshTurnActions() {
   } else {
     ui.hideTurnActions();
   }
+}
+
+/* ---------- Comparaison multi-modèles ---------- */
+// Envoie la même question à plusieurs modèles EN MÊME TEMPS, affichées côte à côte.
+// La comparaison est ÉPHÉMÈRE : rien n'est persisté tant que l'utilisateur n'a pas
+// « gardé » une réponse (ou annulé). busy reste vrai jusqu'à ce choix.
+async function runComparison(conv, text, models) {
+  // RAG une seule fois, contexte PARTAGÉ entre tous les modèles (comparaison équitable +
+  // un seul coût de recherche).
+  let ragContext = '';
+  let ragSources = [];
+  let ragSearched = false;
+  if (state.useLibrary && state.activeCollectionId != null) {
+    try {
+      const r = await retrieveFromLibrary(text);
+      ragContext = r.context;
+      ragSources = r.sources;
+      ragSearched = true;
+    } catch (err) {
+      ui.showError('Recherche RAG : ' + describeError(err) + ' — réponse sans la bibliothèque.');
+    }
+  }
+  // Mode Requête sans extrait : refus direct (pas d'appel facturé), comme en mono-modèle.
+  if (state.ragMode === 'requete' && ragSearched && !ragContext) {
+    const refusal = state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.';
+    addMessage(conv, 'assistant', refusal);
+    ui.finalizeBubble(ui.appendMessage('assistant', ''), refusal);
+    ui.setComposerMeta('mode Requête : aucun extrait pertinent trouvé.');
+    state.busy = false;
+    ui.setSending(false);
+    ui.renderConversationList(convHandlers);
+    refreshTurnActions();
+    ui.scrollDown();
+    $('prompt').focus();
+    return;
+  }
+
+  const apiMessages = buildMessages(conv, ragContext); // mêmes messages pour tous les modèles
+  const comp = ui.appendComparison(models, (i) => keepComparison(i));
+  compareCtx = {
+    conv,
+    comp,
+    models,
+    apiMessages,
+    ragSources,
+    controllers: models.map(() => new AbortController()),
+    results: models.map(() => ''),
+  };
+  ui.setComposerMeta('comparaison de ' + models.length + ' modèles — coût ×' + models.length);
+  models.forEach((m, i) => ui.setBubbleTyping(comp.cols[i].bubble));
+  await Promise.all(models.map((m, i) => streamOneColumn(m, i)));
+  // Tous terminés : on attend que l'utilisateur garde une réponse (ou Stop). busy reste vrai.
+  if (compareCtx) {
+    const anyOk = compareCtx.results.some((r) => r);
+    ui.setComposerMeta(
+      anyOk
+        ? 'Comparaison terminée — cliquez « Garder » sous la meilleure réponse (ou Stop pour annuler).'
+        : 'Aucune réponse exploitable — cliquez Stop pour annuler.'
+    );
+  }
+}
+
+// Streame UN modèle dans sa colonne. Indépendant des autres (chaque appel a son requestId).
+async function streamOneColumn(model, i) {
+  const ctx = compareCtx;
+  const ctrl = ctx.controllers[i];
+  const bubble = ctx.comp.cols[i].bubble;
+  let acc = '';
+  let first = true;
+  try {
+    const { text: full } = await streamChat({
+      model,
+      messages: ctx.apiMessages,
+      signal: ctrl.signal,
+      onDelta: (d) => {
+        if (first) { bubble.textContent = ''; first = false; }
+        acc += d;
+        ui.streamInto(bubble, acc);
+        ui.scrollDown();
+      },
+    });
+    if (!compareCtx) return; // déjà résolu (garde/annule)
+    const finalText = (full || acc).trim() || '(réponse vide)';
+    ctx.results[i] = finalText;
+    ui.finalizeBubble(bubble, finalText);
+    ctx.comp.cols[i].keep.disabled = false;
+  } catch (err) {
+    if (!compareCtx) return;
+    const d = describeError(err);
+    if (d === '__ABORT__') {
+      const partial = acc.trim();
+      ctx.results[i] = partial;
+      ui.finalizeBubble(bubble, partial ? partial + '\n\n*(interrompu)*' : '*(interrompu)*');
+      ctx.comp.cols[i].keep.disabled = !partial;
+    } else {
+      ctx.results[i] = '';
+      ui.finalizeBubble(bubble, '⚠ ' + d);
+      ctx.comp.cols[i].keep.disabled = true;
+    }
+  }
+}
+
+// L'utilisateur garde la réponse de la colonne i : elle devient LA réponse du tour.
+function keepComparison(i) {
+  const ctx = compareCtx;
+  if (!ctx) return;
+  const chosen = ctx.results[i];
+  if (!chosen) return; // colonne sans réponse exploitable
+  ctx.controllers.forEach((c) => c.abort()); // stoppe les colonnes encore en cours
+  compareCtx = null;
+  ctx.comp.wrap.remove();
+  addMessage(ctx.conv, 'assistant', chosen);
+  const bubble = ui.appendMessage('assistant', '');
+  ui.finalizeBubble(bubble, chosen);
+  if (ctx.ragSources.length) ui.appendSources(bubble, ctx.ragSources);
+  ui.setComposerMeta('réponse retenue : ' + ctx.models[i]);
+  state.busy = false;
+  ui.setSending(false);
+  ui.renderConversationList(convHandlers);
+  refreshTurnActions();
+  ui.scrollDown();
+  $('prompt').focus();
+}
+
+// Annule la comparaison (bouton Stop) : rien gardé → on retire la question orpheline.
+function cancelComparison() {
+  const ctx = compareCtx;
+  if (!ctx) return;
+  ctx.controllers.forEach((c) => c.abort());
+  compareCtx = null;
+  ctx.comp.wrap.remove();
+  if (ctx.conv.messages[ctx.conv.messages.length - 1]?.role === 'user') removeLastMessage(ctx.conv);
+  ui.setComposerMeta('comparaison annulée.');
+  state.busy = false;
+  ui.setSending(false);
+  ui.renderConversationList(convHandlers);
+  refreshTurnActions();
+  ui.scrollDown();
+  $('prompt').focus();
+}
+
+// Remplit le second sélecteur de modèle (comparaison) et choisit un défaut DIFFÉRENT du principal.
+function populateCompareSelect() {
+  const sel = $('chatModelSelect2');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if (!state.models.length) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '— modèle B —';
+    o.disabled = true;
+    o.selected = true;
+    sel.appendChild(o);
+    sel.disabled = true;
+    return;
+  }
+  state.models.forEach((m) => {
+    const o = document.createElement('option');
+    o.value = m;
+    o.textContent = m;
+    sel.appendChild(o);
+  });
+  // Défaut : compareModelB s'il est valide, sinon un modèle différent du principal.
+  let b = state.compareModelB && state.models.includes(state.compareModelB) ? state.compareModelB : '';
+  if (!b) b = state.models.find((m) => m !== state.model) || state.models[0];
+  state.compareModelB = b;
+  sel.value = b;
+  sel.disabled = false;
+}
+
+// Synchronise l'UI de comparaison (toggle + second sélecteur) avec l'état.
+function syncCompareUI() {
+  const t = $('compareToggle');
+  if (!t) return;
+  t.disabled = state.models.length < 2;
+  if (t.disabled) state.compareMode = false;
+  t.checked = state.compareMode;
+  populateCompareSelect();
+  $('chatModelSelect2').hidden = !state.compareMode;
 }
 
 /* ---------- Document de contexte ---------- */
@@ -1562,6 +1749,15 @@ function wireEvents() {
   // Génération — modèle : deux sélecteurs synchronisés (rail « Modèle » + composeur du chat).
   $('modelSelect').addEventListener('change', (e) => setModel(e.target.value));
   $('chatModelSelect').addEventListener('change', (e) => setModel(e.target.value));
+  $('compareToggle').addEventListener('change', (e) => {
+    state.compareMode = e.target.checked;
+    if (state.compareMode) populateCompareSelect();
+    $('chatModelSelect2').hidden = !state.compareMode;
+  });
+  $('chatModelSelect2').addEventListener('change', (e) => {
+    state.compareModelB = e.target.value;
+    saveSettings();
+  });
   $('temp').addEventListener('input', (e) => {
     state.temp = parseFloat(e.target.value);
     $('tempVal').textContent = state.temp.toFixed(2);

@@ -42,6 +42,9 @@
       <div class="composer">
         <div class="composer-tools">
           <select id="chatModelSelect" class="chat-model" aria-label="Modèle interrogé" title="Modèle interrogé" disabled><option value="" disabled selected>— modèle —</option></select>
+          <label class="ragtoggle"><input type="checkbox" id="compareToggle" disabled> Comparer</label>
+          <select id="chatModelSelect2" class="chat-model" aria-label="Second modèle à comparer" title="Second modèle (comparaison)" hidden disabled><option value="" disabled selected>— modèle B —</option></select>
+          <button class="help up" type="button" aria-label="Envoie la même question aux deux modèles choisis en même temps et affiche les réponses côte à côte, pour garder la meilleure. Coût doublé (suivi dans Conso & coût).">?<span class="help-bubble" aria-hidden="true">Envoie la même question aux <strong>deux modèles</strong> en même temps et affiche les réponses <strong>côte à côte</strong> ; vous gardez la meilleure.<br>⚠ Coût <strong>×2</strong> (suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;»).</span></button>
           <label class="ragtoggle"><input type="checkbox" id="useLibrary" disabled> Utiliser la bibliothèque (RAG)</label>
           <button class="help up" type="button" aria-label="Si coché, chaque question recherche dans la collection active et cite les passages utilisés sous la réponse.">?<span class="help-bubble" aria-hidden="true">Si coché, chaque question recherche dans la <strong>collection active</strong> et cite les passages utilisés sous la réponse.</span></button>
           <span class="ragmode" id="ragModeGroup" hidden>

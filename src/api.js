@@ -104,7 +104,7 @@ export async function listModels() {
 
 // Envoie une requête de chat en streaming. Appelle onDelta(chunk) au fil de l'eau.
 // Renvoie { text, usage }. Lance une erreur (AbortError si le signal est annulé).
-export async function streamChat({ messages, signal, onDelta }) {
+export async function streamChat({ messages, signal, onDelta, model }) {
   if (!state.activeId) throw 'Aucun profil actif.';
   const requestId =
     (globalThis.crypto && crypto.randomUUID && crypto.randomUUID()) ||
@@ -116,7 +116,7 @@ export async function streamChat({ messages, signal, onDelta }) {
   });
 
   const abort = () => {
-    invoke('cancel_chat').catch(() => {});
+    invoke('cancel_chat', { requestId }).catch(() => {});
   };
   if (signal) {
     if (signal.aborted) abort();
@@ -127,7 +127,7 @@ export async function streamChat({ messages, signal, onDelta }) {
     const res = await invoke('chat', {
       req: {
         profileId: state.activeId,
-        model: state.model,
+        model: model || state.model,
         temperature: state.temp,
         maxTokens: state.maxTokens,
         messages,
