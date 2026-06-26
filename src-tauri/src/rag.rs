@@ -240,7 +240,47 @@ pub async fn rag_ocr(
 ) -> Result<String, String> {
     use base64::Engine;
     let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
-    let url = format!("{}/ocr", normalize_base(&base));
+    let nbase = normalize_base(&base);
+
+    // L'endpoint OCR exige un modèle de TYPE OCR (sinon 422 « Wrong model type »). On le
+    // découvre dans le catalogue (id/type contenant « ocr », ou type image→texte).
+    let mres = client()?
+        .get(format!("{}/models", nbase))
+        .bearer_auth(key.trim())
+        .send()
+        .await
+        .map_err(send_error)?;
+    let models = json_or_error(mres).await?;
+    let rows = models.get("data").and_then(|d| d.as_array());
+    let model = rows
+        .and_then(|arr| {
+            arr.iter().find_map(|m| {
+                let id = m.get("id").and_then(Value::as_str).unwrap_or("");
+                let ty = m.get("type").and_then(Value::as_str).unwrap_or("");
+                let hay = format!("{} {}", id.to_lowercase(), ty.to_lowercase());
+                if hay.contains("ocr") || ty == "image-text-to-text" {
+                    Some(id.to_string())
+                } else {
+                    None
+                }
+            })
+        })
+        .ok_or_else(|| {
+            let avail = rows
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|m| {
+                            let id = m.get("id").and_then(Value::as_str)?;
+                            let ty = m.get("type").and_then(Value::as_str).unwrap_or("?");
+                            Some(format!("{id} [{ty}]"))
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
+                .unwrap_or_default();
+            format!("Aucun modèle OCR détecté côté ILaaS. Modèles disponibles : {avail}")
+        })?;
+
     let bytes = std::fs::read(&path).map_err(|e| format!("Lecture du fichier : {e}"))?;
     let mime = guess_mime(&path);
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
@@ -257,9 +297,9 @@ pub async fn rag_ocr(
         .build()
         .map_err(|e| e.to_string())?;
     let res = http
-        .post(&url)
+        .post(format!("{}/ocr", nbase))
         .bearer_auth(key.trim())
-        .json(&json!({ "document": document }))
+        .json(&json!({ "model": model, "document": document }))
         .send()
         .await
         .map_err(send_error)?;
