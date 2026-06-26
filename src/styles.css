@@ -255,8 +255,14 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .empty{color:var(--faint);text-align:center;margin-top:12vh}
 .empty .hero-logo{display:block;width:84px;height:84px;margin:0 auto 18px;object-fit:contain;opacity:.96}
 .empty .big{font-size:15px;color:var(--muted);margin-bottom:6px}
-.msg{margin-bottom:22px}
+.msg{margin-bottom:22px;position:relative}
 .msg .who{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:6px;font-weight:600}
+/* Outils par message (✎ modifier, ⧉ copier), révélés au survol */
+.msg-tools{position:absolute;top:-2px;right:0;opacity:.6;transition:opacity .12s}
+.msg:hover .msg-tools,.msg:focus-within .msg-tools{opacity:1}
+.msg-tool{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;color:var(--faint);background:var(--bg);border:1px solid var(--line);border-radius:7px;cursor:pointer;padding:0}
+.msg-tool:hover{color:var(--ink);border-color:var(--line-strong);background:var(--surface-2)}
+.msg-tool.ok{color:var(--accent);border-color:var(--accent)}
 .msg.user .who{color:var(--muted)}
 .bubble{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
 .msg.assistant .bubble{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
@@ -347,6 +353,11 @@ body.dragging #dropOverlay{display:flex}
 .sources{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
 .sources-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin-bottom:6px}
 .source-item{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+
+/* Barre d'actions sous la dernière réponse (Régénérer / Annuler) */
+.turn-actions{display:flex;gap:8px;margin-top:9px}
+.turn-btn{font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:7px;padding:4px 11px;cursor:pointer}
+.turn-btn:hover{background:var(--surface-2);border-color:var(--line-strong);color:var(--ink)}
 
 /* Aide contextuelle : « ? » survolable, infobulle propre par-dessus */
 .help{

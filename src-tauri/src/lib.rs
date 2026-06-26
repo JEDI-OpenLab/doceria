@@ -17,6 +17,17 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_window_state::Builder::default().build())
     .manage(ChatState::default())
+    .on_menu_event(|_app, event| {
+      // Menu « Aide » : ouvre le site, le mode d'emploi ou le suivi d'incidents
+      // dans le navigateur (URL https figées, validées par update::open_url).
+      let url = match event.id().as_ref() {
+        "help-site" => "https://jedi-openlab.github.io/doceria/",
+        "help-guide" => "https://jedi-openlab.github.io/doceria/#guide",
+        "help-issue" => "https://github.com/JEDI-OpenLab/doceria/issues",
+        _ => return,
+      };
+      let _ = update::open_url(url.to_string());
+    })
     .invoke_handler(tauri::generate_handler![
       ilaas::list_models,
       ilaas::chat,
@@ -57,7 +68,7 @@ pub fn run() {
       // raccourcis d'édition de la webview (⌘C/⌘V/⌘A…) et Quitter ne fonctionnent pas.
       // On n'utilise que des items prédéfinis (libellés localisés par l'OS).
       {
-        use tauri::menu::{Menu, PredefinedMenuItem, Submenu};
+        use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
         let h = app.handle().clone();
         let app_menu = Submenu::with_items(
           &h,
@@ -96,7 +107,18 @@ pub fn run() {
             &PredefinedMenuItem::close_window(&h, None)?,
           ],
         )?;
-        let menu = Menu::with_items(&h, &[&app_menu, &edit_menu, &window_menu])?;
+        let help_menu = Submenu::with_items(
+          &h,
+          "Aide",
+          true,
+          &[
+            &MenuItem::with_id(&h, "help-site", "Site Doceria", true, None::<&str>)?,
+            &MenuItem::with_id(&h, "help-guide", "Mode d'emploi", true, None::<&str>)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &MenuItem::with_id(&h, "help-issue", "Signaler un problème…", true, None::<&str>)?,
+          ],
+        )?;
+        let menu = Menu::with_items(&h, &[&app_menu, &edit_menu, &window_menu, &help_menu])?;
         app.set_menu(menu)?;
       }
 

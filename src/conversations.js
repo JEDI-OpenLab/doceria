@@ -87,6 +87,14 @@ export function removeLastMessage(conv) {
   saveConversations();
 }
 
+// Tronque la conversation à partir de l'index donné (retire ce message et tous les suivants).
+// Utilisé par « Modifier » : on rembobine à la question éditée.
+export function truncateConversation(conv, index) {
+  conv.messages.splice(index);
+  conv.updatedAt = Date.now();
+  saveConversations();
+}
+
 export function conversationToMarkdown(conv) {
   const date = new Date(conv.updatedAt || Date.now()).toLocaleString('fr-FR');
   let md = `# ${conv.title}\n\n*Doceria — exporté le ${date}*\n\n`;

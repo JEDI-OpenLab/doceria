@@ -258,6 +258,10 @@ export function renderThread(conv) {
   scrollDown();
 }
 
+const ICON_PENCIL = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_COPY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
 export function appendMessage(role, text) {
   $('empty')?.remove();
   const wrap = document.createElement('div');
@@ -271,8 +275,24 @@ export function appendMessage(role, text) {
     if (role === 'assistant') bubble.innerHTML = format(text);
     else bubble.textContent = text;
   }
+  // Outil au survol : ✎ modifier (question utilisateur) ou ⧉ copier (réponse du modèle).
+  const tools = document.createElement('div');
+  tools.className = 'msg-tools';
+  const tool = document.createElement('button');
+  tool.type = 'button';
+  if (role === 'user') {
+    tool.className = 'msg-tool msg-edit';
+    tool.title = 'Modifier cette question';
+    tool.innerHTML = ICON_PENCIL;
+  } else {
+    tool.className = 'msg-tool msg-copy';
+    tool.title = 'Copier la réponse';
+    tool.innerHTML = ICON_COPY;
+  }
+  tools.appendChild(tool);
   wrap.appendChild(who);
   wrap.appendChild(bubble);
+  wrap.appendChild(tools);
   threadInner().appendChild(wrap);
   scrollDown();
   return bubble;
@@ -291,6 +311,60 @@ export function finalizeBubble(bubble, text) {
 }
 export function removeBubble(bubble) {
   bubble.parentNode?.remove();
+}
+
+// Retire la dernière réponse du fil (sa bulle, ses sources, sa barre d'actions).
+export function removeLastAssistant() {
+  hideTurnActions();
+  const msgs = threadInner().querySelectorAll('.msg.assistant');
+  msgs[msgs.length - 1]?.remove();
+}
+
+// Barre « Régénérer / Annuler » sous la dernière réponse.
+export function showTurnActions({ onRegenerate, onUndo }) {
+  hideTurnActions();
+  const msgs = threadInner().querySelectorAll('.msg.assistant');
+  const last = msgs[msgs.length - 1];
+  if (!last) return;
+  const bar = document.createElement('div');
+  bar.className = 'turn-actions';
+  bar.id = 'turnActions';
+  const reg = document.createElement('button');
+  reg.type = 'button';
+  reg.className = 'turn-btn';
+  reg.innerHTML = '↻ Régénérer';
+  reg.title = 'Régénérer cette réponse (même question, réglages actuels)';
+  reg.addEventListener('click', onRegenerate);
+  const undo = document.createElement('button');
+  undo.type = 'button';
+  undo.className = 'turn-btn';
+  undo.innerHTML = '↩ Annuler';
+  undo.title = 'Annuler ce tour : retire la question et la réponse, et remet la question dans le champ';
+  undo.addEventListener('click', onUndo);
+  bar.appendChild(reg);
+  bar.appendChild(undo);
+  last.appendChild(bar);
+}
+export function hideTurnActions() {
+  $('turnActions')?.remove();
+}
+
+// Index (dans conv.messages) du message DOM contenant ce nœud — l'ordre du DOM suit l'ordre
+// des messages, donc la position du .msg = l'index dans le tableau.
+export function messageIndex(node) {
+  const all = Array.from(threadInner().querySelectorAll('.msg'));
+  return all.indexOf(node.closest('.msg'));
+}
+
+// Retour visuel « copié » : l'icône passe en coche ~1,2 s.
+export function flashCopied(btn) {
+  const prev = btn.innerHTML;
+  btn.innerHTML = ICON_CHECK;
+  btn.classList.add('ok');
+  setTimeout(() => {
+    btn.innerHTML = prev;
+    btn.classList.remove('ok');
+  }, 1200);
 }
 
 // Affiche les sources RAG sous une réponse : [n] nom du document — extrait.

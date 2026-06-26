@@ -12,6 +12,7 @@ import {
   addMessage,
   setLastMessageContent,
   removeLastMessage,
+  truncateConversation,
   downloadMarkdown,
 } from './conversations.js';
 import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop, updater, usageApi } from './api.js';
@@ -133,6 +134,7 @@ function refreshConversation() {
   ui.renderConversationList(convHandlers);
   ui.renderThread(currentConversation());
   ui.updateComposerMeta();
+  refreshTurnActions();
 }
 
 /* ---------- Profils ---------- */
@@ -1012,6 +1014,7 @@ async function send() {
   // Verrou posé AVANT tout await (recherche RAG) : ferme la fenêtre de double-soumission.
   state.busy = true;
   ui.setSending(true);
+  ui.hideTurnActions();
 
   const conv = ensureConversation();
   addMessage(conv, 'user', text);
@@ -1020,6 +1023,13 @@ async function send() {
   ui.resizePrompt();
   ui.clearError();
 
+  await runGeneration(conv, text);
+}
+
+// Cœur de génération : recherche RAG puis streaming. Suppose que le verrou (state.busy)
+// est déjà posé et que le DERNIER message de `conv` est la question utilisateur (le slot
+// assistant n'est ajouté qu'ici). Partagé par send() et regenerate().
+async function runGeneration(conv, text) {
   // RAG : si activé, on cherche dans la bibliothèque avant de construire la requête.
   let ragContext = '';
   let ragSources = [];
@@ -1047,6 +1057,7 @@ async function send() {
     state.busy = false;
     ui.setSending(false);
     ui.renderConversationList(convHandlers);
+    refreshTurnActions();
     ui.scrollDown();
     $('prompt').focus();
     return;
@@ -1115,8 +1126,99 @@ async function send() {
     abortController = null;
     ui.setSending(false);
     ui.renderConversationList(convHandlers);
+    refreshTurnActions();
     ui.scrollDown();
     $('prompt').focus();
+  }
+}
+
+// Régénère la dernière réponse : retire la réponse courante et relance la MÊME question
+// (avec les réglages actuels : modèle, température, RAG…). Pratique pour « refaire autrement ».
+async function regenerate() {
+  if (state.busy) return;
+  const conv = currentConversation();
+  if (!conv || !conv.messages.length) return;
+  if (conv.messages[conv.messages.length - 1].role !== 'assistant') return;
+  // Retrouve la question (dernier message utilisateur avant la réponse).
+  let userText = '';
+  for (let i = conv.messages.length - 2; i >= 0; i--) {
+    if (conv.messages[i].role === 'user') { userText = conv.messages[i].content; break; }
+  }
+  if (!userText) return;
+  if (!state.activeId) { ui.showError('Sélectionne ou crée un profil avec sa clé.'); return; }
+  readGenerationFromInputs();
+  if (!state.model) { ui.showError('Sélectionnez un modèle (chargez les modèles d’abord).'); return; }
+  state.busy = true;
+  ui.setSending(true);
+  ui.hideTurnActions();
+  ui.clearError();
+  removeLastMessage(conv);   // retire l'ancienne réponse (modèle)
+  ui.removeLastAssistant();  // retire l'ancienne réponse (DOM + ses sources)
+  await runGeneration(conv, userText);
+}
+
+// Annule le dernier tour : retire la réponse ET la question, et remet la question dans le
+// champ de saisie pour la corriger puis la renvoyer.
+function undoLastTurn() {
+  if (state.busy) return;
+  const conv = currentConversation();
+  if (!conv || !conv.messages.length) return;
+  if (conv.messages[conv.messages.length - 1].role !== 'assistant') return;
+  removeLastMessage(conv); // la réponse
+  let restored = '';
+  const prev = conv.messages[conv.messages.length - 1];
+  if (prev && prev.role === 'user') {
+    restored = prev.content;
+    removeLastMessage(conv); // la question
+  }
+  refreshConversation();
+  if (restored) {
+    $('prompt').value = restored;
+    ui.resizePrompt();
+  }
+  $('prompt').focus();
+}
+
+// Modifier une question : rembobine la conversation à ce message (retire la question et tout
+// ce qui suit) et la remet dans le champ de saisie pour la corriger puis la renvoyer.
+function onEditMessage(btn) {
+  if (state.busy) return;
+  const conv = currentConversation();
+  if (!conv) return;
+  const i = ui.messageIndex(btn);
+  const msg = conv.messages[i];
+  if (!msg || msg.role !== 'user') return;
+  const text = msg.content;
+  truncateConversation(conv, i);
+  refreshConversation();
+  $('prompt').value = text;
+  ui.resizePrompt();
+  $('prompt').focus();
+}
+
+// Copier le contenu (Markdown brut) d'une réponse dans le presse-papiers.
+async function onCopyMessage(btn) {
+  const conv = currentConversation();
+  if (!conv) return;
+  const msg = conv.messages[ui.messageIndex(btn)];
+  if (!msg) return;
+  try {
+    await navigator.clipboard.writeText(msg.content || '');
+    ui.flashCopied(btn);
+  } catch {
+    ui.showError('Copie impossible (presse-papiers indisponible).');
+  }
+}
+
+// Affiche la barre « Régénérer / Annuler » sous la dernière réponse, si l'on n'est pas en
+// train de générer et que le dernier message est bien une réponse non vide.
+function refreshTurnActions() {
+  const conv = currentConversation();
+  const last = conv?.messages[conv.messages.length - 1];
+  if (!state.busy && last && last.role === 'assistant' && (last.content || '').trim()) {
+    ui.showTurnActions({ onRegenerate: regenerate, onUndo: undoLastTurn });
+  } else {
+    ui.hideTurnActions();
   }
 }
 
@@ -1368,6 +1470,14 @@ function wireEvents() {
   $('sysPresetSave').addEventListener('click', onSysPresetSave);
   $('sysPresetDelete').addEventListener('click', onSysPresetDelete);
   $('convNew').addEventListener('click', convHandlers.onNew);
+
+  // Outils par message (délégation) : ✎ modifier la question, ⧉ copier la réponse.
+  $('thread').addEventListener('click', (e) => {
+    const edit = e.target.closest('.msg-edit');
+    if (edit) return onEditMessage(edit);
+    const copy = e.target.closest('.msg-copy');
+    if (copy) return onCopyMessage(copy);
+  });
 
   // Profils
   $('profileSelect').addEventListener('change', (e) => switchProfile(e.target.value));
