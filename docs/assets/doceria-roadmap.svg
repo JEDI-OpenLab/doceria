@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="600" viewBox="0 0 1280 600" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="drm-title drm-desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="drm-title drm-desc">
   <title id="drm-title">Feuille de route de Doceria</title>
-  <desc id="drm-desc">Quatre étapes : aujourd'hui (chat et RAG souverain sur macOS, disponible), puis la version « v-next » de confort enseignant (menu Aide, annuler/régénérer, presets pédagogiques, rendu LaTeX, comparaison multi-modèles côte à côte, seuil et message de refus), puis le build Linux, puis l'intégration Moodle pour faire du RAG sur ses propres cours.</desc>
+  <desc id="drm-desc">Aujourd'hui (disponible sur macOS) : chat et RAG souverain, plus les nouveautés livrées — comparaison multi-modèles côte à côte, rendu LaTeX, régénérer/modifier/copier, menu Aide et message de refus configurable. Ensuite, dans l'ordre : l'intégration Moodle (RAG sur ses propres cours, le différenciateur), puis le build Linux (AppImage pour l'ESR).</desc>
   <defs>
     <marker id="drm-petrol" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1A5A55"/></marker>
     <marker id="drm-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9AA39B"/></marker>
@@ -10,56 +10,48 @@
       .drm-sub{font:400 16px Arial,sans-serif;fill:#5F6B64}
       .drm-bt{font:700 22px Arial,sans-serif;fill:#11302E}
       .drm-bx{font:400 15px Arial,sans-serif;fill:#4B5751}
-      .drm-it{font:400 15.5px Arial,sans-serif;fill:#11302E}
+      .drm-it{font:400 15px Arial,sans-serif;fill:#11302E}
       .drm-badge{font:700 12.5px Arial,sans-serif;letter-spacing:.04em}
       .drm-cap{font:400 15px Arial,sans-serif;fill:#5F6B64}
     </style>
   </defs>
 
-  <rect x="0" y="0" width="1280" height="600" rx="28" fill="#F7F2E7"/>
-  <text x="640" y="56" text-anchor="middle" class="drm-title">Doceria — feuille de route</text>
-  <text x="640" y="86" text-anchor="middle" class="drm-sub">Une prochaine version « confort enseignant », puis Linux, puis l'intégration Moodle.</text>
+  <rect x="0" y="0" width="1280" height="560" rx="28" fill="#F7F2E7"/>
+  <text x="640" y="54" text-anchor="middle" class="drm-title">Doceria — feuille de route</text>
+  <text x="640" y="84" text-anchor="middle" class="drm-sub">Les nouveautés sont livrées. Ensuite, dans l'ordre : Moodle, puis Linux.</text>
 
   <!-- Connecteurs -->
-  <line x1="302" y1="225" x2="334" y2="225" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#drm-petrol)"/>
-  <line x1="582" y1="225" x2="614" y2="225" stroke="#9AA39B" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#drm-muted)"/>
-  <line x1="860" y1="225" x2="892" y2="225" stroke="#9AA39B" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#drm-muted)"/>
+  <line x1="366" y1="215" x2="424" y2="215" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#drm-petrol)"/>
+  <line x1="792" y1="215" x2="822" y2="215" stroke="#9AA39B" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#drm-muted)"/>
 
-  <!-- B1 Aujourd'hui -->
-  <rect x="64" y="160" width="238" height="130" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3" filter="url(#drm-shadow)"/>
-  <text x="183" y="202" text-anchor="middle" class="drm-bt">Aujourd'hui</text>
-  <text x="183" y="230" text-anchor="middle" class="drm-bx">Chat + RAG souverain</text>
-  <text x="183" y="251" text-anchor="middle" class="drm-bx">macOS Apple Silicon</text>
-  <text x="183" y="276" text-anchor="middle" class="drm-badge" fill="#1A5A55">● DISPONIBLE</text>
-
-  <!-- B2 v-next (carte détaillée) -->
-  <rect x="342" y="160" width="238" height="322" rx="12" fill="#FBF7EF" stroke="#B68F46" stroke-width="3" filter="url(#drm-shadow)"/>
-  <text x="461" y="200" text-anchor="middle" class="drm-bt">v-next</text>
-  <text x="461" y="226" text-anchor="middle" class="drm-bx">Confort enseignant</text>
-  <line x1="366" y1="242" x2="556" y2="242" stroke="#E2D8C5" stroke-width="1.5"/>
+  <!-- B1 Aujourd'hui (carte détaillée, livré) -->
+  <rect x="64" y="150" width="302" height="300" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3" filter="url(#drm-shadow)"/>
+  <text x="215" y="190" text-anchor="middle" class="drm-bt">Aujourd'hui</text>
+  <text x="215" y="216" text-anchor="middle" class="drm-bx">macOS Apple Silicon</text>
+  <line x1="88" y1="232" x2="342" y2="232" stroke="#C9C0AC" stroke-width="1.5"/>
   <g>
-    <circle cx="372" cy="268" r="3" fill="#B68F46"/><text x="384" y="273" class="drm-it">Menu Aide → site</text>
-    <circle cx="372" cy="296" r="3" fill="#B68F46"/><text x="384" y="301" class="drm-it">Annuler / Régénérer</text>
-    <circle cx="372" cy="324" r="3" fill="#B68F46"/><text x="384" y="329" class="drm-it">Presets pédagogiques</text>
-    <circle cx="372" cy="352" r="3" fill="#B68F46"/><text x="384" y="357" class="drm-it">Rendu LaTeX / KaTeX</text>
-    <circle cx="372" cy="380" r="3" fill="#B68F46"/><text x="384" y="385" class="drm-it">Multi-modèles côte à côte</text>
-    <circle cx="372" cy="408" r="3" fill="#B68F46"/><text x="384" y="413" class="drm-it">Seuil &amp; message de refus</text>
+    <circle cx="96" cy="259" r="3" fill="#1A5A55"/><text x="108" y="264" class="drm-it">Chat + RAG souverain</text>
+    <circle cx="96" cy="287" r="3" fill="#1A5A55"/><text x="108" y="292" class="drm-it">Comparaison multi-modèles</text>
+    <circle cx="96" cy="315" r="3" fill="#1A5A55"/><text x="108" y="320" class="drm-it">Rendu LaTeX / formules</text>
+    <circle cx="96" cy="343" r="3" fill="#1A5A55"/><text x="108" y="348" class="drm-it">Régénérer · Modifier · Copier</text>
+    <circle cx="96" cy="371" r="3" fill="#1A5A55"/><text x="108" y="376" class="drm-it">Menu Aide · message de refus</text>
   </g>
-  <text x="461" y="458" text-anchor="middle" class="drm-badge" fill="#B68F46">○ EN PRÉPARATION</text>
+  <text x="215" y="424" text-anchor="middle" class="drm-badge" fill="#1A5A55">● DISPONIBLE</text>
 
-  <!-- B3 Linux -->
-  <rect x="620" y="160" width="238" height="130" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3" filter="url(#drm-shadow)"/>
-  <text x="739" y="202" text-anchor="middle" class="drm-bt">Linux</text>
-  <text x="739" y="230" text-anchor="middle" class="drm-bx">AppImage pour l'ESR</text>
-  <text x="739" y="251" text-anchor="middle" class="drm-bx">postes Linux courants</text>
-  <text x="739" y="276" text-anchor="middle" class="drm-badge" fill="#CE7A33">○ PLANIFIÉ</text>
+  <!-- B2 Moodle (prochain) -->
+  <rect x="430" y="150" width="362" height="130" rx="12" fill="#F2E7CC" stroke="#B68F46" stroke-width="3" filter="url(#drm-shadow)"/>
+  <text x="611" y="192" text-anchor="middle" class="drm-bt">Moodle</text>
+  <text x="611" y="220" text-anchor="middle" class="drm-bx">RAG sur vos propres cours</text>
+  <text x="611" y="241" text-anchor="middle" class="drm-bx">via les web services REST</text>
+  <text x="611" y="266" text-anchor="middle" class="drm-badge" fill="#B68F46">○ PROCHAIN · le différenciateur</text>
 
-  <!-- B4 Moodle -->
-  <rect x="898" y="160" width="238" height="130" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3" filter="url(#drm-shadow)"/>
-  <text x="1017" y="202" text-anchor="middle" class="drm-bt">Moodle</text>
-  <text x="1017" y="230" text-anchor="middle" class="drm-bx">RAG sur vos cours</text>
-  <text x="1017" y="251" text-anchor="middle" class="drm-bx">web services REST</text>
-  <text x="1017" y="276" text-anchor="middle" class="drm-badge" fill="#8B9089">○ À VENIR</text>
+  <!-- B3 Linux (ensuite) -->
+  <rect x="826" y="150" width="360" height="130" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3" filter="url(#drm-shadow)"/>
+  <text x="1006" y="192" text-anchor="middle" class="drm-bt">Linux</text>
+  <text x="1006" y="220" text-anchor="middle" class="drm-bx">AppImage pour l'ESR</text>
+  <text x="1006" y="241" text-anchor="middle" class="drm-bx">postes Linux courants</text>
+  <text x="1006" y="266" text-anchor="middle" class="drm-badge" fill="#CE7A33">○ ENSUITE</text>
 
-  <text x="640" y="538" text-anchor="middle" class="drm-cap">Ordre retenu : d'abord la v-next « confort prof », puis le build Linux, puis le chantier Moodle (le différenciateur).</text>
+  <text x="808" y="360" text-anchor="middle" class="drm-cap">Ordre retenu : l'intégration Moodle d'abord (le différenciateur),</text>
+  <text x="808" y="384" text-anchor="middle" class="drm-cap">puis le build Linux. Toujours souverain, simple, en français.</text>
 </svg>

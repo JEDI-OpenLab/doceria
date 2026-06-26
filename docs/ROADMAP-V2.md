@@ -14,9 +14,12 @@
 
 ---
 
-## 1. Prochaine version (« v-next ») — périmètre retenu
+## 1. v-next — ✅ LIVRÉ (version `20260626.8.0`)
 
-Six chantiers, choisis pour leur **rapport valeur/effort** et leur alignement enseignant.
+Ces chantiers, choisis pour leur **rapport valeur/effort** et leur alignement enseignant, sont
+**désormais en service**. *(Les « presets de prompts pédagogiques » initialement prévus ont été
+**écartés** : bien faits, ils demandent un vrai cadre pédagogique — taxonomie de Bloom, rédaction
+d'objectifs — à poser en amont ; voir §1.3.)*
 
 ### 1.1 Entrée de menu « Aide » → site officiel  · `must` · `S`
 **Ce que c'est.** Un sous-menu **« Aide »** dans la barre de menus macOS (à côté de
@@ -37,8 +40,12 @@ terminal**. Manque aujourd'hui.
 **Comment.** S'appuie sur l'archi de conversations existante : retirer le dernier tour
 assistant (`removeLastMessage`) et relancer `send()` sur le dernier message utilisateur.
 
-### 1.3 Bibliothèque de presets de prompts pédagogiques  · `must` · `S`
-**Ce que c'est.** Des **modèles de consigne prêts à l'emploi**, déclenchables en un clic ou par
+### 1.3 Bibliothèque de presets de prompts pédagogiques  · ❌ ÉCARTÉ
+> **Décision :** non implémenté. Bien fait, ce chantier exige un vrai travail de conception
+> pédagogique (taxonomie de Bloom, rédaction d'objectifs d'apprentissage) à poser délibérément,
+> plutôt que de l'improviser. À reconsidérer si le cadre pédagogique est fourni en amont.
+
+**Ce que c'était (idée initiale).** Des **modèles de consigne prêts à l'emploi**, déclenchables en un clic ou par
 commande : `/qcm`, `/plan-de-cours`, `/reformuler`, `/barème`, `/vulgariser`, **tuteur
 socratique**, **correcteur**, **générateur d'exercices**…
 **Pourquoi.** C'est **le manque le plus net** face aux concurrents et **le plus fort levier
@@ -88,10 +95,11 @@ l'utilisateur.)*
 
 ## 2. Séquencement
 
-1. **v-next « confort prof »** — les six chantiers du §1 (gains rapides + LaTeX + comparaison
-   multi-modèles). Effet immédiat, risque faible.
-2. **Build Linux** *(prioritaire avant Moodle, choix acté)* — voir §3.
-3. **Chantier Moodle** — le différenciateur, en chantier dédié — voir §4.
+1. ✅ **v-next « confort prof »** — les chantiers du §1 (LaTeX + comparaison multi-modèles +
+   régénérer/modifier/copier + menu Aide + message de refus). **Livré** en `20260626.8.0`.
+2. **Chantier Moodle** — le différenciateur, en chantier dédié — voir §4. *(Choix acté : Moodle
+   **avant** Linux.)*
+3. **Build Linux** — voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
 ---
@@ -119,7 +127,7 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
 > contenus = **Pages / Étiquettes / Ressources fichiers / Books** ; sortie **Markdown** avec
 > hiérarchie ; RAG strict « uniquement depuis les documents »).
 
-**Verdict : à FAIRE, en `should`**, en chantier dédié **après** la v-next et le build Linux.
+**Verdict : à FAIRE, en `should`**, en **prochain chantier dédié** (la v-next étant livrée) — **avant** le build Linux.
 C'est la fonctionnalité **la plus alignée « prof ESR souverain »** : elle **nourrit le RAG du
 prof avec son propre cours Moodle**, sans copier-coller, en restant dans le périmètre ESR.
 **Techniquement faisable et peu risquée côté client.**

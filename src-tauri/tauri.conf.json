@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Doceria",
-  "version": "20260626.7.0",
+  "version": "20260626.8.0",
   "identifier": "fr.jedi-openlab.doceria",
   "build": {
     "frontendDist": "../dist",

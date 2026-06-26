@@ -145,6 +145,15 @@
             (ILaaS), jamais par un service américain&nbsp;; et vos clés d'accès restent protégées dans le
             <strong>trousseau de votre Mac</strong>.
           </p>
+          <p class="section-lead" style="font-size:1.02rem;margin-top:1.1rem">
+            Doceria est une application <strong>souveraine</strong> qui prolonge le proof of concept
+            <a href="https://jedi-openlab.github.io/Learnix/" target="_blank" rel="noopener">Learnix</a>.
+            Ce démonstrateur d'assistant documentaire a servi à <strong>éprouver l'approche et à
+            spécifier les besoins techniques et fonctionnels</strong> — RAG strictement fondé sur un
+            corpus maîtrisé, périmètre 100&nbsp;% ESR, <strong>aucune donnée personnelle</strong>, et
+            l'alimentation depuis Moodle. Doceria en fait un <strong>outil de bureau abouti</strong>,
+            simple et soigné, pour les enseignants.
+          </p>
         </div>
       </div>
 
@@ -199,7 +208,28 @@
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-book-open-reader"></i></div>
             <h3>RAG sur vos documents</h3>
-            <p>Bibliothèque de collections privées (RAG géré ILaaS) : ajoutez fichiers ou dossiers, posez vos questions, obtenez des réponses <strong>avec citations des sources</strong>. Modes <strong>Chat ⇄ Requête</strong> (réponse strictement fondée sur vos documents) et réglages de récupération (méthode, nombre d'extraits, seuil).</p>
+            <p>Bibliothèque de collections privées (RAG géré ILaaS) : ajoutez fichiers ou dossiers, posez vos questions, obtenez des réponses <strong>avec citations des sources</strong>. Modes <strong>Chat ⇄ Requête</strong> (réponse strictement fondée sur vos documents), réglages de récupération (méthode, nombre d'extraits, seuil) et <strong>message de « non trouvé » personnalisable</strong>.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature">
+            <div class="feature-ic"><i class="fa-solid fa-table-columns"></i></div>
+            <h3>Comparer des modèles</h3>
+            <p>Posez une question à <strong>deux modèles souverains en même temps</strong>, affichés <strong>côte à côte</strong>, et gardez la meilleure réponse. Idéal pour choisir le modèle le plus juste pour une tâche — le coût (×2) reste suivi dans « Conso & coût ».</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature">
+            <div class="feature-ic"><i class="fa-solid fa-square-root-variable"></i></div>
+            <h3>Formules mathématiques</h3>
+            <p>Rendu <strong>LaTeX / KaTeX</strong> des formules (<code>$…$</code>, <code>$$…$$</code>) dans les réponses <em>et</em> les citations. Pour les maths, la physique, l'informatique théorique — affichage local, sans réseau.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature">
+            <div class="feature-ic"><i class="fa-solid fa-pen-to-square"></i></div>
+            <h3>Réécrire, régénérer, copier</h3>
+            <p><strong>Régénérez</strong> une réponse, <strong>modifiez</strong> votre question d'un clic (✎), <strong>copiez</strong> une réponse (⧉) ou <strong>annulez</strong> le dernier tour. Plus un menu <strong>Aide</strong> intégré vers le site et le mode d'emploi.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -310,7 +340,7 @@
       </div>
       <div class="row g-4 justify-content-center">
         <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-1.png" alt="Doceria — chat" loading="lazy" onerror="this.closest('.shot').remove()"></div>
-        <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-2.png" alt="Doceria — bibliothèque RAG" loading="lazy" onerror="this.closest('.shot').remove()"></div>
+        <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-2.png" alt="Doceria — comparaison de deux modèles côte à côte" loading="lazy" onerror="this.closest('.shot').remove()"></div>
       </div>
     </div>
   </section>
@@ -343,6 +373,11 @@
             <dt>Message &amp; Envoyer</dt><dd>Tapez votre question, puis <strong>Envoyer</strong> (ou Entrée). La réponse s'affiche au fil de l'eau ; <strong>Stop</strong> l'interrompt.</dd>
             <dt>Sélecteur de modèle</dt><dd>Au-dessus de la zone de message : changez le modèle interrogé sans quitter le chat. Il est synchronisé avec le menu « Modèle » du panneau de droite.</dd>
             <dt>Conversations</dt><dd>Créez, renommez (icône crayon) et supprimez des conversations ; exportez-en une en <strong>Markdown</strong>. L'historique reste sur votre machine.</dd>
+            <dt>Régénérer / Annuler</dt><dd>Sous la dernière réponse : <strong>↻ Régénérer</strong> relance la même question (avec les réglages courants) ; <strong>↩ Annuler</strong> retire le tour et remet la question dans le champ.</dd>
+            <dt>Modifier une question (✎)</dt><dd>Au survol de votre message, l'icône <strong>✎</strong> remet la question dans le champ pour la corriger et la renvoyer — la conversation repart de ce point.</dd>
+            <dt>Copier une réponse (⧉)</dt><dd>Au survol d'une réponse, l'icône <strong>⧉</strong> copie son contenu (Markdown) dans le presse-papiers.</dd>
+            <dt>Comparer des modèles</dt><dd>Cochez <strong>Comparer</strong> : un <strong>second menu déroulant</strong> apparaît. Choisissez deux modèles <strong>différents</strong> → la question part aux deux <strong>en même temps</strong>, réponses <strong>côte à côte</strong>. Cliquez <strong>Garder</strong> sous la meilleure (ou <strong>Stop</strong> pour annuler). Coût ×2, suivi dans « Conso&nbsp;&amp;&nbsp;coût ».</dd>
+            <dt>Formules mathématiques</dt><dd>Les formules <strong>LaTeX</strong> (<code>$…$</code> en ligne, <code>$$…$$</code> en bloc) sont rendues automatiquement dans les réponses et les citations.</dd>
           </dl>
         </details>
 
@@ -368,6 +403,7 @@
             <dt>Extraits récupérés (top-k)</dt><dd>Nombre maximum de passages fournis au modèle à chaque question (défaut 5).</dd>
             <dt>Seuil de similarité</dt><dd>Écarte les passages sous ce score. 0 = aucun filtre ; plus haut = plus strict (et davantage de « non trouvé » en mode Requête).</dd>
             <dt>Reranking</dt><dd>Réordonne les passages par <strong>pertinence</strong> (modèle bge-reranker) avant de ne garder que le top-k. Améliore nettement la qualité ; ajoute un appel.</dd>
+            <dt>Message si aucune réponse (mode Requête)</dt><dd>Personnalisez la phrase renvoyée quand la réponse n'est pas dans vos documents (ton, langue, consigne pour l'étudiant). Laissez le champ vide pour rétablir le texte par défaut.</dd>
             <dt>Citations [n] &amp; Sources</dt><dd>Les passages utilisés apparaissent numérotés dans la réponse et listés en dessous, avec le nom du document.</dd>
           </dl>
         </details>
@@ -404,6 +440,7 @@
             <dt>Colonnes pliables</dt><dd>Chevrons dans la barre du haut pour masquer la liste des conversations (gauche) ou le panneau de réglages (droite).</dd>
             <dt>Sections pliables</dt><dd>Cliquez le titre d'une section du panneau (Connexion, Bibliothèque, Génération…) pour la replier. L'état est mémorisé.</dd>
             <dt>Aides « ? »</dt><dd>Survolez les points d'interrogation pour une explication contextuelle.</dd>
+            <dt>Menu Aide</dt><dd>Dans la barre de menus macOS : <strong>Aide</strong> → ouvre le site, le mode d'emploi ou le suivi des problèmes (GitHub) dans votre navigateur.</dd>
             <dt>Mises à jour</dt><dd>Au démarrage, Doceria vérifie s'il existe une version plus récente sur GitHub et propose de la télécharger.</dd>
           </dl>
         </details>
@@ -462,26 +499,28 @@
         <span class="kicker light">La suite</span>
         <h2 class="section-serif light">Feuille de route</h2>
         <p class="deep-lead" style="margin:0 auto">
-          Doceria est déjà complète et utile. Voici ce qui arrive — des choix guidés par la
-          <strong>valeur pour l'enseignant</strong>, sans jamais trahir l'ADN&nbsp;: souverain, simple, en français.
+          Doceria vient de gagner la <strong>comparaison multi-modèles</strong>, le <strong>rendu LaTeX</strong>
+          et beaucoup de confort. La suite, dans l'ordre&nbsp;: l'<strong>intégration Moodle</strong>
+          (le différenciateur), puis le <strong>build Linux</strong> — sans jamais trahir l'ADN&nbsp;:
+          souverain, simple, en français.
         </p>
       </div>
 
       <figure class="diagram">
         <img class="diagram-img" src="assets/doceria-roadmap.svg"
-             alt="Feuille de route : aujourd'hui (chat et RAG souverain sur macOS, disponible), puis la version « v-next » de confort enseignant (menu Aide, annuler/régénérer, presets pédagogiques, rendu LaTeX, comparaison multi-modèles côte à côte, seuil et message de refus), puis le build Linux, puis l'intégration Moodle.">
-        <figcaption>D'abord la v-next «&nbsp;confort prof&nbsp;», puis Linux, puis l'intégration Moodle.</figcaption>
+             alt="Feuille de route : aujourd'hui (chat et RAG souverain sur macOS, plus les nouveautés livrées — comparaison multi-modèles côte à côte, rendu LaTeX, régénérer/annuler/modifier/copier, menu Aide, message de refus configurable), puis l'intégration Moodle (RAG sur vos cours), puis le build Linux.">
+        <figcaption>Les nouveautés sont là. Ensuite&nbsp;: Moodle (le différenciateur), puis Linux.</figcaption>
       </figure>
 
       <!-- Nouveautés en vedette -->
       <div class="row align-items-center g-4 g-lg-5 mt-5 roadmap-feature">
         <div class="col-lg-5">
-          <span class="roadmap-pill">v-next</span>
-          <h3>Comparer plusieurs modèles, côte à côte</h3>
+          <span class="roadmap-pill">nouveau</span>
+          <h3>Comparer deux modèles, côte à côte</h3>
           <p>
-            Posez une question, envoyez-la <strong>en même temps à plusieurs modèles souverains</strong>&nbsp;:
-            la fenêtre se divise et vous voyez les réponses côte à côte. Vous gardez la meilleure.
-            Une option à activer (le coût est multiplié&nbsp;: il reste suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;»).
+            Désormais disponible&nbsp;: posez une question et envoyez-la <strong>en même temps à deux modèles
+            souverains</strong>&nbsp;; la fenêtre se divise et vous voyez les réponses côte à côte. Vous gardez
+            la meilleure. Une option à activer (coût&nbsp;×2, suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;»).
           </p>
         </div>
         <div class="col-lg-7">
@@ -494,7 +533,7 @@
 
       <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature flex-lg-row-reverse">
         <div class="col-lg-5">
-          <span class="roadmap-pill">le différenciateur</span>
+          <span class="roadmap-pill">prochain · le différenciateur</span>
           <h3>Du RAG sur vos cours Moodle</h3>
           <p>
             Doceria pourra <strong>aspirer les contenus pédagogiques de votre Moodle</strong> (Pages, Étiquettes,
