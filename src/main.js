@@ -115,6 +115,7 @@ function hydrateGen() {
   $('ragThresholdVal').textContent =
     state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
   $('ragRerank').checked = state.ragRerank;
+  $('ragRefusal').value = state.ragRefusal;
   $('ragAutoSync').checked = state.ragAutoSync;
 }
 
@@ -905,7 +906,7 @@ function buildMessages(conv, ragContext) {
       state.ragMode === 'requete'
         ? ' Réponds EXCLUSIVEMENT à partir de ces extraits, sans recourir à tes connaissances ' +
           'générales. Si la réponse ne figure pas dans les extraits, réponds uniquement : ' +
-          '« Je ne trouve pas la réponse dans la bibliothèque. »'
+          '« ' + (state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.') + ' »'
         : ' Appuie-toi sur ces extraits en priorité ; tu peux compléter par tes connaissances ' +
           'générales si c\'est utile et pertinent. Si la réponse ne s\'y trouve pas, dis-le clairement.';
     const rag = base + mode + '\n\n' + ragContext;
@@ -1050,7 +1051,7 @@ async function runGeneration(conv, text) {
   // renvoie directement le refus, comme AnythingLLM en mode « Query » — et on évite un appel
   // facturé inutile. (Sur erreur réseau on ne court-circuite pas : le repli ci-dessus s'applique.)
   if (state.ragMode === 'requete' && ragSearched && !ragContext) {
-    const refusal = 'Je ne trouve pas la réponse dans la bibliothèque.';
+    const refusal = state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.';
     addMessage(conv, 'assistant', refusal);
     ui.finalizeBubble(ui.appendMessage('assistant', ''), refusal);
     ui.setComposerMeta('mode Requête : aucun extrait pertinent trouvé.');
@@ -1533,6 +1534,17 @@ function wireEvents() {
   $('ragThreshold').addEventListener('change', saveSettings);
   $('ragRerank').addEventListener('change', (e) => {
     state.ragRerank = e.target.checked;
+    saveSettings();
+  });
+  $('ragRefusal').addEventListener('input', (e) => {
+    state.ragRefusal = e.target.value;
+  });
+  $('ragRefusal').addEventListener('change', (e) => {
+    // Champ vidé → on rétablit le texte par défaut (le mode Requête a toujours un refus).
+    if (!e.target.value.trim()) {
+      state.ragRefusal = 'Je ne trouve pas la réponse dans la bibliothèque.';
+      e.target.value = state.ragRefusal;
+    }
     saveSettings();
   });
   // Synchro dossier ↔ collection

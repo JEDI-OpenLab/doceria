@@ -2,6 +2,8 @@
 // les actions (sélection, envoi, etc.) sont passées en callbacks depuis main.js.
 
 import { state } from './state.js';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 export const $ = (id) => document.getElementById(id);
 
@@ -220,14 +222,40 @@ function escapeHtml(s) {
 // réinsérerait des attributs HTML (ex. liens [txte](url) → <a href="…">) devra ré-échapper
 // les guillemets et valider le schéma d'URL (http/https/mailto), sinon risque XSS.
 export function format(text) {
-  let t = escapeHtml(text);
-  // blocs de code ```...```
-  t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
-  // code en ligne `...`
-  t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-  // gras **...**
+  // On met d'abord de côté, sous des jetons, les fragments qui ne doivent PAS être échappés :
+  // le code (échappé à la main) et les maths (rendues par KaTeX). On échappe ensuite TOUT le
+  // reste (anti-injection), puis on réinsère. Invariant : ce qui revient dans le HTML est soit
+  // échappé, soit produit par KaTeX (sortie fiable, \href désactivé par défaut).
+  const stash = [];
+  const keep = (html) => '\u0000S' + (stash.push(html) - 1) + '\u0000';
+
+  let t = text;
+  // 1) code : blocs ```...``` puis en ligne `...` (contenu échappé, jamais interprété)
+  t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) =>
+    keep('<pre><code>' + escapeHtml(code.replace(/\n$/, '')) + '</code></pre>'));
+  t = t.replace(/`([^`\n]+)`/g, (m, code) => keep('<code>' + escapeHtml(code) + '</code>'));
+  // 2) maths LaTeX → KaTeX : bloc ($$…$$, \[…\]) puis en ligne ($…$, \(…\))
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m, tex) => keep(renderMath(tex, true)));
+  t = t.replace(/\\\[([\s\S]+?)\\\]/g, (m, tex) => keep(renderMath(tex, true)));
+  t = t.replace(/\\\(([\s\S]+?)\\\)/g, (m, tex) => keep(renderMath(tex, false)));
+  t = t.replace(/\$([^\s$][^$\n]*?[^\s$]|[^\s$])\$/g, (m, tex) => keep(renderMath(tex, false)));
+  // 3) échappement de tout le reste
+  t = escapeHtml(t);
+  // 4) gras **...**
   t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-  return t;
+  // 5) réinsertion des fragments protégés
+  return t.replace(/\u0000S(\d+)\u0000/g, (m, i) => stash[+i]);
+}
+
+// Rendu d'une formule LaTeX via KaTeX. Sur erreur de syntaxe (ou faux positif $…$), on
+// retombe sur le texte source échappé : jamais d'injection, jamais de plantage.
+function renderMath(tex, display) {
+  try {
+    return katex.renderToString(tex.trim(), { displayMode: display, strict: false });
+  } catch {
+    const d = display ? '$$' : '$';
+    return escapeHtml(d + tex + d);
+  }
 }
 
 /* ---------- Fil de conversation ---------- */

@@ -190,6 +190,11 @@
         <label class="ragtoggle"><input type="checkbox" id="ragRerank"> Reranking des extraits<button class="help" type="button" aria-label="Réordonne les passages par pertinence (modèle bge-reranker) après la recherche, puis garde les meilleurs. Améliore nettement la qualité ; ajoute un appel facturé.">?<span class="help-bubble" aria-hidden="true">Réordonne les passages par <strong>pertinence</strong> (bge-reranker) après la recherche, puis garde les meilleurs. État de l'art du RAG.<br>Améliore la qualité — <strong>ajoute un appel</strong> facturé.</span></button></label>
         <div class="hint">Recommandé. Recherche un vivier plus large, le réordonne, puis ne garde que le top-k ci-dessus.</div>
       </div>
+      <div class="field">
+        <label for="ragRefusal">Message si aucune réponse (mode Requête)<button class="help" type="button" aria-label="En mode Requête, c'est la phrase exacte renvoyée lorsque la réponse ne figure pas dans tes documents. Personnalise-la pour ton cours (ton, langue, consigne).">?<span class="help-bubble" aria-hidden="true">En mode <strong>Requête</strong>, la phrase renvoyée quand la réponse n'est <strong>pas</strong> dans tes documents. Personnalise-la (ton, langue, consigne pour l'étudiant).</span></button></label>
+        <input type="text" id="ragRefusal" spellcheck="true" value="Je ne trouve pas la réponse dans la bibliothèque.">
+        <div class="hint">N'agit qu'en mode Requête. Laisse vide pour rétablir le texte par défaut.</div>
+      </div>
 
       <h2 class="section-head" data-section="generation"><span class="chevron" aria-hidden="true"></span>Génération</h2>
       <div class="field">

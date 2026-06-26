@@ -23,6 +23,7 @@ export const state = {
   ragTopK: 5, // nombre d'extraits récupérés (limit de /search)
   ragThreshold: 0, // seuil de similarité (score_threshold) ; 0 = désactivé
   ragRerank: true, // réordonner les extraits par pertinence (bge-reranker) après la recherche
+  ragRefusal: 'Je ne trouve pas la réponse dans la bibliothèque.', // mode Requête : phrase renvoyée quand rien n'est trouvé
   ragAutoSync: false, // synchroniser les collections liées à un dossier à l'ouverture du profil
   memoryTurns: 0, // tours d'historique envoyés à chaque message ; 0 = illimité
   // Modèles
@@ -61,6 +62,7 @@ export function loadSettings() {
       if (typeof d.ragTopK === 'number') state.ragTopK = d.ragTopK;
       if (typeof d.ragThreshold === 'number') state.ragThreshold = d.ragThreshold;
       if (typeof d.ragRerank === 'boolean') state.ragRerank = d.ragRerank;
+      if (typeof d.ragRefusal === 'string' && d.ragRefusal.trim()) state.ragRefusal = d.ragRefusal;
       if (typeof d.ragAutoSync === 'boolean') state.ragAutoSync = d.ragAutoSync;
       if (typeof d.memoryTurns === 'number') state.memoryTurns = d.memoryTurns;
     }
@@ -81,6 +83,7 @@ export function saveSettings() {
         ragTopK: state.ragTopK,
         ragThreshold: state.ragThreshold,
         ragRerank: state.ragRerank,
+        ragRefusal: state.ragRefusal,
         ragAutoSync: state.ragAutoSync,
         memoryTurns: state.memoryTurns,
       })
