@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="660" viewBox="0 0 1280 660" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dmm-title dmm-desc">
+  <title id="dmm-title">Comparer plusieurs modèles côte à côte</title>
+  <desc id="dmm-desc">Fonctionnalité à venir : une seule question est envoyée en même temps à plusieurs modèles souverains ; la fenêtre se divise en colonnes pour afficher les réponses côte à côte ; l'enseignant garde la meilleure. Option à activer (opt-in) car le coût est multiplié par le nombre de modèles.</desc>
+  <defs>
+    <marker id="dmm-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
+    <filter id="dmm-shadow" x="-15%" y="-15%" width="130%" height="135%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#11302E" flood-opacity=".14"/></filter>
+    <style>
+      .dmm-title{font:700 31px Georgia,"Times New Roman",serif;fill:#11302E}
+      .dmm-sub{font:400 16px Arial,sans-serif;fill:#5F6B64}
+      .dmm-q{font:700 19px Arial,sans-serif;fill:#11302E}
+      .dmm-h{font:700 16px Arial,sans-serif;fill:#fff}
+      .dmm-flow{font:700 13px Arial,sans-serif;fill:#1A5A55}
+      .dmm-tag{font:700 12px Arial,sans-serif;fill:#1A5A55}
+      .dmm-dec{font:700 17px Arial,sans-serif;fill:#11302E}
+      .dmm-chip{font:700 14px Arial,sans-serif;fill:#A85A1E}
+      .dmm-div{font:700 12.5px Arial,sans-serif;fill:#9AA39B}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="660" rx="28" fill="#F7F2E7"/>
+  <text x="640" y="52" text-anchor="middle" class="dmm-title">Comparer plusieurs modèles, côte à côte</text>
+  <text x="640" y="82" text-anchor="middle" class="dmm-sub">Une seule question, envoyée à plusieurs modèles souverains en même temps — vous gardez la meilleure réponse.</text>
+
+  <!-- Question (haut, centrée) -->
+  <rect x="510" y="102" width="260" height="64" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3" filter="url(#dmm-shadow)"/>
+  <g fill="none" stroke="#1A5A55" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M548 127 h22 a3.5 3.5 0 0 1 3.5 3.5 v11 a3.5 3.5 0 0 1 -3.5 3.5 h-13 l-5 4 v-4 h-4 a3.5 3.5 0 0 1 -3.5 -3.5 v-11 a3.5 3.5 0 0 1 3.5 -3.5 z"/></g>
+  <text x="660" y="140" text-anchor="middle" class="dmm-q">Votre question</text>
+
+  <!-- Fourche : envoi simultané -->
+  <text x="640" y="202" text-anchor="middle" class="dmm-flow">envoi simultané</text>
+  <path d="M572 166 C 500 194, 440 206, 386 226" fill="none" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#dmm-petrol)"/>
+  <path d="M708 166 C 780 194, 840 206, 894 226" fill="none" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#dmm-petrol)"/>
+
+  <!-- Colonne A -->
+  <rect x="154" y="230" width="456" height="54" rx="10" fill="#CE7A33" filter="url(#dmm-shadow)"/>
+  <text x="178" y="264" class="dmm-h">Modèle A — mistral-medium</text>
+  <rect x="154" y="288" width="456" height="184" rx="10" fill="#FBF7EF" stroke="#E2D8C5" stroke-width="2"/>
+  <rect x="178" y="314" width="300" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="178" y="338" width="372" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="178" y="362" width="262" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="178" y="398" width="132" height="24" rx="12" fill="#E4EFEA"/>
+  <text x="244" y="414" text-anchor="middle" class="dmm-tag">[1] votre cours</text>
+
+  <!-- Colonne B -->
+  <rect x="670" y="230" width="456" height="54" rx="10" fill="#B68F46" filter="url(#dmm-shadow)"/>
+  <text x="694" y="264" class="dmm-h">Modèle B — gemma-4</text>
+  <rect x="670" y="288" width="456" height="184" rx="10" fill="#FBF7EF" stroke="#E2D8C5" stroke-width="2"/>
+  <rect x="694" y="314" width="340" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="694" y="338" width="284" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="694" y="362" width="360" height="11" rx="5.5" fill="#E7EADF"/>
+  <rect x="694" y="398" width="132" height="24" rx="12" fill="#E4EFEA"/>
+  <text x="760" y="414" text-anchor="middle" class="dmm-tag">[1] votre cours</text>
+
+  <!-- Séparateur « fenêtre divisée » -->
+  <text x="640" y="220" text-anchor="middle" class="dmm-div">fenêtre divisée</text>
+  <line x1="640" y1="230" x2="640" y2="472" stroke="#D8CDB6" stroke-width="2" stroke-dasharray="4 5"/>
+
+  <!-- Convergence vers la décision -->
+  <path d="M382 472 C 400 498, 540 504, 624 512" fill="none" stroke="#1A5A55" stroke-width="3" stroke-linecap="round" marker-end="url(#dmm-petrol)"/>
+  <path d="M898 472 C 880 498, 740 504, 656 512" fill="none" stroke="#1A5A55" stroke-width="3" stroke-linecap="round" marker-end="url(#dmm-petrol)"/>
+
+  <!-- Bandeau de décision -->
+  <rect x="154" y="516" width="972" height="62" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="2.5"/>
+  <g fill="none" stroke="#1A5A55" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="196" cy="547" r="13"/><path d="M189 547 l5 5 l9 -10"/></g>
+  <text x="228" y="553" class="dmm-dec">Vous gardez la meilleure réponse — elle rejoint le fil.</text>
+
+  <!-- Chip coût -->
+  <rect x="330" y="600" width="620" height="40" rx="20" fill="#F6E4D4" stroke="#CE7A33" stroke-width="2"/>
+  <text x="640" y="625" text-anchor="middle" class="dmm-chip">⚠  Coût ×N — option à activer (opt-in), suivie dans « Conso &amp; coût ».</text>
+</svg>

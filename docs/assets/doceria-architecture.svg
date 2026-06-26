@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="772" viewBox="0 0 1280 772" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dca-title dca-desc">
+  <title id="dca-title">Comment fonctionne Doceria</title>
+  <desc id="dca-desc">Schéma de principe : l'enseignant pose une question dans Doceria, application native macOS dont les clés restent au trousseau ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse. En option, les documents déposés par l'enseignant sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité. Rien ne part vers un cloud tiers.</desc>
+  <defs>
+    <marker id="dca-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
+    <marker id="dca-gold" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#B68F46"/></marker>
+    <marker id="dca-orange" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#CE7A33"/></marker>
+    <filter id="dca-shadow" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#11302E" flood-opacity=".14"/></filter>
+    <style>
+      .dca-title{font:700 31px Georgia,"Times New Roman",serif;fill:#11302E}
+      .dca-sub{font:400 16px Arial,sans-serif;fill:#5F6B64}
+      .dca-zone{font:700 14px Arial,sans-serif;letter-spacing:.09em}
+      .dca-bt{font:700 21px Arial,sans-serif;fill:#11302E}
+      .dca-bx{font:400 15px Arial,sans-serif;fill:#4B5751}
+      .dca-flow{font:700 13px Arial,sans-serif}
+      .dca-leg{font:400 14.5px Arial,sans-serif;fill:#5F6B64}
+      .dca-ic{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="772" rx="28" fill="#F7F2E7"/>
+  <text x="640" y="56" text-anchor="middle" class="dca-title">Doceria — comment ça marche</text>
+  <text x="640" y="86" text-anchor="middle" class="dca-sub">Votre question reste dans le périmètre souverain de l'ESR. Vos clés au trousseau, rien vers un cloud tiers.</text>
+
+  <!-- Zones -->
+  <text x="56" y="132" class="dca-zone" fill="#1A5A55">VOUS · SUR VOTRE MAC</text>
+  <text x="536" y="132" class="dca-zone" fill="#B68F46">INFRASTRUCTURE SOUVERAINE DE L'ESR</text>
+
+  <!-- Cadre souverain (pointillé) -->
+  <rect x="520" y="142" width="592" height="468" rx="18" fill="none" stroke="#B68F46" stroke-width="2" stroke-dasharray="3 6" opacity=".7"/>
+
+  <!-- Boîtes -->
+  <g filter="url(#dca-shadow)">
+    <rect x="56" y="160" width="216" height="146" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3"/>
+    <rect x="296" y="160" width="216" height="146" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3"/>
+    <rect x="536" y="160" width="288" height="146" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3"/>
+    <rect x="856" y="160" width="232" height="146" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3"/>
+    <rect x="296" y="452" width="216" height="146" rx="12" fill="#F2E7CC" stroke="#B68F46" stroke-width="3"/>
+    <rect x="536" y="452" width="288" height="146" rx="12" fill="#F2E7CC" stroke="#B68F46" stroke-width="3"/>
+  </g>
+
+  <!-- Icônes -->
+  <g class="dca-ic" stroke="#1A5A55"><circle cx="164" cy="192" r="7"/><path d="M151 210 a13 13 0 0 1 26 0"/></g>
+  <g class="dca-ic" stroke="#1A5A55"><rect x="380" y="180" width="48" height="34" rx="4"/><line x1="380" y1="190" x2="428" y2="190"/><circle cx="387" cy="185" r="1.4" fill="#1A5A55" stroke="none"/><circle cx="393" cy="185" r="1.4" fill="#1A5A55" stroke="none"/></g>
+  <g class="dca-ic" stroke="#CE7A33"><rect x="670" y="180" width="20" height="20" rx="2"/><rect x="676" y="186" width="8" height="8"/><line x1="675" y1="180" x2="675" y2="175"/><line x1="685" y1="180" x2="685" y2="175"/><line x1="675" y1="200" x2="675" y2="205"/><line x1="685" y1="200" x2="685" y2="205"/><line x1="670" y1="185" x2="665" y2="185"/><line x1="670" y1="195" x2="665" y2="195"/><line x1="690" y1="185" x2="695" y2="185"/><line x1="690" y1="195" x2="695" y2="195"/></g>
+  <g class="dca-ic" stroke="#1A5A55"><path d="M960 182 h24 a4 4 0 0 1 4 4 v13 a4 4 0 0 1 -4 4 h-15 l-6 5 v-5 h-3 a4 4 0 0 1 -4 -4 v-13 a4 4 0 0 1 4 -4 z"/><circle cx="966" cy="192" r="1.3" fill="#1A5A55" stroke="none"/><circle cx="972" cy="192" r="1.3" fill="#1A5A55" stroke="none"/><circle cx="978" cy="192" r="1.3" fill="#1A5A55" stroke="none"/></g>
+  <g class="dca-ic" stroke="#B68F46"><rect x="394" y="472" width="20" height="26" rx="2"/><line x1="399" y1="480" x2="409" y2="480"/><line x1="399" y1="486" x2="409" y2="486"/><line x1="399" y1="492" x2="406" y2="492"/></g>
+  <g class="dca-ic" stroke="#B68F46"><ellipse cx="680" cy="476" rx="15" ry="5"/><path d="M665 476 v12 a15 5 0 0 0 30 0 v-12"/><path d="M665 482 a15 5 0 0 0 30 0"/></g>
+
+  <!-- Textes -->
+  <text x="164" y="240" text-anchor="middle" class="dca-bt">Enseignant</text>
+  <text x="164" y="266" text-anchor="middle" class="dca-bx">pose sa question</text>
+
+  <text x="404" y="240" text-anchor="middle" class="dca-bt">Doceria</text>
+  <text x="404" y="266" text-anchor="middle" class="dca-bx">app native macOS</text>
+  <text x="404" y="287" text-anchor="middle" class="dca-bx">clés au trousseau</text>
+
+  <text x="680" y="238" text-anchor="middle" class="dca-bt">ILaaS — inférence</text>
+  <text x="680" y="264" text-anchor="middle" class="dca-bx">les modèles souverains de l'ESR</text>
+  <text x="680" y="285" text-anchor="middle" class="dca-bx">llm.ilaas.fr</text>
+
+  <text x="972" y="238" text-anchor="middle" class="dca-bt">Réponse</text>
+  <text x="972" y="264" text-anchor="middle" class="dca-bx">au fil de l'eau</text>
+  <text x="972" y="285" text-anchor="middle" class="dca-bx">avec citations</text>
+
+  <text x="404" y="532" text-anchor="middle" class="dca-bt">Vos documents</text>
+  <text x="404" y="558" text-anchor="middle" class="dca-bx">PDF, DOCX, Markdown…</text>
+  <text x="404" y="579" text-anchor="middle" class="dca-bx">que vous déposez</text>
+
+  <text x="680" y="532" text-anchor="middle" class="dca-bt">OpenGateLLM — RAG</text>
+  <text x="680" y="558" text-anchor="middle" class="dca-bx">collections privées</text>
+  <text x="680" y="579" text-anchor="middle" class="dca-bx">rag-api.ilaas.fr</text>
+
+  <!-- Flèches : chat (petrol) -->
+  <path d="M272 233 H292" fill="none" stroke="#1A5A55" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-petrol)"/>
+  <path d="M512 233 H532" fill="none" stroke="#1A5A55" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-petrol)"/>
+
+  <!-- génération (orange) -->
+  <path d="M824 233 H852" fill="none" stroke="#CE7A33" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-orange)"/>
+
+  <!-- documents (gold) -->
+  <path d="M404 306 V448" fill="none" stroke="#B68F46" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-gold)"/>
+  <text x="418" y="384" text-anchor="start" class="dca-flow" fill="#9A7838">vous déposez</text>
+  <path d="M512 525 H532" fill="none" stroke="#B68F46" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-gold)"/>
+  <path d="M680 452 V310" fill="none" stroke="#B68F46" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dca-gold)"/>
+  <text x="694" y="384" text-anchor="start" class="dca-flow" fill="#9A7838">contexte (RAG)</text>
+
+  <!-- réponse renvoyée (petrol, coude) -->
+  <path d="M972 306 V652 H164 V310" fill="none" stroke="#1A5A55" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#dca-petrol)"/>
+  <text x="568" y="642" text-anchor="middle" class="dca-flow" fill="#1A5A55">la réponse vous revient, avec ses citations</text>
+
+  <!-- Légende -->
+  <line x1="56" y1="694" x2="88" y2="694" stroke="#1A5A55" stroke-width="5" stroke-linecap="round"/>
+  <text x="96" y="699" class="dca-leg">Votre question et la réponse, portées par l'app native — vos clés restent au trousseau du système.</text>
+  <line x1="56" y1="722" x2="88" y2="722" stroke="#B68F46" stroke-width="5" stroke-linecap="round"/>
+  <text x="96" y="727" class="dca-leg">Option RAG : vos documents, indexés en collections privées dans le périmètre ESR, fournissent un contexte cité.</text>
+  <line x1="56" y1="750" x2="88" y2="750" stroke="#CE7A33" stroke-width="5" stroke-linecap="round"/>
+  <text x="96" y="755" class="dca-leg">Génération par un modèle hébergé par l'ESR (ILaaS) — jamais un cloud tiers, aucune télémétrie.</text>
+</svg>

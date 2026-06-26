@@ -153,3 +153,21 @@ code{background:var(--gold-soft);color:var(--petrol-ink);padding:.1rem .4rem;bor
 #lightbox img{max-width:95vw;max-height:90vh;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
 #lightbox-close{position:absolute;top:16px;right:24px;width:42px;height:42px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:26px;line-height:1;border-radius:50%;cursor:pointer}
 #lightbox-close:hover{background:rgba(255,255,255,.22)}
+
+/* Schémas (SVG) */
+.diagram{margin:0 auto;max-width:980px}
+.diagram-img{width:100%;display:block;border:1px solid var(--line);border-radius:16px;background:#F7F2E7;box-shadow:0 22px 50px -30px rgba(17,48,46,.45);cursor:zoom-in}
+.band-deep .diagram-img{border-color:rgba(255,255,255,.14)}
+.diagram figcaption{text-align:center;color:var(--muted);font-family:var(--serif);font-style:italic;font-size:.95rem;margin-top:14px}
+.band-deep .diagram figcaption{color:#9FB6B0}
+.band-paper .feature{background:var(--surface)}
+
+/* Présentation : « en clair » */
+.plain-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#E7F0ED;color:var(--petrol);font-size:1.2rem;margin-bottom:14px}
+
+/* Feuille de route (sur bande profonde) */
+.roadmap-feature h3{font-size:1.45rem;font-weight:600;margin:0 0 .6rem;color:#F4EFE6}
+.roadmap-feature p{color:#CFDAD5;font-size:1.03rem;margin:0}
+.roadmap-pill{display:inline-block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#11302E;background:#D8B66A;border-radius:30px;padding:.25rem .7rem;margin-bottom:.8rem}
+.btn-light{background:transparent;border:1px solid rgba(231,237,234,.45);color:#F4EFE6}
+.btn-light:hover{background:rgba(231,237,234,.1);border-color:#E7EDEA;color:#fff}

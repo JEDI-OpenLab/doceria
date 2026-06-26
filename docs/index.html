@@ -34,10 +34,11 @@
       </button>
       <div class="collapse navbar-collapse" id="nav">
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+          <li class="nav-item"><a class="nav-link" href="#presentation">Présentation</a></li>
           <li class="nav-item"><a class="nav-link" href="#fonctionnalites">Fonctionnalités</a></li>
           <li class="nav-item"><a class="nav-link" href="#guide">Mode d'emploi</a></li>
           <li class="nav-item"><a class="nav-link" href="#souverainete">Souveraineté</a></li>
-          <li class="nav-item"><a class="nav-link" href="#limites">Transparence</a></li>
+          <li class="nav-item"><a class="nav-link" href="#roadmap">Feuille de route</a></li>
           <li class="nav-item"><a class="nav-link" href="#installer">Installer</a></li>
           <li class="nav-item ms-lg-2"><a class="nav-link nav-gh" href="https://github.com/JEDI-OpenLab/doceria" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a></li>
           <li class="nav-item"><a class="nav-link" href="https://jedi-openlab.github.io/jedi/" target="_blank" rel="noopener">JEDI-OpenLab <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
@@ -125,6 +126,55 @@
             prolongée par l'<strong>IA</strong> et par le suffixe des lieux de savoir.
           </p>
           <p class="deep-lead" style="margin:0 auto">Un atelier où l'on enseigne avec l'intelligence artificielle, à partir de ses propres documents.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Présentation : qu'est-ce que Doceria -->
+  <section id="presentation" class="band-paper">
+    <div class="container">
+      <div class="row justify-content-center text-center mb-5">
+        <div class="col-lg-9">
+          <span class="kicker">En deux mots</span>
+          <h2 class="section-serif">Doceria, c'est quoi&nbsp;?</h2>
+          <p class="section-lead">
+            Une <strong>application que vous installez sur votre Mac</strong> pour poser vos questions à une IA —
+            et, si vous le souhaitez, <strong>à partir de vos propres documents</strong> (cours, polycopiés, articles).
+            La différence&nbsp;: tout passe par l'<strong>infrastructure publique de l'enseignement supérieur</strong>
+            (ILaaS), jamais par un service américain&nbsp;; et vos clés d'accès restent protégées dans le
+            <strong>trousseau de votre Mac</strong>.
+          </p>
+        </div>
+      </div>
+
+      <figure class="diagram">
+        <img class="diagram-img" src="assets/doceria-architecture.svg"
+             alt="Schéma : l'enseignant pose une question dans Doceria (app native macOS, clés au trousseau) ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse ; en option, les documents déposés sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité ; la réponse revient avec ses citations, sans passer par un cloud tiers.">
+        <figcaption>De votre question à la réponse — en restant dans le périmètre souverain de l'ESR.</figcaption>
+      </figure>
+
+      <div class="row g-4 mt-5">
+        <div class="col-md-4">
+          <div class="feature">
+            <div class="plain-ic"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <h3>Pensée pour les enseignants</h3>
+            <p>Préparer un cours, un TD, un QCM, reformuler, corriger, vulgariser… Sans Docker, sans terminal&nbsp;: un double-clic, et c'est en français.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature">
+            <div class="plain-ic"><i class="fa-solid fa-comments"></i></div>
+            <h3>Discuter avec l'IA</h3>
+            <p>Un chat fluide avec les modèles de l'ESR. Vous choisissez le modèle, le degré de créativité et la consigne&nbsp;; l'historique reste sur votre machine.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature">
+            <div class="plain-ic"><i class="fa-solid fa-book-open-reader"></i></div>
+            <h3>Discuter avec vos documents</h3>
+            <p>Déposez vos PDF et supports&nbsp;: les réponses <strong>citent vos sources</strong>. Un mode strict ne répond qu'à partir de vos documents, ou dit «&nbsp;non trouvé&nbsp;».</p>
+          </div>
         </div>
       </div>
     </div>
@@ -405,6 +455,69 @@
     </div>
   </section>
 
+  <!-- Feuille de route -->
+  <section id="roadmap" class="band-deep">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="kicker light">La suite</span>
+        <h2 class="section-serif light">Feuille de route</h2>
+        <p class="deep-lead" style="margin:0 auto">
+          Doceria est déjà complète et utile. Voici ce qui arrive — des choix guidés par la
+          <strong>valeur pour l'enseignant</strong>, sans jamais trahir l'ADN&nbsp;: souverain, simple, en français.
+        </p>
+      </div>
+
+      <figure class="diagram">
+        <img class="diagram-img" src="assets/doceria-roadmap.svg"
+             alt="Feuille de route : aujourd'hui (chat et RAG souverain sur macOS, disponible), puis la version « v-next » de confort enseignant (menu Aide, annuler/régénérer, presets pédagogiques, rendu LaTeX, comparaison multi-modèles côte à côte, seuil et message de refus), puis le build Linux, puis l'intégration Moodle.">
+        <figcaption>D'abord la v-next «&nbsp;confort prof&nbsp;», puis Linux, puis l'intégration Moodle.</figcaption>
+      </figure>
+
+      <!-- Nouveautés en vedette -->
+      <div class="row align-items-center g-4 g-lg-5 mt-5 roadmap-feature">
+        <div class="col-lg-5">
+          <span class="roadmap-pill">v-next</span>
+          <h3>Comparer plusieurs modèles, côte à côte</h3>
+          <p>
+            Posez une question, envoyez-la <strong>en même temps à plusieurs modèles souverains</strong>&nbsp;:
+            la fenêtre se divise et vous voyez les réponses côte à côte. Vous gardez la meilleure.
+            Une option à activer (le coût est multiplié&nbsp;: il reste suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;»).
+          </p>
+        </div>
+        <div class="col-lg-7">
+          <figure class="diagram">
+            <img class="diagram-img" src="assets/doceria-multimodeles.svg"
+                 alt="Schéma de la comparaison multi-modèles : une question envoyée simultanément à deux modèles, deux réponses affichées côte à côte dans une fenêtre divisée, l'enseignant garde la meilleure ; option opt-in car le coût est multiplié par le nombre de modèles.">
+          </figure>
+        </div>
+      </div>
+
+      <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature flex-lg-row-reverse">
+        <div class="col-lg-5">
+          <span class="roadmap-pill">le différenciateur</span>
+          <h3>Du RAG sur vos cours Moodle</h3>
+          <p>
+            Doceria pourra <strong>aspirer les contenus pédagogiques de votre Moodle</strong> (Pages, Étiquettes,
+            Ressources…) via ses web services, et les indexer dans une collection privée — <strong>sans aucune
+            donnée personnelle d'étudiant</strong>. Votre RAG, nourri par votre propre cours, sans copier-coller.
+          </p>
+        </div>
+        <div class="col-lg-7">
+          <figure class="diagram">
+            <img class="diagram-img" src="assets/doceria-moodle.svg"
+                 alt="Schéma de l'intégration Moodle : Doceria interroge Moodle en lecture seule via les web services REST (jeton dédié), n'extrait que des contenus pédagogiques, les met en forme en Markdown après revue humaine, et les indexe dans une collection privée OpenGateLLM qui enrichit le RAG — sans données personnelles.">
+          </figure>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <a class="btn btn-light btn-lg" href="https://github.com/JEDI-OpenLab/doceria/blob/main/docs/ROADMAP-V2.md" target="_blank" rel="noopener">
+          Lire la feuille de route détaillée <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- Installer -->
   <section id="installer" class="band-paper">
     <div class="container">
@@ -498,7 +611,7 @@
       if (!lb || !img) return;
       const open = (src, alt) => { img.src = src; img.alt = alt || ''; lb.hidden = false; document.body.style.overflow = 'hidden'; };
       const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; };
-      document.querySelectorAll('.shot-img').forEach((el) => {
+      document.querySelectorAll('.shot-img, .diagram-img').forEach((el) => {
         el.style.cursor = 'zoom-in';
         el.addEventListener('click', () => open(el.currentSrc || el.src, el.alt));
       });

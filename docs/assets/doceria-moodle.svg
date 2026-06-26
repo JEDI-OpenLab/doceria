@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dmo-title dmo-desc">
+  <title id="dmo-title">Nourrir votre RAG avec vos cours Moodle</title>
+  <desc id="dmo-desc">Chantier à venir, inspiré du POC Learnix : Doceria interroge Moodle via ses web services REST en lecture seule (jeton dédié au trousseau), n'extrait que des contenus pédagogiques (Pages, Étiquettes, Ressources, Books), les met en forme en Markdown hiérarchisé, vous les fait valider, puis les indexe dans une collection privée OpenGateLLM qui enrichit votre RAG — sans aucune donnée personnelle d'étudiant.</desc>
+  <defs>
+    <marker id="dmo-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
+    <marker id="dmo-gold" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#B68F46"/></marker>
+    <filter id="dmo-shadow" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#11302E" flood-opacity=".14"/></filter>
+    <style>
+      .dmo-title{font:700 31px Georgia,"Times New Roman",serif;fill:#11302E}
+      .dmo-sub{font:400 16px Arial,sans-serif;fill:#5F6B64}
+      .dmo-zone{font:700 13px Arial,sans-serif;letter-spacing:.08em}
+      .dmo-bt{font:700 20px Arial,sans-serif;fill:#11302E}
+      .dmo-bx{font:400 14.5px Arial,sans-serif;fill:#4B5751}
+      .dmo-flow{font:700 13px Arial,sans-serif}
+      .dmo-note{font:400 15px Arial,sans-serif;fill:#11302E}
+      .dmo-foot{font:400 14px Arial,sans-serif;fill:#5F6B64}
+      .dmo-ic{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="560" rx="28" fill="#F7F2E7"/>
+  <text x="640" y="54" text-anchor="middle" class="dmo-title">Nourrir votre RAG avec vos cours Moodle</text>
+  <text x="640" y="83" text-anchor="middle" class="dmo-sub">Doceria extrait les contenus pédagogiques via les web services REST de Moodle — sans données personnelles — et les indexe en collection privée.</text>
+
+  <!-- Zones -->
+  <text x="56" y="142" class="dmo-zone" fill="#B68F46">VOTRE MOODLE</text>
+  <text x="356" y="142" class="dmo-zone" fill="#1A5A55">DOCERIA · EN LECTURE SEULE</text>
+  <text x="1012" y="142" class="dmo-zone" fill="#CE7A33">VOTRE RAG ESR</text>
+
+  <!-- Boîtes -->
+  <g filter="url(#dmo-shadow)">
+    <rect x="56" y="156" width="236" height="150" rx="12" fill="#F2E7CC" stroke="#B68F46" stroke-width="3"/>
+    <rect x="356" y="156" width="264" height="150" rx="12" fill="#E4EFEA" stroke="#1A5A55" stroke-width="3"/>
+    <rect x="684" y="156" width="264" height="150" rx="12" fill="#FBF7EF" stroke="#1A5A55" stroke-width="3"/>
+    <rect x="1012" y="156" width="212" height="150" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3"/>
+  </g>
+
+  <!-- Icônes -->
+  <g class="dmo-ic" stroke="#B68F46"><path d="M158 188 L174 181 L190 188 L174 195 Z"/><path d="M164 191 L164 200 Q174 206 184 200 L184 191"/><line x1="190" y1="188" x2="190" y2="198"/></g>
+  <g class="dmo-ic" stroke="#1A5A55"><path d="M474 184 a13 13 0 0 1 22 -4"/><path d="M496 172 l0 9 l-9 0"/><path d="M498 196 a13 13 0 0 1 -22 4"/><path d="M476 208 l0 -9 l9 0"/></g>
+  <g class="dmo-ic" stroke="#1A5A55"><circle cx="816" cy="190" r="13"/><path d="M809 190 l5 5 l9 -10"/></g>
+  <g class="dmo-ic" stroke="#CE7A33"><ellipse cx="1118" cy="184" rx="15" ry="5"/><path d="M1103 184 v12 a15 5 0 0 0 30 0 v-12"/><path d="M1103 190 a15 5 0 0 0 30 0"/></g>
+
+  <!-- Textes -->
+  <text x="174" y="234" text-anchor="middle" class="dmo-bt">Moodle</text>
+  <text x="174" y="260" text-anchor="middle" class="dmo-bx">cours · Pages · Étiquettes</text>
+  <text x="174" y="281" text-anchor="middle" class="dmo-bx">Ressources · Books</text>
+
+  <text x="488" y="234" text-anchor="middle" class="dmo-bt">Connecteur</text>
+  <text x="488" y="260" text-anchor="middle" class="dmo-bx">web services REST</text>
+  <text x="488" y="281" text-anchor="middle" class="dmo-bx">jeton dédié au trousseau</text>
+
+  <text x="816" y="234" text-anchor="middle" class="dmo-bt">Markdown + revue</text>
+  <text x="816" y="260" text-anchor="middle" class="dmo-bx">mise en forme hiérarchisée</text>
+  <text x="816" y="281" text-anchor="middle" class="dmo-bx">vous validez avant l'envoi</text>
+
+  <text x="1118" y="230" text-anchor="middle" class="dmo-bt">Collection</text>
+  <text x="1118" y="252" text-anchor="middle" class="dmo-bt">privée</text>
+  <text x="1118" y="281" text-anchor="middle" class="dmo-bx">indexée · citations</text>
+
+  <!-- Flèches -->
+  <path d="M292 222 H352" fill="none" stroke="#B68F46" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dmo-gold)"/>
+  <text x="322" y="208" text-anchor="middle" class="dmo-flow" fill="#9A7838">lecture</text>
+  <path d="M620 222 H680" fill="none" stroke="#1A5A55" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dmo-petrol)"/>
+  <text x="650" y="208" text-anchor="middle" class="dmo-flow" fill="#1A5A55">extraction</text>
+  <path d="M948 222 H1008" fill="none" stroke="#1A5A55" stroke-width="4.5" stroke-linecap="round" marker-end="url(#dmo-petrol)"/>
+  <text x="978" y="208" text-anchor="middle" class="dmo-flow" fill="#1A5A55">import</text>
+
+  <!-- Callout : sans données personnelles -->
+  <rect x="56" y="372" width="1168" height="64" rx="14" fill="#E4EFEA" stroke="#1A5A55" stroke-width="2.5"/>
+  <g class="dmo-ic" stroke="#1A5A55" transform="translate(0,2)"><path d="M96 388 l18 -7 l18 7 v10 c0 11 -8 18 -18 22 c-10 -4 -18 -11 -18 -22 z"/><path d="M106 404 l5 5 l10 -11"/></g>
+  <text x="150" y="402" class="dmo-note"><tspan font-weight="700">Liste blanche — contenus pédagogiques uniquement.</tspan> Ni notes, ni inscriptions,</text>
+  <text x="150" y="424" class="dmo-note">ni messages : <tspan font-weight="700">aucune donnée personnelle d'étudiant</tspan> n'est extraite ni indexée.</text>
+
+  <!-- Note de bas -->
+  <text x="640" y="492" text-anchor="middle" class="dmo-foot">Inspiré du POC Learnix · l'administrateur Moodle active les web services et fournit un jeton dédié, révocable.</text>
+</svg>
