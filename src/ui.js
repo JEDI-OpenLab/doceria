@@ -158,9 +158,10 @@ export function uploadDone(text, isError) {
   t.classList.remove('busy');
   t.classList.toggle('err', !!isError);
   $('uploadToastText').textContent = text;
-  $('uploadToastClose').hidden = !isError;
+  $('uploadToastClose').hidden = false; // ✕ visible dès que c'est fini (succès comme erreur)
   t.hidden = false;
   if (uploadHideTimer) { clearTimeout(uploadHideTimer); uploadHideTimer = null; }
+  // En cas de succès, fermeture automatique ; en cas d'erreur, on laisse l'utilisateur fermer.
   if (!isError) uploadHideTimer = setTimeout(() => { t.hidden = true; }, 4500);
 }
 
