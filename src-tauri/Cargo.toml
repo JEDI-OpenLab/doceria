@@ -1,7 +1,7 @@
 [package]
 name = "doceria"
 # Schéma de version : AAAAMMJJ.ii.0 (date · itération du jour · 0). Doit rester du semver valide.
-version = "20260626.2.0"
+version = "20260626.7.0"
 description = "Doceria — Enseigner avec l'IA. Coquille native (Tauri) du portail ILaaS."
 authors = ["JEDI-OpenLab"]
 license = ""

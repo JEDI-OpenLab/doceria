@@ -1,72 +1,74 @@
 :root{
-  /* ── Atelier (clair) — papier chaud, pétrole + or ── */
-  --bg:#EEE7D9;
-  --surface:#FBF7EF;
-  --surface-2:#F4EEE2;
-  --ink:#20262B;
-  --muted:#6F6A5F;
-  --faint:#9A9384;
-  --line:#E4DBCB;
-  --line-strong:#D2C7B2;
-  --accent:#1A5A55;
-  --accent-ink:#0C3A36;
-  --accent-soft:#E3EEEB;
-  --gold:#BE9A55;
-  --gold-soft:#F0E6CF;
-  --gold-ink:#7C6326;
-  --warn:#C26A2C;
-  --warn-soft:#F6E7D6;
-  --warn-ink:#7A3F16;
-  --warn-line:#E6C9A8;
-  --ok:#2E7D5B;
-  --bar:#11302E;
-  --bar-text:#C2D0CC;
-  --bar-strong:#F4EFE6;
-  --bar-faint:#3E5A56;
-  --bar-endpoint:#8FB3AD;
-  --code-bg:#EBE3D3;
-  --code-text:#5A5346;
-  --code-block-bg:#15211F;
-  --code-block-text:#E4EAE6;
-  --tooltip-bg:#18302D;
-  --tooltip-text:#ECEFEA;
-  --panel-bg:rgba(251,247,239,0.72);
+  /* ── Apple « Podcasts » (clair) — gris système macOS, accent violet, rouge système ── */
+  --bg:#F2F2F7;
+  --surface:#FFFFFF;
+  --surface-2:#ECECF0;
+  --ink:#1D1D1F;
+  --muted:#6E6E73;
+  --faint:#8A8A8E;
+  --line:#E2E2E6;
+  --line-strong:#C9C9CE;
+  --accent:#0C6065;
+  --accent-ink:#084B4F;
+  --accent-soft:#E1EEEE;
+  --on-accent:#FFFFFF;
+  --gold:#8A8A8E;
+  --gold-soft:#ECECF0;
+  --gold-ink:#6E6E73;
+  --warn:#D70015;
+  --warn-soft:#FBE9EB;
+  --warn-ink:#A1000F;
+  --warn-line:#F0C8CC;
+  --ok:#248A3D;
+  --bar:#1C1C1E;
+  --bar-text:#A8A8AE;
+  --bar-strong:#FFFFFF;
+  --bar-faint:#3A3A3C;
+  --bar-endpoint:#8E8E93;
+  --code-bg:#ECECF0;
+  --code-text:#48484C;
+  --code-block-bg:#1C1C1E;
+  --code-block-text:#E4E4E6;
+  --tooltip-bg:#2C2C2E;
+  --tooltip-text:#FFFFFF;
+  --panel-bg:rgba(255,255,255,0.75);
   --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 :root[data-theme="dark"]{
-  /* ── Atelier (sombre) — pétrole profond, ivoire, or ── */
-  --bg:#14201E;
-  --surface:#1B2D2A;
-  --surface-2:#213733;
-  --ink:#F1EBDE;
-  --muted:#BCC8C2;
-  --faint:#9DAFA8;
-  --line:#334B45;
-  --line-strong:#47675F;
-  --accent:#5FBCAB;
-  --accent-ink:#BFE6DD;
-  --accent-soft:#1E3A35;
-  --gold:#D6B36A;
-  --gold-soft:#2E2A1C;
-  --gold-ink:#E2C684;
-  --warn:#E0863C;
-  --warn-soft:#352519;
-  --warn-ink:#F0B57E;
-  --warn-line:#553D24;
-  --ok:#58B38A;
-  --bar:#0C1817;
-  --bar-text:#9DB0AB;
-  --bar-strong:#ECE6D8;
-  --bar-faint:#2C443F;
-  --bar-endpoint:#6FA89E;
-  --code-bg:#243733;
-  --code-text:#BFC9C4;
-  --code-block-bg:#0E1A18;
-  --code-block-text:#D7E0DB;
-  --tooltip-bg:#0A1413;
-  --tooltip-text:#E6EFEA;
-  --panel-bg:rgba(27,45,42,0.62);
+  /* ── Apple « Podcasts » (sombre) — gris système macOS, accent violet, rouge système ── */
+  --bg:#1C1C1E;
+  --surface:#2C2C2E;
+  --surface-2:#3A3A3C;
+  --ink:#FFFFFF;
+  --muted:#A8A8AE;
+  --faint:#8E8E93;
+  --line:#48484A;
+  --line-strong:#5A5A5F;
+  --accent:#0F8175;
+  --accent-ink:#57CFC1;
+  --accent-soft:#14302D;
+  --on-accent:#FFFFFF;
+  --gold:#8E8E93;
+  --gold-soft:#2C2C2E;
+  --gold-ink:#A8A8AE;
+  --warn:#FF453A;
+  --warn-soft:#3A2422;
+  --warn-ink:#FF6961;
+  --warn-line:#5A302C;
+  --ok:#30D158;
+  --bar:#161618;
+  --bar-text:#A8A8AE;
+  --bar-strong:#FFFFFF;
+  --bar-faint:#3A3A3C;
+  --bar-endpoint:#8E8E93;
+  --code-bg:#3A3A3C;
+  --code-text:#C6C6CC;
+  --code-block-bg:#141416;
+  --code-block-text:#E4E4E6;
+  --tooltip-bg:#0E0E10;
+  --tooltip-text:#FFFFFF;
+  --panel-bg:rgba(28,28,30,0.82);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -184,6 +186,8 @@ input[type=text],input[type=password],input[type=number],select,textarea{
   background:var(--surface-2);color:var(--ink);font-size:13.5px;font-family:var(--mono);
 }
 textarea{font-family:var(--sans);resize:vertical;line-height:1.45}
+/* Champs/listes désactivés : on garde le texte LISIBLE (sinon WebKit le délave). */
+input:disabled,select:disabled,textarea:disabled{opacity:1;color:var(--muted);-webkit-text-fill-color:var(--muted);background:var(--surface-2);cursor:not-allowed}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .field{margin-bottom:14px}
 .row{display:flex;gap:8px}
@@ -194,10 +198,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 button{
   font-family:var(--sans);font-size:13.5px;font-weight:600;cursor:pointer;
   border-radius:7px;border:1px solid var(--accent);padding:9px 14px;
-  background:var(--accent);color:#fff;transition:background .12s,border-color .12s;
+  background:var(--accent);color:var(--on-accent);transition:background .12s,border-color .12s;
 }
-button:hover{background:var(--accent-ink)}
-:root[data-theme="dark"] button:hover{background:var(--accent);filter:brightness(1.12)}
+button:hover{filter:brightness(0.96)}
+:root[data-theme="dark"] button:hover{filter:brightness(1.1)}
 button:disabled{opacity:.5;cursor:not-allowed}
 button.ghost{background:transparent;color:var(--accent);border-color:var(--line-strong)}
 button.ghost:hover{background:var(--accent-soft);border-color:var(--accent)}
@@ -220,11 +224,11 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .doc .clear:hover{text-decoration:underline;background:none}
 .filebtn{
   display:inline-block;cursor:pointer;
-  font-size:13px;font-weight:600;color:var(--accent);
+  font-size:13px;font-weight:600;color:var(--ink);
   border:1px solid var(--line-strong);border-radius:7px;padding:8px 12px;
   background:transparent;
 }
-.filebtn:hover{background:var(--accent-soft);border-color:var(--accent)}
+.filebtn:hover{background:var(--surface-2);border-color:var(--line-strong);color:var(--ink)}
 .filebtn input{display:none}
 
 /* Profils */
@@ -234,7 +238,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .profile-bar{display:flex;gap:6px;margin:8px 0 12px}
 .profile-bar .filebtn{flex:1;text-align:center;padding:7px 4px;font-size:12px}
 .filebtn.danger{color:var(--warn);border-color:var(--line-strong)}
-.filebtn.danger:hover{background:var(--warn-soft);border-color:var(--warn)}
+.filebtn.danger:hover{background:var(--surface-2);border-color:var(--warn);color:var(--warn)}
 .profile-editor{margin:12px 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
 .profile-editor[hidden]{display:none}
 .pf-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
@@ -253,7 +257,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .empty .big{font-size:15px;color:var(--muted);margin-bottom:6px}
 .msg{margin-bottom:22px}
 .msg .who{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:6px;font-weight:600}
-.msg.user .who{color:var(--gold-ink)}
+.msg.user .who{color:var(--muted)}
 .bubble{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
 .msg.assistant .bubble{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .bubble code{font-family:var(--mono);background:var(--code-bg);color:var(--code-text);padding:1px 5px;border-radius:4px;font-size:.9em}
@@ -288,8 +292,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .seg{font-family:var(--sans);font-size:12px;font-weight:600;line-height:1;color:var(--muted);background:transparent;border:0;border-radius:0;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
 .seg + .seg{border-left:1px solid var(--line-strong)}
 .seg:hover{background:var(--surface);color:var(--accent)}
-.seg.active{background:var(--accent);color:#fff}
-.seg.active:hover{background:var(--accent);color:#fff}
+.seg.active{background:var(--accent);color:var(--on-accent)}
+.seg.active:hover{background:var(--accent);color:var(--on-accent)}
 
 /* Synchro dossier ↔ collection */
 /* Visibilité « pas de collection active » via classe (n'entre pas en conflit avec le
@@ -308,7 +312,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .doc-row-del:hover{background:var(--warn);color:#fff;border-color:var(--warn)}
 
 /* Glisser-déposer de fichiers (overlay affiché pendant le survol d'un drag) */
-#dropOverlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(12,58,54,.30);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#dropOverlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(18,18,20,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 body.dragging #dropOverlay{display:flex}
 .drop-card{background:var(--surface);color:var(--accent-ink);border:2px dashed var(--accent);border-radius:14px;padding:22px 30px;font-weight:600;font-size:15px;max-width:80%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.28)}
 .drop-ic{margin-right:8px;color:var(--accent)}
