@@ -117,6 +117,18 @@ function hydrateGen() {
   $('ragAutoSync').checked = state.ragAutoSync;
 }
 
+// Modèle de chat : met à jour l'état et synchronise les deux sélecteurs (rail + composeur).
+function setModel(value) {
+  if (!value) return;
+  state.model = value;
+  const ms = $('modelSelect');
+  if (ms) ms.value = value;
+  const cs = $('chatModelSelect');
+  if (cs) cs.value = value;
+  ui.setConsoleModel(value);
+  saveSettings();
+}
+
 function refreshConversation() {
   ui.renderConversationList(convHandlers);
   ui.renderThread(currentConversation());
@@ -298,10 +310,10 @@ async function onDeleteCollection() {
 }
 
 // Téléverse un fichier vers une collection. PDF/DOCX : extraction du texte EN LOCAL
-// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Si un PDF
-// n'a pas de couche texte (scanné), repli automatique sur l'OCR ILaaS (POST /v1/ocr).
-// Les formats texte partent en direct. `onStatus(msg)` (optionnel) remonte l'étape OCR.
-async function uploadFileSmart(collectionId, path, profileId, onStatus) {
+// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Les formats
+// texte partent en direct. Un PDF scanné (sans couche texte) n'est pas importable pour
+// l'instant (pas de modèle OCR chez ILaaS — voir roadmap).
+async function uploadFileSmart(collectionId, path, profileId) {
   const name = String(path).split(/[\\/]/).pop() || 'document';
   const ext = (name.split('.').pop() || '').toLowerCase();
   if (ext === 'pdf' || ext === 'docx') {
@@ -312,11 +324,10 @@ async function uploadFileSmart(collectionId, path, profileId, onStatus) {
     try {
       text = (await readDocument(file)).text;
     } catch (e) {
-      // Pas de texte extractible. Pour un PDF (scanné), on tente l'OCR côté ILaaS.
-      if (ext !== 'pdf') throw e;
-      if (onStatus) onStatus('OCR de ' + name + '… (peut prendre un moment)');
-      text = (await ragApi.ocr(path, profileId)).trim();
-      if (!text) throw new Error('OCR : aucun texte reconnu dans ce PDF.');
+      if (ext === 'pdf') {
+        throw new Error('PDF scanné « ' + name + ' » : aucun texte extractible (OCR pas encore disponible).');
+      }
+      throw e;
     }
     const mdName = name.replace(/\.(pdf|docx)$/i, '') + '.md';
     return await ragApi.uploadText(collectionId, mdName, text, profileId);
@@ -340,10 +351,7 @@ async function uploadPaths(paths) {
     ui.uploadBusy(msg + '…');
     $('ragStatus').textContent = msg + '…';
     try {
-      await uploadFileSmart(cid, paths[i], undefined, (m) => {
-        ui.uploadBusy(m);
-        $('ragStatus').textContent = m;
-      });
+      await uploadFileSmart(cid, paths[i]);
       ok++;
     } catch (e) {
       fail++;
@@ -1429,12 +1437,9 @@ function wireEvents() {
   $('usageRefresh').addEventListener('click', loadUsage);
   $('uploadToastClose').addEventListener('click', () => { $('uploadToast').hidden = true; });
 
-  // Génération
-  $('modelSelect').addEventListener('change', (e) => {
-    state.model = e.target.value;
-    ui.setConsoleModel(state.model);
-    saveSettings();
-  });
+  // Génération — modèle : deux sélecteurs synchronisés (rail « Modèle » + composeur du chat).
+  $('modelSelect').addEventListener('change', (e) => setModel(e.target.value));
+  $('chatModelSelect').addEventListener('change', (e) => setModel(e.target.value));
   $('temp').addEventListener('input', (e) => {
     state.temp = parseFloat(e.target.value);
     $('tempVal').textContent = state.temp.toFixed(2);

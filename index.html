@@ -41,6 +41,7 @@
       </div>
       <div class="composer">
         <div class="composer-tools">
+          <select id="chatModelSelect" class="chat-model" aria-label="Modèle interrogé" title="Modèle interrogé" disabled><option value="" disabled selected>— modèle —</option></select>
           <label class="ragtoggle"><input type="checkbox" id="useLibrary" disabled> Utiliser la bibliothèque (RAG)</label>
           <button class="help up" type="button" aria-label="Si coché, chaque question recherche dans la collection active et cite les passages utilisés sous la réponse.">?<span class="help-bubble" aria-hidden="true">Si coché, chaque question recherche dans la <strong>collection active</strong> et cite les passages utilisés sous la réponse.</span></button>
           <span class="ragmode" id="ragModeGroup" hidden>

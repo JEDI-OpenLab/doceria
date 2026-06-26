@@ -269,7 +269,10 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .composer button.stop{background:var(--warn);border-color:var(--warn)}
 .composer button.stop:hover{background:var(--warn);filter:brightness(.9)}
 .composer .meta{max-width:760px;margin:8px auto 0;font-size:11.5px;color:var(--faint);font-family:var(--mono)}
-.composer-tools{max-width:760px;margin:0 auto 8px;display:flex;align-items:center;gap:4px}
+.composer-tools{max-width:760px;margin:0 auto 8px;display:flex;align-items:center;gap:8px}
+/* Sélecteur de modèle dans le composeur (compact, à gauche des outils) */
+.composer-tools .chat-model{flex:0 0 auto;width:auto;max-width:230px;padding:5px 9px;font-size:12px;border-radius:7px}
+.composer-tools .chat-model:disabled{opacity:.55;cursor:not-allowed}
 .ragtoggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
 .ragtoggle input{width:auto;margin:0}
 .ragtoggle input:disabled{cursor:not-allowed;opacity:.5}

@@ -20,17 +20,32 @@ export function setConsoleModel(m) {
 
 /* ---------- Modèles ---------- */
 export function fillModels(list, current) {
-  const sel = $('modelSelect');
-  sel.innerHTML = '';
-  list.forEach((id) => {
-    const o = document.createElement('option');
-    o.value = id;
-    o.textContent = id;
-    sel.appendChild(o);
-  });
-  sel.disabled = false;
-  sel.value = current && list.includes(current) ? current : list[0];
-  setConsoleModel(sel.value);
+  const value = current && list.includes(current) ? current : list[0] || '';
+  // Deux sélecteurs synchronisés : celui du rail (« Modèle ») et celui du chat (composeur).
+  for (const id of ['modelSelect', 'chatModelSelect']) {
+    const sel = $(id);
+    if (!sel) continue;
+    sel.innerHTML = '';
+    if (!list.length) {
+      const o = document.createElement('option');
+      o.value = '';
+      o.textContent = '— modèles non chargés —';
+      o.disabled = true;
+      o.selected = true;
+      sel.appendChild(o);
+      sel.disabled = true;
+      continue;
+    }
+    list.forEach((m) => {
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = m;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+    sel.value = value;
+  }
+  setConsoleModel(value);
 }
 
 export function enableChat(on) {
