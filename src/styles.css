@@ -306,6 +306,15 @@ body.dragging #dropOverlay{display:flex}
 .drop-card{background:var(--surface);color:var(--accent-ink);border:2px dashed var(--accent);border-radius:14px;padding:22px 30px;font-weight:600;font-size:15px;max-width:80%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.28)}
 .drop-ic{margin-right:8px;color:var(--accent)}
 
+/* Toast d'upload (progression / résultat, toujours visible) */
+#uploadToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9997;display:flex;align-items:center;gap:10px;max-width:90%;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:12px;padding:10px 14px;box-shadow:0 14px 44px rgba(0,0,0,.24);font-size:13px}
+#uploadToast[hidden]{display:none}
+#uploadToast.err{border-color:var(--warn);background:var(--warn-soft);color:var(--warn-ink)}
+#uploadToast .ut-spin{flex:0 0 auto;width:14px;height:14px;border-radius:50%;border:2px solid var(--line-strong);border-top-color:var(--accent);animation:ut-spin .7s linear infinite}
+#uploadToast:not(.busy) .ut-spin{display:none}
+#uploadToast .filebtn{padding:4px 9px}
+@keyframes ut-spin{to{transform:rotate(360deg)}}
+
 /* Bandeau « mise à jour disponible » (toast en bas de fenêtre) */
 #updateBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px 9px 14px;box-shadow:0 14px 44px rgba(0,0,0,.24);font-size:13px;max-width:90%}
 #updateBar[hidden]{display:none}

@@ -297,9 +297,27 @@ async function onDeleteCollection() {
   }
 }
 
+// Téléverse un fichier vers une collection. PDF/DOCX : extraction du texte EN LOCAL
+// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Les formats
+// texte partent en direct. Lève si un PDF est scanné (aucun texte → relève de l'OCR).
+async function uploadFileSmart(collectionId, path, profileId) {
+  const name = String(path).split(/[\\/]/).pop() || 'document';
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf' || ext === 'docx') {
+    const raw = await ragApi.readFile(path); // IPC binaire (ArrayBuffer ou Uint8Array)
+    const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
+    const file = new File([part], name);
+    const { text } = await readDocument(file);
+    const mdName = name.replace(/\.(pdf|docx)$/i, '') + '.md';
+    return await ragApi.uploadText(collectionId, mdName, text, profileId);
+  }
+  return await ragApi.uploadDocument(collectionId, path, null, profileId);
+}
+
 async function uploadPaths(paths) {
   if (state.activeCollectionId == null) {
     $('ragStatus').textContent = 'Sélectionne ou crée une collection d’abord.';
+    ui.uploadDone('Choisis ou crée une collection d’abord.', true);
     return;
   }
   const cid = Number(state.activeCollectionId);
@@ -307,17 +325,21 @@ async function uploadPaths(paths) {
   let fail = 0;
   let lastErr = '';
   for (let i = 0; i < paths.length; i++) {
-    $('ragStatus').textContent = 'Téléversement ' + (i + 1) + '/' + paths.length + '…';
+    const name = String(paths[i]).split(/[\\/]/).pop();
+    const msg = 'Ajout ' + (i + 1) + '/' + paths.length + ' — ' + name;
+    ui.uploadBusy(msg + '…');
+    $('ragStatus').textContent = msg + '…';
     try {
-      await ragApi.uploadDocument(cid, paths[i]);
+      await uploadFileSmart(cid, paths[i]);
       ok++;
     } catch (e) {
       fail++;
       lastErr = describeError(e);
     }
   }
-  $('ragStatus').textContent =
-    '✓ ' + ok + ' ajouté(s)' + (fail ? ', ' + fail + ' échec(s) [coll #' + cid + '] — ' + lastErr : '') + '.';
+  const summary = ok + ' ajouté(s)' + (fail ? ', ' + fail + ' échec(s) — ' + lastErr : '');
+  $('ragStatus').textContent = (fail ? '✗ ' : '✓ ') + summary + '.';
+  ui.uploadDone((fail ? '✗ ' : '✓ ') + summary, fail > 0);
   await loadCollections(); // rafraîchit le nombre de documents
 }
 
@@ -458,7 +480,7 @@ async function syncCollection(collectionId, profileId, opts = {}) {
       if (changed && known.documentId != null) {
         try { await ragApi.deleteDocument(Number(known.documentId), profileId); } catch { /* ignore */ }
       }
-      const created = await ragApi.uploadDocument(collectionId, e.path, null, profileId);
+      const created = await uploadFileSmart(collectionId, e.path, profileId);
       const docId = extractDocId(created);
       files[e.path] = { documentId: docId, size: e.size, mtime: e.mtime };
       persist();
@@ -1392,6 +1414,7 @@ function wireEvents() {
   });
   $('docListToggle').addEventListener('click', onToggleDocList);
   $('usageRefresh').addEventListener('click', loadUsage);
+  $('uploadToastClose').addEventListener('click', () => { $('uploadToast').hidden = true; });
 
   // Génération
   $('modelSelect').addEventListener('change', (e) => {

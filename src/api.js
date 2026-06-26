@@ -45,6 +45,11 @@ export const ragApi = {
   // l'utilisateur change de profil pendant une tâche de fond.
   uploadDocument: (collectionId, filePath, name, profileId) =>
     invoke('rag_upload_document', { profileId: profileId || state.activeId, collectionId, filePath, name: name || null }),
+  // Téléverse du texte déjà extrait (PDF/DOCX → texte local → .md), contourne le parser ILaaS.
+  uploadText: (collectionId, name, content, profileId) =>
+    invoke('rag_upload_text', { profileId: profileId || state.activeId, collectionId, name, content }),
+  // Octets bruts d'un fichier local (ArrayBuffer) → pour l'extraction locale PDF/DOCX.
+  readFile: (path) => invoke('read_file', { path }),
   getDocument: (documentId) => invoke('rag_get_document', { profileId: state.activeId, documentId }),
   listDocuments: (collectionId) => invoke('rag_list_documents', { profileId: state.activeId, collectionId }),
   deleteDocument: (documentId, profileId) =>

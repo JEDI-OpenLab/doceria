@@ -33,6 +33,8 @@ pub fn run() {
       rag::rag_create_collection,
       rag::rag_delete_collection,
       rag::rag_upload_document,
+      rag::rag_upload_text,
+      rag::read_file,
       rag::rag_get_document,
       rag::rag_delete_document,
       rag::rag_list_documents,

@@ -251,6 +251,12 @@
     <div class="drop-card"><span class="drop-ic">⬇︎</span> Déposez vos fichiers pour les ajouter à la collection active</div>
   </div>
 
+  <div id="uploadToast" hidden role="status" aria-live="polite">
+    <span class="ut-spin" aria-hidden="true"></span>
+    <span id="uploadToastText"></span>
+    <button id="uploadToastClose" type="button" class="filebtn" aria-label="Fermer" hidden>✕</button>
+  </div>
+
   <div id="updateBar" hidden role="status">
     <span class="update-ic">✨</span>
     <span id="updateText"></span>

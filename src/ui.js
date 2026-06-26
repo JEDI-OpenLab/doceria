@@ -139,6 +139,31 @@ export function renderUsage(parts) {
   box.hidden = false;
 }
 
+// Toast d'upload : visible en permanence (même rail replié / glisser-déposer). État busy
+// (spinner) → done (✓ auto-disparaît) ou erreur (✗ reste, croix pour fermer).
+let uploadHideTimer = null;
+export function uploadBusy(text) {
+  const t = $('uploadToast');
+  if (!t) return;
+  if (uploadHideTimer) { clearTimeout(uploadHideTimer); uploadHideTimer = null; }
+  t.classList.add('busy');
+  t.classList.remove('err');
+  $('uploadToastText').textContent = text;
+  $('uploadToastClose').hidden = true;
+  t.hidden = false;
+}
+export function uploadDone(text, isError) {
+  const t = $('uploadToast');
+  if (!t) return;
+  t.classList.remove('busy');
+  t.classList.toggle('err', !!isError);
+  $('uploadToastText').textContent = text;
+  $('uploadToastClose').hidden = !isError;
+  t.hidden = false;
+  if (uploadHideTimer) { clearTimeout(uploadHideTimer); uploadHideTimer = null; }
+  if (!isError) uploadHideTimer = setTimeout(() => { t.hidden = true; }, 4500);
+}
+
 // Liste des documents d'une collection, avec un bouton de suppression par ligne.
 // `onDelete(doc, rowElement)` est appelé au clic sur la croix.
 export function renderDocuments(docs, onDelete) {

@@ -188,6 +188,47 @@ pub async fn rag_upload_document(
     json_or_error(res).await
 }
 
+/// Lit un fichier local et renvoie ses octets bruts (IPC binaire efficace). Sert à extraire
+/// le texte des PDF/DOCX côté frontend, pour les envoyer ensuite en texte (contourne le
+/// parser PDF d'ILaaS, instable → HTTP 502).
+#[tauri::command]
+pub fn read_file(path: String) -> Result<tauri::ipc::Response, String> {
+    std::fs::read(&path)
+        .map(tauri::ipc::Response::new)
+        .map_err(|e| format!("Lecture du fichier : {e}"))
+}
+
+/// Téléverse un document à partir de TEXTE (et non d'un fichier disque) : utilisé après
+/// extraction locale (PDF/DOCX → texte). Envoyé en `text/markdown`, qui passe côté ILaaS.
+#[tauri::command]
+pub async fn rag_upload_text(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    collection_id: i64,
+    name: String,
+    content: String,
+) -> Result<Value, String> {
+    let (base, key) = settings::resolve(&settings, &profile_id, "rag")?;
+    let url = format!("{}/documents", normalize_base(&base));
+    let part = reqwest::multipart::Part::text(content)
+        .file_name(name.clone())
+        .mime_str("text/markdown")
+        .map_err(|e| format!("Type MIME invalide : {e}"))?;
+    let form = reqwest::multipart::Form::new()
+        .text("collection_id", collection_id.to_string())
+        .text("collection", collection_id.to_string())
+        .text("name", name)
+        .part("file", part);
+    let res = client()?
+        .post(&url)
+        .bearer_auth(key.trim())
+        .multipart(form)
+        .send()
+        .await
+        .map_err(send_error)?;
+    json_or_error(res).await
+}
+
 /// Récupère un document (GET /documents/{id}) — pour résoudre son nom dans les citations.
 #[tauri::command]
 pub async fn rag_get_document(
