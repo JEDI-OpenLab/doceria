@@ -102,6 +102,26 @@ l'utilisateur.)*
 3. **Build Linux** — voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
+### v.9 — petits correctifs & polish (rapides, avant/pendant Moodle)
+- **Première ouverture macOS : commande Terminal en évidence.** Sur macOS récent, « Ouvrir
+  quand même » n'apparaît **pas** pour le message « endommagé » (quarantaine posée sur une app
+  non signée téléchargée). → **Remonter en tête** du LISEZ-MOI du `.dmg` **ET la faire figurer
+  sur le site web, dans la rubrique « Installer »**, la commande :
+  `xattr -dr com.apple.quarantine /Applications/Doceria.app`
+  (c'est le chemin réel et fiable sur macOS récent). *(Le vrai correctif — la **notarisation
+  Apple** — reste « plus tard », §5.4.)*
+- **Menu natif : entrée « Vérifier les mises à jour… ».** Ajouter une entrée dans le menu
+  **Doceria**, **sous « À propos »**, qui déclenche manuellement `check_update` (déjà appelée au
+  démarrage). Effort S.
+- **Menu natif en français.** Les items prédéfinis s'affichent en **anglais** (About / Hide /
+  Quit) même sur un système français. → Passer un libellé FR aux `PredefinedMenuItem` :
+  `about(&h, Some("À propos de Doceria"), …)`, `hide(&h, Some("Masquer Doceria"))`,
+  `quit(&h, Some("Quitter Doceria"))`, etc. (ou déclarer la localisation `fr` du bundle). Effort S.
+- **Site web : alléger le menu de navigation.** La barre de nav est chargée (Présentation,
+  Fonctionnalités, Mode d'emploi, Souveraineté, Feuille de route, Installer, GitHub, JEDI-OpenLab).
+  → **Regrouper** des entrées sous un menu déroulant — p. ex. **Présentation / Fonctionnalités /
+  Mode d'emploi** sous un « Découvrir » (ou « Le produit ») — pour clarifier la lecture. Effort S.
+
 ---
 
 ## 3. Build Linux  · `should` · `M`
