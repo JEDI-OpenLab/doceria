@@ -43,7 +43,7 @@
   <text x="611" y="192" text-anchor="middle" class="drm-bt">Moodle</text>
   <text x="611" y="220" text-anchor="middle" class="drm-bx">RAG sur vos propres cours</text>
   <text x="611" y="241" text-anchor="middle" class="drm-bx">via les web services REST</text>
-  <text x="611" y="266" text-anchor="middle" class="drm-badge" fill="#B68F46">○ PROCHAIN · le différenciateur</text>
+  <text x="611" y="266" text-anchor="middle" class="drm-badge" fill="#B68F46">◐ EN COURS · le différenciateur</text>
 
   <!-- B3 Linux (ensuite) -->
   <rect x="826" y="150" width="360" height="130" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3" filter="url(#drm-shadow)"/>

@@ -7,6 +7,11 @@ dist/
 .env.local
 .env.*.local
 
+# Documentation LOCALE privée (valeurs réelles : IP, jeton, mot de passe…) — ne JAMAIS committer
+MOODLE-LOCAL.md
+*-LOCAL.md
+*.local.md
+
 # Système
 .DS_Store
 *.log
