@@ -257,7 +257,7 @@
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-feather"></i></div>
             <h3>Léger & natif</h3>
-            <p>Construit avec Tauri (Rust + webview système) : ~13&nbsp;Mo, démarrage instantané, double-clic, sans terminal.</p>
+            <p>Construit avec Tauri (Rust + webview système) : ~15&nbsp;Mo, démarrage instantané, double-clic, sans terminal.</p>
           </div>
         </div>
       </div>
@@ -316,7 +316,7 @@
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-feather"></i></div>
             <h3>Léger & vraiment natif</h3>
-            <p>Tauri (webview système + cœur Rust) plutôt qu'Electron : ~13 Mo, démarrage instantané, vibrance macOS. Et vos clés vivent dans le <strong>trousseau du système</strong>, pas dans un fichier de l'app.</p>
+            <p>Tauri (webview système + cœur Rust) plutôt qu'Electron : ~15 Mo, démarrage instantané, vibrance macOS. Et vos clés vivent dans le <strong>trousseau du système</strong>, pas dans un fichier de l'app.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-3">
@@ -580,7 +580,8 @@
       <div class="row justify-content-center mt-4">
         <div class="col-lg-9">
           <div class="install-note">
-            <p><i class="fa-solid fa-shield-halved"></i> <strong>« Ouvrir quand même » — c'est normal et sans danger.</strong> Doceria n'est pas signée par Apple (projet interne, sans compte développeur payant) : macOS demande donc une autorisation <strong>une seule fois</strong>. Faites un <strong>clic droit</strong> sur l'app → <strong>Ouvrir</strong> ; ou Réglages Système → <strong>Confidentialité et sécurité</strong> → tout en bas, <strong>« Ouvrir quand même »</strong>. <span class="muted-inline">(Si macOS dit « endommagé » : Terminal → <code>xattr -dr com.apple.quarantine /Applications/Doceria.app</code>.)</span></p>
+            <p><i class="fa-solid fa-shield-halved"></i> <strong>« Ouvrir quand même » — c'est normal et sans danger.</strong> Doceria n'est pas signée par Apple (projet interne, sans compte développeur payant) : macOS demande donc une autorisation <strong>une seule fois</strong>. Faites un <strong>clic droit</strong> sur l'app → <strong>Ouvrir</strong> ; ou Réglages Système → <strong>Confidentialité et sécurité</strong> → tout en bas, <strong>« Ouvrir quand même »</strong>.</p>
+            <p><i class="fa-solid fa-terminal"></i> <strong>Si macOS affiche « Doceria est endommagé ».</strong> C'est fréquent sur macOS récent (le bouton « Ouvrir quand même » n'apparaît alors pas). <strong>Ce n'est pas un vrai dommage</strong> : juste la « quarantaine » posée sur une app non signée téléchargée. Ouvrez le <strong>Terminal</strong> (Applications → Utilitaires), collez cette ligne — <strong>une seule fois</strong> — puis relancez Doceria :<br><code>xattr -dr com.apple.quarantine /Applications/Doceria.app</code></p>
             <p><i class="fa-solid fa-key"></i> <strong>« Toujours autoriser » l'accès au trousseau.</strong> En enregistrant votre clé ILaaS, macOS demande l'accès au trousseau : cliquez <strong>« Toujours autoriser »</strong>. C'est <strong>votre</strong> clé que Doceria range au bon endroit — le <strong>trousseau du système</strong> — plutôt que de la laisser en clair ; l'app n'accède qu'à <strong>ses propres entrées</strong>. La demande peut réapparaître après une mise à jour : c'est normal pour une app non signée (sa signature change à chaque version), <strong>ce n'est pas un signe de danger</strong>.</p>
           </div>
         </div>
@@ -600,9 +601,9 @@
           <span class="kicker">Sous le capot</span>
           <h2 class="section-serif">Stack</h2>
           <ul class="plain-list">
-            <li><strong>Tauri v2</strong> — coquille Rust + webview système (~13 Mo).</li>
+            <li><strong>Tauri v2</strong> — coquille Rust + webview système (~15 Mo).</li>
             <li><strong>Frontend</strong> — HTML/CSS/JS, sans framework lourd.</li>
-            <li><strong>API ILaaS</strong> — compatible OpenAI ; modèle de chat <code>mistral-medium-latest</code>.</li>
+            <li><strong>API ILaaS</strong> — compatible OpenAI ; <strong>plusieurs modèles souverains</strong> au choix (défaut <code>mistral-medium-latest</code>), comparables côte à côte.</li>
             <li><strong>RAG</strong> — OpenGateLLM (collections, recherche hybride, rerank, citations).</li>
           </ul>
         </div>
