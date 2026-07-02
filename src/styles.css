@@ -258,6 +258,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .course-row input{width:auto;flex:none;margin:2px 0 0;padding:0}
 .course-row span{flex:1;min-width:0;line-height:1.35}
 .course-row em{color:var(--faint);font-style:normal}
+.course-sync{flex:none;margin-left:auto;font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:1px 8px;white-space:nowrap}
 
 /* Explorateur de cours Moodle (vue centrale, couvre le chat) */
 .moodle-view{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;min-height:0}

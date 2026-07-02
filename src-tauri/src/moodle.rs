@@ -584,6 +584,7 @@ pub struct CourseFile {
     pub fileurl: String,
     pub mimetype: String,
     pub filesize: i64,
+    pub timemodified: i64, // signal de changement (synchro incrémentale, Lot 5) — sans télécharger
 }
 
 /// Markdown assemblé pour un cours + la liste de ses fichiers joints (Lot 4).
@@ -667,6 +668,7 @@ pub async fn moodle_course_markdown(
                                     fileurl: url.to_string(),
                                     mimetype: c.get("mimetype").and_then(|x| x.as_str()).unwrap_or("").to_string(),
                                     filesize: c.get("filesize").and_then(|x| x.as_i64()).unwrap_or(0),
+                                    timemodified: c.get("timemodified").and_then(|x| x.as_i64()).unwrap_or(0),
                                 });
                             }
                         }

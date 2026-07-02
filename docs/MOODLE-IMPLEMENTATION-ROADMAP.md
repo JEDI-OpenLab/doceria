@@ -365,4 +365,41 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     « Synchroniser » ajoutera le texte **+ les 2 PDF** à « Moodle · Les fondateurs… ».
   - *Fait quand :* après « Synchroniser », les PDF d'un cours sont interrogeables (texte extrait, cité) ;
     un PDF scanné ou un format non géré est ignoré proprement avec mention au bilan.
-- *(à suivre : Lot 5 — synchro incrémentale + déduplication ; Lot 6 — interrupteur « inclure les cours Moodle ».)*
+- **2026-07-02 — Lot 5 (Synchro incrémentale + déduplication) ✅.** Règle le #4 du Lot 4 : re-synchro
+  = **plus de doublons**, et bilan de ce qui a changé.
+  - **Index local** `doceria_moodle_sync_v1` (localStorage), clé `dest::mpId::courseId` →
+    `{ collectionId, textHash, textDocId, files:{ nom:{documentId, timemodified, filesize} } }`. Sur le
+    patron éprouvé de la synchro dossier (`extractDocId`, persist après chaque op). `hashString` = FNV-1a.
+  - **Rust** : `CourseFile.timemodified` ajouté (signal de changement d'un fichier **sans le télécharger**).
+  - **`onMoodleSync` incrémental** : **abandonne** si `listCollections` échoue (sinon risque de doublonner
+    une collection) ; par cours → **TEXTE** comparé par **hash** (inchangé/maj/ajout, ou retrait) ;
+    **FICHIERS** diff par nom sur **(timemodified, taille)** — *aucun téléchargement si inchangé* ; une MàJ =
+    **upload du nouveau PUIS suppression de l'ancien** (pas de perte, pas d'orphelin) ; **retraits** des
+    fichiers disparus côté Moodle. Persistance après chaque opération. Si la collection mémorisée a été
+    supprimée → repart de zéro. **Bilan détaillé** : « N cours · X ajoutés · Y mis à jour · Z inchangés ·
+    W retirés (K ignorés) ».
+  - **Badge « ✓ synchronisé »** dans l'explorateur (cours présents dans l'index, lecture locale, sans appel
+    réseau) ; **purge** de l'index dans `onDeleteCollection`.
+  - **Réponse à la question utilisateur** (« que se passe-t-il si on re-synchronise ? ») : **plus d'écrasement
+    ni de doublon** — seuls les changements sont appliqués, et le bilan dit précisément quoi.
+  - **Revue adversariale (14 agents) → 11 findings, consolidés en 6 correctifs** :
+    - *(high)* **collision de noms de fichiers** (2 fichiers de même nom dans un cours → 1 clé d'index →
+      perte de contenu + churn) → clé = **`fileurl`** (unique par fichier).
+    - *(high)* **purge non scoppée** dans `onDeleteCollection` (les ids de collection sont propres à
+      chaque profil) → exiger le préfixe `activeId::`.
+    - *(medium)* la garde du texte exigeait `textDocId != null` → **churn**/doublons si `extractDocId`
+      renvoie null → se fier au **hash seul**.
+    - *(medium)* un fichier **ignoré** était **re-téléchargé** à chaque synchro → **mémoriser le skip**
+      (timemodified+taille) dans l'index.
+    - *(medium)* orphelin possible au crash → **persister le nouvel id AVANT** de supprimer l'ancien
+      (l'index pointe toujours vers un doc réel).
+    - *(low)* `isCourseSynced` = **code mort** → supprimé ; badge affiné (exige un vrai document).
+    - **Re-revue** du code corrigé → **5 findings, tous cosmétiques** (comptage du bilan sur les
+      transitions « ignoré ↔ réel ») : le comptage add/màj/retrait se base désormais sur l'existence
+      d'un **vrai document** (plus de « retiré » fantôme, ni de « màj » pour un premier ajout). **Zéro
+      défaut fonctionnel** (pas de doublon, perte ni orphelin) sur les 2 passes. *Édge accepté* : si
+      `extractDocId` renvoie `null` sur une màj de texte (ILaaS renvoie toujours un id — cf. synchro
+      dossier), un seul orphelin possible lors d'un changement ultérieur ; le hash évite tout churn.
+  - *Fait quand :* re-synchro d'un cours inchangé = 0 doublon ; un ajout/retrait/modif côté Moodle se
+    reflète proprement ; le badge marque les cours déjà synchronisés.
+- *(à suivre : Lot 6 — interrupteur « inclure les cours Moodle » dans le chat ; puis merge + release.)*

@@ -307,6 +307,16 @@ async function onDeleteCollection() {
     const m = loadSyncMap();
     delete m[syncMapKey(deletedId)];
     saveSyncMap(m);
+    // Idem pour l'index de synchro Moodle : retire les cours pointant sur cette collection, MAIS
+    // uniquement pour le profil ILaaS actif (les ids de collection sont propres à chaque profil —
+    // un même id peut exister dans deux profils différents). La clé est « dest::mpId::courseId ».
+    const mm = loadMoodleSyncMap();
+    const prefix = state.activeId + '::';
+    let mmChanged = false;
+    for (const k of Object.keys(mm)) {
+      if (k.startsWith(prefix) && mm[k] && String(mm[k].collectionId) === String(deletedId)) { delete mm[k]; mmChanged = true; }
+    }
+    if (mmChanged) saveMoodleSyncMap(mm);
     state.activeCollectionId = null;
     await loadCollections();
     $('ragStatus').textContent = '✓ collection supprimée.';
@@ -1050,6 +1060,7 @@ let mvSelected = new Set();  // ids cochés — SOURCE DE VÉRITÉ (survit à la
 let mvCollapsed = new Set(); // catégories repliées
 let mvLoadedFor = null;      // id de la connexion dont mvCourses contient les cours
 let mvOpenFor = null;        // id de la connexion actuellement affichée (null si fermé)
+let mvSyncedSet = new Set(); // ids des cours déjà synchronisés (badge « synchronisé »)
 let moodleSyncing = false;   // synchro en cours → verrou global (bloque tout changement de profil)
 
 // Ouvre l'explorateur sur la connexion active : la sélection est initialisée depuis le
@@ -1157,6 +1168,18 @@ function mvFilteredCourses() {
 function renderMoodleView() {
   const list = $('mvList');
   list.textContent = '';
+  // Cours déjà synchronisés vers le RAG du profil ILaaS actif (pour le badge) — lecture d'index locale.
+  const dest = activeProfile() && activeProfile().id;
+  mvSyncedSet = new Set();
+  if (dest && mvOpenFor) {
+    const smap = loadMoodleSyncMap();
+    for (const c of mvCourses) {
+      const rec = smap[moodleSyncKey(dest, mvOpenFor, c.id)];
+      // « synchronisé » = au moins un VRAI document (texte ou fichier ingéré) — pas juste des « ignorés ».
+      const real = rec && (rec.textDocId != null || (rec.files && Object.values(rec.files).some((x) => x.documentId != null)));
+      if (real) mvSyncedSet.add(Number(c.id));
+    }
+  }
   const filtered = mvFilteredCourses();
   if (!filtered.length) {
     const empty = document.createElement('div');
@@ -1226,6 +1249,12 @@ function courseRow(c) {
   }
   row.appendChild(cb);
   row.appendChild(span);
+  if (mvSyncedSet.has(Number(c.id))) {
+    const tag = document.createElement('span');
+    tag.className = 'course-sync';
+    tag.textContent = '✓ synchronisé';
+    row.appendChild(tag);
+  }
   return row;
 }
 
@@ -1304,6 +1333,29 @@ function mvProgress(done, total, label) {
   }
 }
 
+/* ── Index de synchro Moodle (incrémental, Lot 5) ──────────────────────────────
+ * Clé « profilILaaS::profilMoodle::cours » → { collectionId, textHash, textDocId,
+ * files:{ nom:{documentId,timemodified,filesize} } }. Permet de ne ré-ingérer QUE ce
+ * qui a changé (ajout / mise à jour / retrait), sans jamais doublonner. */
+const MOODLE_SYNC_KEY = 'doceria_moodle_sync_v1';
+function loadMoodleSyncMap() {
+  try { return JSON.parse(localStorage.getItem(MOODLE_SYNC_KEY) || '{}') || {}; } catch { return {}; }
+}
+function saveMoodleSyncMap(m) {
+  try { localStorage.setItem(MOODLE_SYNC_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
+function moodleSyncKey(dest, mpId, courseId) { return dest + '::' + mpId + '::' + courseId; }
+
+// Hash rapide (FNV-1a 32 bits) pour détecter un changement du texte d'un cours (pas de sécurité).
+function hashString(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
 // Formats texte importables directement (décodés en UTF-8). Le HTML est détagué ; PDF/DOCX
 // passent par l'extraction locale (readDocument) ; les autres formats sont ignorés. (Le RTF est
 // exclu : c'est du balisage binaire non décodable en texte propre — revue Lot 4.)
@@ -1327,6 +1379,7 @@ async function ingestMoodleFile(collectionId, file, mpId, dest) {
   }
   const raw = await moodleApi.downloadFile(mpId, file.fileurl); // octets (ArrayBuffer/Uint8Array)
   const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
+  let created;
   if (isPdfDocx) {
     let doc;
     try {
@@ -1337,7 +1390,7 @@ async function ingestMoodleFile(collectionId, file, mpId, dest) {
       return { skipped: name + (ext === 'pdf' ? ' (PDF scanné, pas d’OCR)' : ' (illisible)') };
     }
     if (!doc.text || !doc.text.trim()) return { skipped: name + ' (aucun texte extractible)' };
-    await ragApi.uploadText(collectionId, name.replace(/\.(pdf|docx)$/i, '') + '.md', doc.text, dest);
+    created = await ragApi.uploadText(collectionId, name.replace(/\.(pdf|docx)$/i, '') + '.md', doc.text, dest);
   } else {
     let text = new TextDecoder('utf-8').decode(part);
     if (ext === 'html' || ext === 'htm') {
@@ -1345,14 +1398,16 @@ async function ingestMoodleFile(collectionId, file, mpId, dest) {
       try { text = new DOMParser().parseFromString(text, 'text/html').body.textContent || ''; } catch { /* garde le brut */ }
     }
     if (!text.trim()) return { skipped: name + ' (vide)' };
-    await ragApi.uploadText(collectionId, name, text, dest);
+    created = await ragApi.uploadText(collectionId, name, text, dest);
   }
-  return { ok: true };
+  return { ok: true, documentId: extractDocId(created) };
 }
 
-// Synchronisation (Lots 3-4) : pour chaque cours coché, ingère son TEXTE (Markdown) puis ses
-// FICHIERS joints dans une collection RAG « Moodle · <cours> » du PROFIL ILAAS ACTIF. Barre de
-// progression par cours et par fichier ; poursuit malgré un échec ponctuel et fait un bilan.
+// Synchronisation (Lots 3-5) : pour chaque cours coché, ingère TEXTE + FICHIERS dans une collection
+// RAG « Moodle · <cours> » du PROFIL ILAAS ACTIF, de façon INCRÉMENTALE (index local `moodleSyncMap`) :
+// on ne (ré)importe QUE ce qui a changé — ajout / mise à jour / retrait — sans jamais doublonner
+// (texte comparé par hash ; fichiers par timemodified+taille, sans les télécharger si inchangés).
+// Progression par cours/fichier ; poursuit malgré un échec ; bilan détaillé + badges « synchronisé ».
 async function onMoodleSync() {
   if (mvSelected.size === 0) return;
   const mp = activeMoodleProfile();
@@ -1366,17 +1421,25 @@ async function onMoodleSync() {
   const dest = ip.id; // destination RAG FIGÉE : toutes les ops ciblent ce profil, pas l'actif courant
   const ids = [...mvSelected];
   const results = [];
+  const tot = { added: 0, updated: 0, unchanged: 0, removed: 0, filesSkipped: 0 };
   setMvSyncing(true);
   try {
     mvProgress(0, ids.length, '');
-    // Collections existantes du profil, filtrées comme loadCollections (mes collections
-    // uniquement) : évite de retomber sur une collection publique homonyme d'autrui.
-    let existing = [];
+    // Collections existantes du profil (mes collections). En incrémental on NE PEUT PAS deviner
+    // sans cette liste (on risquerait de doublonner une collection) → on ABANDONNE si elle échoue.
+    let existing;
     try {
       existing = collectionsFrom(await ragApi.listCollections(dest)).filter(
         (c) => c.visibility === 'private' || (state.ragOwner && c.owner === state.ragOwner)
       );
-    } catch { existing = []; }
+    } catch (e) {
+      $('mvStatus').textContent = '✗ Impossible de lister les collections RAG (' + describeError(e) + ') — synchro annulée.';
+      return; // le finally rétablit setMvSyncing(false)
+    }
+    const collIds = new Set(existing.map((c) => String(c.id)));
+    const smap = loadMoodleSyncMap();
+    const persist = () => saveMoodleSyncMap(smap);
+
     for (let i = 0; i < ids.length; i++) {
       const courseId = ids[i];
       const known = mvCourses.find((c) => Number(c.id) === courseId);
@@ -1390,32 +1453,99 @@ async function onMoodleSync() {
           results.push({ ok: false, label, error: 'aucun contenu' });
           continue;
         }
-        // Collection cible (créée s'il y a du texte OU des fichiers).
+        // Collection cible (créée si besoin).
         const collName = 'Moodle · ' + doc.fullname;
         let coll = existing.find((c) => c.name === collName);
         if (!coll) {
-          const created = await ragApi.createCollection(collName, 'Cours Moodle importé — ' + mp.name, dest);
-          const cid = created && (created.id ?? (created.data && created.data.id));
+          const createdC = await ragApi.createCollection(collName, 'Cours Moodle importé — ' + mp.name, dest);
+          const cid = createdC && (createdC.id ?? (createdC.data && createdC.data.id));
           if (cid == null) throw new Error('collection créée mais identifiant introuvable');
           coll = { id: cid, name: collName, visibility: 'private' };
           existing.push(coll);
+          collIds.add(String(cid));
         }
-        // Texte du cours.
-        if (hasText) await ragApi.uploadText(coll.id, doc.fullname + '.md', doc.markdown, dest);
-        // Fichiers joints (PDF…) : téléchargement + extraction locale + upload (Lot 4).
-        let filesOk = 0;
+        // Index du cours. Si la collection mémorisée n'existe plus (supprimée), on repart de zéro.
+        const skey = moodleSyncKey(dest, mp.id, courseId);
+        let rec = smap[skey];
+        if (rec && !collIds.has(String(rec.collectionId))) rec = null;
+        if (!rec) rec = { collectionId: coll.id, textHash: null, textDocId: null, files: {} };
+        rec.collectionId = coll.id;
+        rec.files = rec.files || {};
+        smap[skey] = rec;
+
+        const c = { added: 0, updated: 0, unchanged: 0, removed: 0 };
         const skipped = [];
+
+        // 1) TEXTE du cours : hash → inchangé / mise à jour / ajout ; retrait s'il n'y a plus de texte.
+        // On PERSISTE le nouvel id AVANT de supprimer l'ancien : après un crash, l'index pointe
+        // toujours vers un doc réel (au pire un ancien orphelin, jamais un doublon). (Revue Lot 5.)
+        if (hasText) {
+          const h = hashString(doc.markdown);
+          if (rec.textHash === h) { // le hash suffit : ne pas exiger textDocId!=null (sinon churn si id inconnu)
+            c.unchanged++;
+          } else {
+            const oldId = rec.textDocId;
+            const createdT = await ragApi.uploadText(coll.id, doc.fullname + '.md', doc.markdown, dest);
+            rec.textDocId = extractDocId(createdT);
+            rec.textHash = h;
+            persist();
+            if (oldId != null) { try { await ragApi.deleteDocument(Number(oldId), dest); } catch { /* déjà absent */ } c.updated++; }
+            else c.added++;
+          }
+        } else if (rec.textDocId != null) {
+          const oldId = rec.textDocId;
+          rec.textDocId = null; rec.textHash = null; persist();
+          try { await ragApi.deleteDocument(Number(oldId), dest); } catch { /* ignore */ }
+          c.removed++;
+        }
+
+        // 2) FICHIERS : clé = fileurl (unique — 2 fichiers de même nom ne collisionnent pas) ; diff sur
+        // (timemodified, taille), pas de téléchargement si inchangé. Les fichiers ignorés sont mémorisés
+        // pour ne PAS être re-téléchargés à chaque synchro.
+        const seen = new Set();
         for (let k = 0; k < files.length; k++) {
+          const f = files[k];
+          const fkey = f.fileurl || (f.filename + '::' + k);
+          seen.add(fkey);
+          const stored = rec.files[fkey];
+          const changed = stored && (stored.timemodified !== f.timemodified || stored.filesize !== f.filesize);
+          if (stored && !changed) { if (!stored.skipped) c.unchanged++; continue; } // inchangé → aucun téléchargement
+          const oldId = changed && stored && !stored.skipped ? stored.documentId : null;
           mvProgress(i, ids.length, label + ' — fichier ' + (k + 1) + '/' + files.length);
           try {
-            const r = await ingestMoodleFile(coll.id, files[k], mp.id, dest);
-            if (r.ok) filesOk++;
-            else if (r.skipped) skipped.push(r.skipped);
+            const r = await ingestMoodleFile(coll.id, f, mp.id, dest);
+            if (r.ok) {
+              rec.files[fkey] = { documentId: r.documentId, timemodified: f.timemodified, filesize: f.filesize };
+              persist();
+              // Compte sur l'existence d'un VRAI document précédent (oldId), pas sur `changed` :
+              // un fichier auparavant « ignoré » devenu importable est un AJOUT, pas une màj.
+              if (oldId != null) { try { await ragApi.deleteDocument(Number(oldId), dest); } catch { /* ignore */ } c.updated++; }
+              else c.added++;
+            } else if (r.skipped) {
+              // Mémorise le skip (avec timemodified+taille) → pas de re-téléchargement au prochain sync.
+              rec.files[fkey] = { skipped: true, timemodified: f.timemodified, filesize: f.filesize };
+              persist();
+              // Si un vrai document existait et devient inimportable, on le retire → c'est un RETRAIT.
+              if (oldId != null) { try { await ragApi.deleteDocument(Number(oldId), dest); } catch { /* ignore */ } c.removed++; }
+              skipped.push(r.skipped);
+            }
           } catch (e) {
-            skipped.push((files[k].filename || 'fichier') + ' (' + describeError(e) + ')');
+            skipped.push((f.filename || 'fichier') + ' (' + describeError(e) + ')');
           }
         }
-        results.push({ ok: true, label, filesOk, filesTotal: files.length, skipped });
+        // 3) Fichiers disparus côté Moodle → retirés de la collection ET de l'index. On ne compte un
+        // RETRAIT que si un vrai document existait (une entrée « ignoré » n'a jamais rien mis au RAG).
+        for (const fkey of Object.keys(rec.files)) {
+          if (seen.has(fkey)) continue;
+          const did = rec.files[fkey].documentId;
+          if (did != null) { try { await ragApi.deleteDocument(Number(did), dest); } catch { /* ignore */ } c.removed++; }
+          delete rec.files[fkey];
+          persist();
+        }
+
+        tot.added += c.added; tot.updated += c.updated; tot.unchanged += c.unchanged; tot.removed += c.removed;
+        tot.filesSkipped += skipped.length;
+        results.push({ ok: true, label, ...c, skipped });
       } catch (err) {
         results.push({ ok: false, label, error: describeError(err) });
       }
@@ -1424,18 +1554,20 @@ async function onMoodleSync() {
   } finally {
     setMvSyncing(false); // TOUJOURS déverrouillé, même si une exception inattendue survient
   }
-  const ok = results.filter((r) => r.ok).length;
+  const okc = results.filter((r) => r.ok).length;
   const failed = results.filter((r) => !r.ok);
-  const filesImported = results.reduce((n, r) => n + (r.filesOk || 0), 0);
-  const filesSkipped = results.reduce((n, r) => n + ((r.skipped && r.skipped.length) || 0), 0);
   let msg = failed.length
-    ? '⚠ ' + ok + '/' + results.length + ' cours — échec : ' + failed.map((r) => r.label).join(', ')
-    : '✓ ' + ok + ' cours synchronisé' + (ok > 1 ? 's' : '');
-  if (filesImported || filesSkipped) {
-    msg += ' · ' + filesImported + ' fichier' + (filesImported > 1 ? 's' : '') + ' importé' + (filesImported > 1 ? 's' : '');
-    if (filesSkipped) msg += ' (' + filesSkipped + ' ignoré' + (filesSkipped > 1 ? 's' : '') + ')';
-  }
+    ? '⚠ ' + okc + '/' + results.length + ' cours — échec : ' + failed.map((r) => r.label).join(', ')
+    : '✓ ' + okc + ' cours synchronisé' + (okc > 1 ? 's' : '');
+  const parts = [];
+  if (tot.added) parts.push(tot.added + ' ajouté' + (tot.added > 1 ? 's' : ''));
+  if (tot.updated) parts.push(tot.updated + ' mis à jour');
+  if (tot.removed) parts.push(tot.removed + ' retiré' + (tot.removed > 1 ? 's' : ''));
+  if (tot.unchanged) parts.push(tot.unchanged + ' inchangé' + (tot.unchanged > 1 ? 's' : ''));
+  if (parts.length) msg += ' · ' + parts.join(' · ');
+  if (tot.filesSkipped) msg += ' (' + tot.filesSkipped + ' ignoré' + (tot.filesSkipped > 1 ? 's' : '') + ')';
   $('mvStatus').textContent = msg;
+  renderMoodleView(); // rafraîchit les badges « synchronisé »
   // Rafraîchit la liste des collections RAG pour que les nouvelles apparaissent dans le rail.
   try { await loadCollections(); } catch { /* non bloquant */ }
 }
