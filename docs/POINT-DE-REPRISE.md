@@ -1,68 +1,133 @@
 # Doceria — Point de reprise (handoff)
 
 > **But : permettre à une NOUVELLE conversation de reprendre exactement ici.**
-> À lire en premier, puis `SPEC.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `RAG-V2-ilaas.md`.
-> Mis à jour : 2026-06-26.
+> À lire en premier, puis `docs/MOODLE-IMPLEMENTATION-ROADMAP.md` (chantier en cours),
+> `docs/ROADMAP-V2.md`, `docs/ARCHITECTURE.md`, `docs/RAG-V2-ilaas.md`.
+> Mis à jour : **2026-07-02**.
 >
-> **Récents (juin 2026)** : ingestion **PDF/DOCX par extraction locale** (pdf.js/mammoth → `.md` ; le parseur PDF d'ILaaS renvoie 502), **gestion documentaire** + **synchro dossier ↔ collection**, **conso/coût** (`/me/usage`), **sélecteur de modèle dans le chat**, **vérif de mise à jour** (GitHub Releases). **OCR retiré** (ILaaS n'a pas de modèle OCR — gardé en roadmap). **DA refaite façon macOS** (gris système, accent **teal du logo `#075057`**, rouge système). ⚠️ **Correctif clé** : la règle générique `:root[data-theme="dark"] button:hover{background:var(--accent)}` (spécificité > `.filebtn.danger:hover`) forçait un fond accent sur TOUS les boutons en sombre → survols illisibles ; remplacée par un simple `filter:brightness`. **Versionnage** : `AAAAMMJJ.ii.0`. **Site** : section « Mode d'emploi » exhaustive + **lightbox** sur l'Aperçu. **Supprimé** : `KICKOFF.md` (périmé).
+> **Jalon en cours — CONNECTEUR MOODLE en lecture seule** (branche `moodle`, validé de bout en
+> bout, **pas encore publié en .dmg**) : profils de connexion Moodle (jeton au **trousseau**,
+> rôle « moodle »), test de connexion (**liste blanche de 8 fonctions de contenu**), **explorateur
+> de cours** central (recherche + filtre catégorie + cases à cocher), bouton **Synchroniser** =
+> ingestion du **texte** des cours (convertisseur **HTML→Markdown maison** en Rust) → collection
+> RAG « Moodle · <cours> » → interrogeable avec citations, **barre de progression** par cours.
+> Détail + journal : `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`. **Chaque lot passe une revue
+> multi-agents adversariale** avant validation.
+>
+> **Correctif RAG récent** : en mode **Requête**, si la recherche RAG échoue (ou 0 extrait), le
+> modèle **ne répond plus** sur ses connaissances générales — il **bloque** et l'explique (pas
+> d'appel facturé). En mode **Chat**, repli assumé **avec avertissement**.
 
 ## 1. Ce qu'est Doceria
-App de bureau **Tauri v2** (macOS Apple Silicon ; Linux à venir), « Enseigner avec l'IA ».
-Interroge l'**API ILaaS** (fédération d'inférence souveraine ESR, compatible OpenAI) : **chat
-en streaming** + **RAG géré ILaaS** (OpenGateLLM). Frontend web réutilisé (Vite + JS vanilla)
-dans une coquille Rust.
+App de bureau **Tauri v2** (macOS Apple Silicon ; **Windows et Linux = feuille de route**, ordre
+acté : **Moodle avant Linux**), « Enseigner avec l'IA ». Interroge l'**API ILaaS** (fédération
+d'inférence **souveraine** de l'ESR, compatible OpenAI) : **chat en streaming** + **RAG géré
+ILaaS** (OpenGateLLM). Frontend web (Vite + JS vanilla) dans une coquille Rust. Filiation directe
+du POC **Learnix**.
 
 ## 2. État global
-- **macOS : fonctionnellement complet et soigné.** Reste 1 validation utilisateur (CSP + pdf/docx, voir §8).
-- **Linux : non commencé** (build AppImage via SSH Ubuntu prévu).
-- **Distribution** : app **non signée** (pas de compte Apple), **Apple Silicon arm64 uniquement**. Guide : `INSTALLATION-macOS.md`.
+- **Version publiée : `20260626.8.0`** (macOS **arm64**, **non signée** — pas de compte Apple).
+  Guide : `INSTALLATION-macOS.md`.
+- **macOS : fonctionnellement complet et soigné** (chat, RAG, comparaison multi-modèles, LaTeX…).
+- **Connecteur Moodle : Lots 0 → 3 livrés et validés** sur la branche `moodle` (voir encart ci-dessus).
+  **Pas encore intégré au .dmg publié** → à embarquer dans la prochaine version.
+- **Windows / Linux : non livrés** (feuille de route). Tauri est multiplateforme → portage Windows
+  surtout conditionné par la **signature Authenticode** (+ WebView2), Linux par le build AppImage.
 
 ## 3. Fait, par domaine
-**Socle (Phase 1)** — fenêtre native (fermer = quitter), chat streaming SSE (events `chat://delta`) + Stop, couche réseau Rust (reqwest rustls, sans CORS), timeouts.
-**Clés & profils (Phase 2)** — trousseau OS (`keyring`). Multi-profils nommés à **deux jetons** (LLM + RAG) + URL + modèle. Clé **jamais** dans le webview (résolue en Rust). `test_connection` (+ version éphémère sans persistance). Choix du modèle par menu (rempli au test de la clé).
-**RAG géré ILaaS** — `rag.rs` : `rag_me`, collections (créer/lister **filtré « mes collections »**/supprimer), upload multipart (+ MIME), get/delete document, `search` hybride, `rerank`, `list_dir_files` (récursif, ignore symlinks). Plugin **dialog** natif. UI « Bibliothèque (RAG) » : collection active, création **inline**, ajout fichiers/dossier avec progression, garde-fou « crée une collection d'abord ». Chat : interrupteur **« Utiliser la bibliothèque »** → `search` → injection des extraits (balisés `<<<EXTRAIT>>>`, **anti prompt-injection**) + **citations [n]** + bloc **Sources** (nom de doc résolu).
-**DA & thème (Phase 3) — FAIT** — charte **« Atelier »** (papier chaud, pétrole, or) en variables CSS, **claire + sombre**. Thème **clair/sombre/auto** (suit le système), bouton dans la barre, persisté (`theme.js`). **Vibrance macOS** (fenêtre `transparent` + `windowEffects` sidebar, `macOSPrivateApi` ; colonnes translucides `--panel-bg`, centre opaque). **Mémorisation fenêtre** (`tauri-plugin-window-state`). **Colonnes pliables** (chevrons ❮/❯ dans la barre, persisté). Aide **« ? »** (gras, infobulle en `position:fixed` calculée en JS → jamais rognée). **Modèles de consigne système** (presets) + feedback « appliquée ».
-**Finitions macOS** — **renommage de conversation inline** (le `window.prompt` n'est pas géré par la webview Tauri — règle générale : toujours des champs inline). **CSP** stricte (à valider, §8). `INSTALLATION-macOS.md`.
-
-**Réglages avancés chat & RAG (inspiré AnythingLLM) — FAIT** — **Mode Chat ⇄ Requête** : contrôle segmenté près de l'interrupteur « Utiliser la bibliothèque » ; « Requête » répond strictement depuis les extraits, avec **garde-fou « Query »** (si la recherche aboutit sans aucun extrait → refus direct *« Je ne trouve pas la réponse dans la bibliothèque. »* sans appel LLM, en distinguant 0 résultat d'une erreur réseau via `ragSearched`). La consigne RAG bascule dans `buildMessages`. **Réglages de récupération** (section Bibliothèque) : **méthode** (`hybrid`/`semantic`/`lexical`), **top-k** (1–20), **seuil de similarité** (`score_threshold`, 0 = off ; param ajouté à `rag_search`, envoyé si > 0). **Reranking** (état de l'art) : pipeline `retrieveFromLibrary` = recherche (vivier élargi `min(20, max(topK*3,10))`) → `rag_rerank` (`bge-reranker-v2-m3`, `top_n` n'est envoyé que si demandé) → tri par `relevance_score` → `slice(0, topK)` ; interrupteur `ragRerank` (défaut **activé**), repli silencieux si indispo. **Mémoire** (section Génération) : nombre de tours d'historique renvoyés (0 = illimité ; bornage `slice(-(N*2+1))`). Tout est **persisté** (localStorage) et hydraté au chargement. **Sections du rail droit pliables** : chevron par titre (`data-section`), clic/clavier, état mémorisé (`doceria_sections`), **pliage non destructif** (ne réaffiche pas `#profileEditor` masqué par ailleurs).
-
-**Synchro dossier ↔ collection — FAIT** — « Lier un dossier » à la collection active → import + suivi ; bouton **« ↻ Synchroniser »** = diff incrémental (ajout / maj sur taille+mtime ms / **retrait** de ce qui a disparu du disque) ; option **`ragAutoSync`** (« synchroniser à l'ouverture du profil »). Index local `localStorage doceria_sync_v1`, clé `profil::collection` → `{collectionId, folder, files:{path:{documentId,size,mtime}}}`. Commande Rust **`list_dir_entries`** (taille+mtime ms ; factorise `walk_supported` avec `list_dir_files`). Ne touche **jamais** aux documents ajoutés à la main (hors index). **Durci après revue adversariale (2 agents)** : profil **figé** passé à `syncCollection`/`ragApi.upload|deleteDocument` (jamais d'écriture sur le mauvais profil), **verrou global `syncing`** (couvre `runSync` ET `autoSyncProfile`), **`saveSyncMap` incrémental** (robuste à une fermeture en cours), **`extractDocId`** tolérant aux variantes de schéma, **purge de l'index** dans `onDeleteCollection`, garde anti-suppression-collection-pendant-sync. *(Détaillé : voir backlog ROADMAP.)*
-
-**Positionnement « Ce qui distingue Doceria » — FAIT** — section sur le site (`docs/index.html`, `#distinction`) + `README.md`, **cadrage positif** (cite AnythingLLM sans tableau frontal), claims **vérifiés par recherche web** (juin 2026) : AnythingLLM = synchro **mono-fichier** (pas de dossier — *« cannot watch an entire directory »*), **Electron**, clés chiffrées en **SQLite**, **télémétrie anonyme par défaut** (désactivable). Doceria = souverain ESR natif, dossier↔collection, Tauri, trousseau OS, zéro télémétrie. Caveat honnête conservé (AnythingLLM plus riche : agents, connecteurs, multi-utilisateur).
-
-**Site web (GitHub Pages) — FAIT** — site premium dans **`docs/`** (Fraunces + IBM Plex Sans + Bootstrap + Font Awesome, palette Atelier), publié via Pages « Deploy from a branch → `main` `/docs` » (`.nojekyll`). **En ligne : https://jedi-openlab.github.io/doceria/**. Sources : `docs/index.html`, `docs/style.css`, `docs/assets/`. *(À FAIRE par l'utilisateur : déposer `screen-1.png`/`screen-2.png`/`screen-3.png` dans `docs/assets/` pour la section « Aperçu » ; créer une Release GitHub avec le `.dmg` pour le bouton « Télécharger ».)*
+**Socle** — fenêtre native (fermer = quitter), chat streaming SSE (`chat://delta`) + Stop, couche
+réseau Rust (reqwest rustls, sans CORS), timeouts. Menus natifs **en français** + menu **Aide**
+(site / mode d'emploi / signaler un problème). Annuler / Régénérer, éditer sa requête, copier une réponse.
+**Clés & profils** — trousseau OS (`keyring`). Multi-profils à **deux jetons** (LLM + RAG) + URL +
+modèle. Clé **jamais** dans le webview (résolue en Rust). `test_connection` (+ version éphémère).
+**RAG géré ILaaS** (`rag.rs`) — `rag_me`, collections (créer/lister filtré « mes collections »/
+supprimer), upload multipart + `rag_upload_text`, get/delete document, `search` (hybride/sémantique/
+lexicale), `rerank`, `list_dir_files/entries`. UI Bibliothèque : collection active, création inline,
+ajout fichiers/dossier avec progression. Chat : **« Utiliser la bibliothèque »** → recherche →
+extraits balisés `<<<EXTRAIT>>>` (**anti prompt-injection**) + **citations [n]** + bloc Sources.
+**Modes Chat ⇄ Requête** + réglages (méthode, top-k, seuil, reranking, mémoire), message de refus
+configurable, **document de contexte**, **conso/coût** (`/me/usage`). **Correctif Requête** (cf. encart).
+**Comparaison multi-modèles** côte à côte (coût ×2, contexte RAG partagé). **Rendu LaTeX/KaTeX**
+(bundle local). **Ingestion PDF/DOCX par extraction locale** (pdf.js/mammoth → `.md`).
+**Synchro dossier ↔ collection** — « Lier un dossier » → import + suivi ; bouton Synchroniser (diff
+incrémental sur taille+mtime, retrait des fichiers disparus) ; option `ragAutoSync`. Index local
+`localStorage doceria_sync_v1`. Durci par revue adversariale (profil figé, verrou global `syncing`).
+**DA & thème** — charte « Atelier », clair/sombre/auto, vibrance macOS, colonnes pliables, sections
+du rail pliables. **Site web** (GitHub Pages, `docs/`) en ligne : https://jedi-openlab.github.io/doceria/
+**CONNECTEUR MOODLE (branche `moodle`)** — voir encart en tête + `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
+Module `src-tauri/src/moodle.rs` : client REST `ws_call` (client HTTP **dédié sans redirections** car
+le jeton voyage dans le corps du POST), **liste blanche de 8 fonctions de contenu**, convertisseur
+`html_to_markdown` **maison** (zéro dépendance, tests unitaires), commandes `test_moodle_connection`,
+`list_moodle_courses`, `moodle_course_markdown`. Front : section Moodle du rail + explorateur central.
 
 ## 4. Carte du code
-**Front** (`src/`) : `main.js` (orchestration), `api.js` (invoke : chat/profils/RAG + dialog), `state.js`, `ui.js`, `theme.js`, `conversations.js`, `documents.js` (pdf.js/mammoth), `styles.css` (variables Atelier clair+sombre).
-**Rust** (`src-tauri/src/`) : `lib.rs` (commandes, plugins, fenêtre, charge les profils), `ilaas.rs` (chat/list_models/test + helpers HTTP `pub(crate)` : client/send_error/http_error/normalize_base), `keychain.rs` (secrets, write-only), `settings.rs` (profils en `appDataDir/settings.json` + `resolve(profil, "llm"|"rag")`), `rag.rs` (client OpenGateLLM).
-**Config** : `Cargo.toml` (reqwest rustls+multipart ; keyring par plateforme : apple-native macOS / async-secret-service+crypto-rust Linux / windows-native ; plugins dialog + window-state ; `tauri` feature `macos-private-api`). `tauri.conf.json` (identifiant `fr.jedi-openlab.doceria`, vibrance, CSP, bundle « all »). `capabilities/default.json` (`core:default` + `dialog:default`).
+**Front** (`src/`) : `main.js` (orchestration + Moodle : explorateur, synchro), `api.js` (invoke :
+chat/profils/RAG/**Moodle**/dialog), `state.js`, `ui.js`, `theme.js`, `conversations.js`,
+`documents.js` (pdf.js/mammoth), `styles.css`.
+**Rust** (`src-tauri/src/`) : `lib.rs` (commandes, plugins, fenêtre, menus), `ilaas.rs` (chat/
+list_models/test + helpers HTTP `pub(crate)`), `keychain.rs` (secrets, write-only, rôles llm/rag/
+**moodle**), `settings.rs` (profils ILaaS **et Moodle** en `settings.json` + `resolve`/`resolve_moodle`),
+`rag.rs` (client OpenGateLLM), **`moodle.rs`** (client WS REST lecture seule + convertisseur HTML→MD),
+`update.rs` (vérif de mise à jour).
+**Config** : `Cargo.toml` (reqwest rustls+multipart ; keyring par plateforme ; plugins dialog +
+window-state ; `macos-private-api`). `tauri.conf.json` (identifiant `fr.jedi-openlab.doceria`, CSP
+autorisant KaTeX, bundle « all »).
 
 ## 5. API ILaaS (vérifié en live)
-- **Inférence** : `https://llm.ilaas.fr/v1`, modèle de chat **`mistral-medium-latest`**. *(Catalogue maj : `gpt-oss-120b`/llama retirés le 2026-10-01 ; nouveaux `qwen-3.6-35b-instruct`, `gemma-4-31b`, `mistral-small-4-119b`.)*
-- **RAG** : `https://rag-api.ilaas.fr/v1` (OpenGateLLM, ex-Albert). **DEUX clés distinctes** (jamais réutiliser la clé d'inférence sur le RAG). Contrat complet : `docs/RAG-V2-ilaas.md`.
+- **Inférence** : `https://llm.ilaas.fr/v1`. Catalogue en évolution (`mistral-small-4-119b`,
+  `mistral-medium-latest`, `qwen-3.6-35b-instruct`, `gemma-4-31b`…).
+- **RAG** : `https://rag-api.ilaas.fr/v1` (OpenGateLLM). **DEUX clés distinctes** (jamais la clé
+  d'inférence sur le RAG). Contrat : `docs/RAG-V2-ilaas.md`.
   - Collections : `visibility` `private`/`public`, champ `owner` (email). On ne liste que `private` || owned.
-  - `POST /search` : `{collection_ids, query, method:semantic|lexical|hybrid, limit, score_threshold, rff_k}` → `data:[{score, chunk:{content, document_id, metadata}}]`.
-  - `GET /me/usage` (conso, cost+tokens) ; `GET /me/info` (id, email, permissions, limits).
-  - ⚠️ **`POST /documents` renvoie 502 sur les PDF** (parser PDF d'ILaaS cassé/instable — constaté en live 2026-06) ; le **texte brut** (`.md`) passe. **Contournement en place** : l'app **extrait le texte des PDF/DOCX EN LOCAL** (pdf.js/mammoth, `documents.js`) puis l'envoie en `.md` via `rag_upload_text` (commande Rust `read_file` lit les octets → IPC binaire → extraction → upload texte). Centralisé dans `uploadFileSmart()` (utilisé par `uploadPaths` ET la synchro). **PDF scanné** (extraction locale vide) → message « non importable » : **ILaaS n'a pas de modèle OCR** (vérifié live 2026-06 ; `/v1/ocr` répond 422 « Wrong model type »), OCR **retiré et reporté** (cf. ROADMAP). **Feedback** : toast d'upload global `#uploadToast` (progression + erreur, visible rail replié / glisser-déposer ; ✕ + auto-fermeture sur succès). **Sélecteur de modèle de chat** aussi dans le composeur (`#chatModelSelect`), synchronisé avec le rail via `setModel()`.
+  - `POST /search` : `{collection_ids, query, method, limit, score_threshold}` → `data:[{score, chunk:{content, document_id, metadata}}]`.
+  - `POST /documents` (multipart) ; `rag_upload_text` (texte `.md`, utilisé aussi par le connecteur Moodle).
+  - `GET /me/usage` (conso, cost+tokens) ; `GET /me/info`.
+  - *Historique* : le parser PDF d'ILaaS a renvoyé des 502 en juin 2026 → contournement en place
+    (extraction PDF/DOCX **locale** via pdf.js/mammoth, envoi en `.md`). Pas d'OCR côté ILaaS.
+- **Moodle** (instance de test) : `/webservice/rest/server.php`, format `json`, 8 fonctions de
+  contenu en lecture seule. Détail reproductible : `docs/MOODLE-TEST-PLAN.md` (placeholders publics ;
+  vraies valeurs dans `MOODLE-LOCAL.md`, **gitignoré**).
 
 ## 6. Conventions de travail (IMPORTANT — à respecter dès la reprise)
-- **Versionnage** : schéma **`AAAAMMJJ.ii.0`** (date du jour · itération du jour · 0), p. ex. `20260626.1.0` puis `20260626.2.0`, lendemain `20260627.1.0`. **Doit rester du semver valide** (3 parties, sans zéro initial) → mis dans `tauri.conf.json` ET `Cargo.toml`. La vérif de mise à jour compare ce numéro au tag de release GitHub (taguer `vAAAAMMJJ.ii.0`).
-- **Git** : **l'utilisateur pousse LUI-MÊME via SourceTree**, jamais l'assistant. **AUCUN trailer `Co-Authored-By: Claude`.** Donner un **message de commit court** à chaque jalon. **Cocher les NOUVEAUX fichiers** dans SourceTree (piège récurrent : ils ne sont pas cochés par défaut → build cassé). Identité : compte **JEDI-OpenLab** (jamais DrJohn).
-- **Build (outil Bash)** : préfixer `export PATH="$HOME/.cargo/bin:$PATH"` (cargo absent du shell non-interactif). **Frontend modifié → rechargement à chaud** (`npm run tauri dev` déjà lancé par l'utilisateur). **Rust/config modifié → REDÉMARRER** `tauri dev`. Réseau/build → `dangerouslyDisableSandbox: true`.
-- **Clés API** : **ne jamais persister** (ni mémoire, ni fichier). L'utilisateur les colle dans l'app (trousseau). Pour un test live de l'API, usage transitoire uniquement, puis effacer.
-- **SSH Linux** : alias `lcn-ubuntu` (`jean@192.168.1.171`, clé `~/.ssh/id_ed25519_lcn`) **déjà autorisé** sur l'Ubuntu Studio 24.04 (Apple… non, Ubuntu). Mais **demander un feu vert explicite « connecte-toi »** avant chaque connexion (le garde-fou bloque sinon). Pas de mot de passe (clé only).
-- **Revue** : lancer un **workflow adversarial** (Workflow tool) avant de clore les phases lourdes (fait : clés, RAG, macOS).
+- **Versionnage** : schéma **`AAAAMMJJ.ii.0`** (semver valide, sans zéro initial) → `tauri.conf.json`
+  ET `Cargo.toml`. Release taguée `vAAAAMMJJ.ii.0` (comparée par la vérif de mise à jour).
+- **Git** : **l'utilisateur pousse LUI-MÊME via SourceTree**, jamais l'assistant. **AUCUN trailer
+  `Co-Authored-By`.** Message de commit court par jalon. **Cocher les NOUVEAUX fichiers** dans
+  SourceTree. Identité : compte **JEDI-OpenLab** (jamais DrJohn). Le connecteur Moodle vit sur la
+  branche `moodle` (sera fusionnée dans `main` quand prête).
+- **Secrets** : **jamais persistés** hors trousseau OS (ni mémoire, ni fichier versionné). **Aucune
+  donnée privée dans le dépôt** (IP, jeton, chemins perso, noms d'hôte) — les vraies valeurs de
+  l'instance Moodle de test vivent dans `MOODLE-LOCAL.md` (**gitignoré**) ; les guides publics
+  utilisent des placeholders.
+- **Build (outil Bash)** : préfixer `export PATH="$HOME/.cargo/bin:$PATH"` si besoin. Frontend
+  modifié → rechargement à chaud (`npm run tauri dev`). Rust/config modifié → **redémarrer** `tauri dev`.
+  Tests du convertisseur : `cargo test --lib moodle`.
+- **Accès à une machine distante (build Linux, Moodle de test)** : via SSH vers une machine dédiée —
+  **les identifiants ne sont pas dans le dépôt** ; demander un **feu vert explicite** avant toute connexion.
+- **Revue** : lancer un **workflow adversarial** avant de clore un lot/une phase (systématique sur le
+  connecteur Moodle).
 - **Webview Tauri** : `window.prompt()` **ne marche pas** → toujours des champs inline.
 
-## 7. Prochaines étapes (demandées par l'utilisateur, AVANT Linux)
-1. **Mode Chat ⇄ Requête** (façon AnythingLLM) : contrôle segmenté. *Requête* = consigne « réponds **uniquement** à partir des extraits, sinon dis ‘non trouvé’ » (ajuster `buildMessages`/`ragContext` dans `main.js`). *Chat* = comportement actuel.
-2. **Réglages de récupération** : exposer **top-k** (`rag_search` limit, figé à 5), **seuil de similarité** (`score_threshold`), **méthode** (`semantic`/`lexical`/`hybrid`). + **Mémoire** : limiter le nombre de tours envoyés (tronquer `conv.messages` dans `buildMessages`).
-3. **Chevrons de SECTIONS du rail droit** : envelopper chaque section (`<h2>` + contenu) dans un bloc **pliable**, chevron sur le titre, état persisté (comme les colonnes).
-4. **Linux** : build AppImage sur Ubuntu (SSH), valider trousseau `async-secret-service`, `webkit2gtk-4.1`, pdf/docx, et la CSP.
-- **Backlog** : mode Agent (function-calling), **sync dossier↔collection** incrémentale (hash/mtime), **site GitHub Pages** (présentation + limites), signature/notarisation (si distribution).
+## 7. Prochaines étapes (feuille de route, dans l'ordre)
+1. **Lot 4 — fichiers/PDF des cours Moodle** : télécharger via `pluginfile.php?token=` →
+   `rag_upload_document` dans la collection du cours (réutilise l'extraction locale).
+2. **Lot 5 — synchro incrémentale + déduplication** : ne ré-ingérer que ce qui a changé ; à terme
+   **planifiée la nuit** au passage à l'échelle.
+3. **Lot 6 — interrupteur « inclure les cours Moodle »** dans le chat.
+4. **Fusionner `moodle` → `main`** et publier une version embarquant le connecteur.
+5. **Portage Windows** : Tauri multiplateforme (WebView2) ; le vrai chantier = **signature
+   Authenticode** (équivalent Windows de la quarantaine macOS). Appui B7 (certificat + build).
+6. **Version serveur/web** : deux formats partageant le cœur Rust (app de bureau vs serveur central
+   sans installation). Décision d'archi + hébergement/auth (B7).
+7. **Linux** : build AppImage (+ .deb/.rpm), trousseau `async-secret-service`, `webkit2gtk-4.1`.
+8. **Signature / notarisation** (quarantaine macOS + SmartScreen Windows).
+- **Items UI (v.9)** : entrée de menu « Vérifier les mises à jour » ; regroupement du menu du site.
 
-## 8. En attente de validation
-- **Test utilisateur (macOS)** après redémarrage : l'app **se lance** (CSP ne casse pas l'écran), **chat + RAG** OK, et **charger un PDF puis un DOCX** (« Document de contexte ») fonctionne (point sensible de la CSP). Si écran blanc / PDF KO → ajuster/retirer la CSP (`tauri.conf.json` `security.csp`).
-- **Vérif macOS** : faite (1 medium « app endommagée » → corrigé dans `INSTALLATION-macOS.md` ; reste des confirmations ; aucun blocker).
-- **Site web** : en ligne. À faire par l'utilisateur — déposer `screen-1.png`/`screen-2.png`/`screen-3.png` dans `docs/assets/` (section « Aperçu ») + créer une **Release** GitHub avec le `.dmg` (bouton « Télécharger »).
-- **Vibrance** : validée par l'utilisateur (« ça rend super bien »). Alpha réglable via `--panel-bg` (2 valeurs clair/sombre).
+## 8. Fait / validé récemment
+- **v8 publiée** (macOS) : lancement OK, chat + RAG OK, PDF/DOCX en document de contexte OK, CSP stable.
+- **Connecteur Moodle** : Lots 0-3 testés par l'utilisateur sur une instance Moodle réelle (synchro
+  d'un cours → collection RAG → réponse sourcée). 9 findings de revue corrigés au Lot 3 (dont un
+  bloquant de corruption inter-profils, vérifié fermé).
+- **Correctif RAG Requête** : validé (« ça marche parfaitement ») — plus de repli trompeur.
+- **Site web** : en ligne. Reste (utilisateur) : captures `docs/assets/screen-*.png` + Release GitHub
+  avec le `.dmg`.

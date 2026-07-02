@@ -1,9 +1,17 @@
 # Plan de test — Connecteur Moodle (hors code Doceria)
 
-> **But.** Préparer, paramétrer et valider un accès **en lecture seule** au contenu pédagogique
-> d'un cours Moodle via l'API REST, **sans écrire une ligne de code Doceria**. On ne passe à
-> l'intégration (`src-tauri/src/moodle.rs`, réutilisant `rag_upload_text`) qu'une fois les
-> Phases 0 à 2 concluantes.
+> **STATUT : validation historique.** Ce document retrace la préparation et la validation manuelle
+> qui ont précédé le code. L'intégration est désormais **LIVRÉE** (Lots 0–3, branche `moodle`) :
+> le connecteur n'est pas encore dans le `.dmg` publié (20260626.8.0) mais est livré et validé sur
+> la branche, destiné à la **prochaine version**. Le périmètre du Lot 3 est le **texte des cours**
+> (résumés de section + descriptions de modules) ; les fichiers/PDF sont le **Lot 4** (à venir).
+> Journal d'implémentation : [`docs/MOODLE-IMPLEMENTATION-ROADMAP.md`](MOODLE-IMPLEMENTATION-ROADMAP.md).
+> Les Phases 0 à 3 ci-dessous sont conservées comme **repères de validation** (au passé).
+
+> **But (à l'époque).** Préparer, paramétrer et valider un accès **en lecture seule** au contenu
+> pédagogique d'un cours Moodle via l'API REST, **sans écrire une ligne de code Doceria**. On ne
+> passait à l'intégration (`src-tauri/src/moodle.rs`, réutilisant `rag_upload_text`) qu'une fois les
+> Phases 0 à 2 concluantes — ce qui est **fait** (Phase 3 réalisée).
 >
 > Vérifié (juin 2026) sur les sources officielles : `docs.moodle.org/dev`, `moodledev.io`, et le
 > code source `github.com/moodle/moodle` (branches 4.5 → 5.1). Structure des réponses REST stable
@@ -28,15 +36,15 @@
 
 ---
 
-## Phase 0.0 — Corriger le `wwwroot` (prérequis, sur la machine Moodle)
+## Phase 0.0 — Corriger le `wwwroot` (prérequis, sur la machine Moodle) — ✅ fait (2026-07-01)
 
 > **Pourquoi.** Moodle n'accepte les requêtes que sur l'hôte déclaré dans `$CFG->wwwroot`, et
 > construit **toutes ses URLs** (dont les `fileurl`/`pluginfile.php`) à partir de cette valeur.
-> Tant qu'elle vaut `http://localhost:8080`, aucun client distant (le Mac, puis Doceria) ne peut
-> l'utiliser. On l'aligne sur l'URL réellement jointe par les clients : `http://VOTRE-MOODLE:8080`.
+> Tant qu'elle valait `http://localhost:8080`, aucun client distant (le Mac, puis Doceria) ne
+> pouvait l'utiliser. On l'a aligné sur l'URL réellement jointe par les clients : `http://VOTRE-MOODLE:8080`.
 >
-> **À faire sur la machine Moodle.** Méthode « découvrir d'abord, éditer ensuite » pour ne rien
-> casser (l'emplacement de `config.php` dépend de l'installation).
+> **Procédure suivie sur la machine Moodle.** Méthode « découvrir d'abord, éditer ensuite » pour ne
+> rien casser (l'emplacement de `config.php` dépend de l'installation).
 
 > **Environnement confirmé (2026-07-01).** Environnement de dev officiel **moodle-docker** :
 > conteneurs `moodle-app` (`moodlehq/moodle-php-apache:8.3`, `0.0.0.0:8080->80/tcp`) et
@@ -144,12 +152,12 @@ curl -s -o /dev/null -w "code=%{http_code} redirige_vers=%{redirect_url}\n" \
 
 ---
 
-## Phase 0 — Configuration admin Moodle (une fois, interface web)
+## Phase 0 — Configuration admin Moodle (une fois, interface web) — ✅ faite (2026-07-01)
 
-> Tout se fait connecté en **administrateur**, via le navigateur (ici depuis le Mac sur
+> Tout s'est fait connecté en **administrateur**, via le navigateur (ici depuis le Mac sur
 > `http://VOTRE-MOODLE:8080`). Fil conducteur : **Administration du site → Serveur → Web services
 > → Vue d'ensemble** (10 étapes cliquables). Détail granulaire ci-dessous avec nos choix (compte
-> dédié, rôle minimal, 8 fonctions, lecture seule). Testé sur **Moodle 5.x / moodle-docker**.
+> dédié, rôle minimal, 8 fonctions, lecture seule). Réalisé sur **Moodle 5.x / moodle-docker**.
 
 ### 0.1 — Activer les services web
 Vue d'ensemble → **« 1. Activer les services web »** → page *Fonctionnalités avancées* → cocher
@@ -252,9 +260,9 @@ Dans **chaque cours à indexer** → *Participants* → **Inscrire des utilisate
 
 ---
 
-## Phase 1 — Validation manuelle via curl (aucun code Doceria)
+## Phase 1 — Validation manuelle via curl (aucun code Doceria) — ✅ faite (2026-07-01)
 
-Exportez les placeholders pour éviter les erreurs :
+Placeholders exportés pour éviter les erreurs (commandes conservées comme référence) :
 ```bash
 export URL_MOODLE="http://VOTRE-MOODLE:8080"   # à confirmer (Phase 0 réseau)
 export TOKEN="VOTRE_TOKEN_ICI"
@@ -325,10 +333,11 @@ file test_telecharge.pdf   # doit dire "PDF document", pas "ASCII text" (= JSON 
 
 ---
 
-## Phase 2 — Prototype de mapping JSON → Markdown (script jetable, hors repo)
+## Phase 2 — Prototype de mapping JSON → Markdown (script jetable, hors repo) — ✅ faite (2026-07-01)
 
-**Objectif :** vérifier que le contenu récupéré se transforme en **Markdown hiérarchisé** exploitable
-par le RAG, **avant** de toucher à Doceria.
+**Objectif (atteint) :** vérifier que le contenu récupéré se transforme en **Markdown hiérarchisé**
+exploitable par le RAG, **avant** de toucher à Doceria. Le mapping validé ici a ensuite été porté en
+Rust dans le connecteur (Phase 3), avec un convertisseur HTML→Markdown maison (voir plus bas).
 
 **Emplacement : HORS du repo Doceria** (ex. `~/scratch/moodle-proto/`), pour zéro risque de committer le token.
 ```
@@ -353,7 +362,11 @@ moodle-proto/
 
   <contenu HTML converti en Markdown>
   ```
-- HTML → Markdown : lib standard (`html2text` en Python / `turndown` en Node), pas de parsing maison.
+- HTML → Markdown : dans le prototype jetable, une lib standard (`html2text`/`turndown`) suffisait.
+  ⚠️ **Dans le connecteur livré, ce n'est PAS le cas** : le Lot 3 utilise un **convertisseur maison
+  en Rust** (`fn html_to_markdown`, `src-tauri/src/moodle.rs`), **zéro dépendance**, couvert par des
+  tests unitaires (titres, listes, gras/italique, liens, entités ; strip du reste). Choix acté au
+  Lot 0 pour garder l'app légère (~15 Mo) — **pas de crate `html2md` / `turndown` / `html2text`**.
 - Cas particuliers :
   - `mod_page` → champ `content` (complet), pas la `description` tronquée de `get_contents`.
   - `mod_label` → tout est dans `intro`.
@@ -369,11 +382,29 @@ moodle-proto/
 
 ---
 
-## Phase 3 — Intégration dans Doceria (ensuite, PAS maintenant)
+## Phase 3 — Intégration dans Doceria — ✅ RÉALISÉE (Lots 0–3, branche `moodle`)
 
-Seulement une fois les Phases 0–2 concluantes : porter la logique validée dans
-`src-tauri/src/moodle.rs`, en réutilisant `rag_upload_text` pour l'ingestion. Travail de code
-séparé, à cadrer le moment venu.
+Les Phases 0–2 étant concluantes, la logique validée a été **portée** dans
+`src-tauri/src/moodle.rs`, en réutilisant `rag_upload_text` pour l'ingestion. Le connecteur livré
+couvre le **texte des cours** : profils de connexion Moodle (jeton au trousseau OS, rôle « moodle »,
+indépendants des profils ILaaS), test de connexion sur la liste blanche de 8 fonctions, explorateur
+de cours (recherche + filtre catégorie + cases à cochées persistées), et bouton **Synchroniser** =
+ingestion des **résumés de section + descriptions de modules** convertis en Markdown vers une
+collection RAG « Moodle · <cours> » du profil ILaaS actif (barre de progression par cours, synchro
+anti-corruption inter-profils). Les **fichiers/PDF** (`pluginfile.php?token=` → `rag_upload_document`)
+restent le **Lot 4** (à venir). Référence de vérité : `src-tauri/src/moodle.rs` et
+[`docs/MOODLE-IMPLEMENTATION-ROADMAP.md`](MOODLE-IMPLEMENTATION-ROADMAP.md).
+
+### Sécurité livrée — client HTTP sans redirections
+Le client Moodle dédié **désactive les redirections** (`reqwest::redirect::Policy::none()`, cf. revue
+sécurité Lot 2). Motif : le jeton voyage dans le **corps du POST** ; suivre une redirection vers un
+hôte tiers pourrait **réémettre le corps** (donc le jeton) vers une autre destination et l'exfiltrer.
+On refuse donc toute redirection (une `3xx` est traitée comme une erreur explicite).
+
+### Correctif connexe — RAG en mode Requête
+En **mode Requête**, si la recherche RAG **échoue** (ou renvoie 0 extrait), le modèle **ne répond
+plus** sur ses connaissances générales : il **bloque** et l'explique, sans appel facturé. En **mode
+Chat**, un repli sur les connaissances générales reste possible, mais **avec avertissement**.
 
 ---
 

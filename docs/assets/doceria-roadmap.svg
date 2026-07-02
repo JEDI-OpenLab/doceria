@@ -18,7 +18,7 @@
 
   <rect x="0" y="0" width="1280" height="560" rx="28" fill="#F7F2E7"/>
   <text x="640" y="54" text-anchor="middle" class="drm-title">Doceria — feuille de route</text>
-  <text x="640" y="84" text-anchor="middle" class="drm-sub">Les nouveautés sont livrées. Ensuite, dans l'ordre : Moodle, puis Linux.</text>
+  <text x="640" y="84" text-anchor="middle" class="drm-sub">Nouveautés livrées, Moodle compris. Ensuite : fichiers, Windows, puis Linux.</text>
 
   <!-- Connecteurs -->
   <line x1="366" y1="215" x2="424" y2="215" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#drm-petrol)"/>
@@ -43,15 +43,15 @@
   <text x="611" y="192" text-anchor="middle" class="drm-bt">Moodle</text>
   <text x="611" y="220" text-anchor="middle" class="drm-bx">RAG sur vos propres cours</text>
   <text x="611" y="241" text-anchor="middle" class="drm-bx">via les web services REST</text>
-  <text x="611" y="266" text-anchor="middle" class="drm-badge" fill="#B68F46">◐ EN COURS · le différenciateur</text>
+  <text x="611" y="266" text-anchor="middle" class="drm-badge" fill="#B68F46">◑ FONCTIONNEL · prochaine version</text>
 
   <!-- B3 Linux (ensuite) -->
   <rect x="826" y="150" width="360" height="130" rx="12" fill="#F6E4D4" stroke="#CE7A33" stroke-width="3" filter="url(#drm-shadow)"/>
-  <text x="1006" y="192" text-anchor="middle" class="drm-bt">Linux</text>
-  <text x="1006" y="220" text-anchor="middle" class="drm-bx">AppImage pour l'ESR</text>
-  <text x="1006" y="241" text-anchor="middle" class="drm-bx">postes Linux courants</text>
+  <text x="1006" y="192" text-anchor="middle" class="drm-bt">Windows &amp; Linux</text>
+  <text x="1006" y="220" text-anchor="middle" class="drm-bx">le gros du parc ESR</text>
+  <text x="1006" y="241" text-anchor="middle" class="drm-bx">.exe signé + .AppImage</text>
   <text x="1006" y="266" text-anchor="middle" class="drm-badge" fill="#CE7A33">○ ENSUITE</text>
 
-  <text x="808" y="360" text-anchor="middle" class="drm-cap">Ordre retenu : l'intégration Moodle d'abord (le différenciateur),</text>
-  <text x="808" y="384" text-anchor="middle" class="drm-cap">puis le build Linux. Toujours souverain, simple, en français.</text>
+  <text x="808" y="360" text-anchor="middle" class="drm-cap">Connecteur Moodle fonctionnel (le différenciateur) ; ensuite les fichiers,</text>
+  <text x="808" y="384" text-anchor="middle" class="drm-cap">puis Windows et Linux. Toujours souverain, simple, en français.</text>
 </svg>

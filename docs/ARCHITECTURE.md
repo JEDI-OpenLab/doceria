@@ -1,114 +1,204 @@
-# Doceria — Architecture technique (cible Tauri)
+# Doceria — Architecture technique (Tauri)
 
-> Document de passation. Détaille les choix techniques et la migration depuis l'app web existante.
+> Document de passation. Décrit l'architecture réelle de l'application de bureau (coquille Rust
+> Tauri + frontend Vite) telle qu'elle est livrée, et résume la feuille de route.
 >
-> **⚠️ Doc de cadrage (historique).** L'application est réalisée ; le **RAG géré ILaaS** est implémenté (le RAG local est resté optionnel). État courant : `../README.md` + site (section « Mode d'emploi »).
+> **État courant.** Version publiée : **20260626.8.0** (macOS arm64, **non signée**). Le **RAG livré
+> est le RAG géré par l'infrastructure ESR (OpenGateLLM / ILaaS)** ; l'ancien design d'un RAG
+> « 100 % local » a été **abandonné** (voir §6). Le **connecteur Moodle** (§7) est livré et validé sur
+> la branche `moodle`, destiné à la **prochaine version** (pas encore dans le `.dmg` publié).
+> Références de vérité : `../README.md`, `MOODLE-IMPLEMENTATION-ROADMAP.md`, `RAG-V2-ilaas.md`, le site
+> (section « Mode d'emploi »), et le code (`src/`, `src-tauri/src/`).
 
 ## 1. Pourquoi Tauri
-- App **légère** (~10–15 Mo) et **démarrage quasi instantané** → ressenti premium.
-- **Webview système** (WKWebView macOS / WebKitGTK Linux) au lieu d'embarquer Chromium.
+- App **légère** (~15 Mo) et **démarrage quasi instantané**.
+- **Webview système** (WKWebView macOS) au lieu d'embarquer Chromium.
 - **Accès natif à l'OS** : trousseau, menus, notifications, dialogues de fichiers, glisser-déposer,
   vibrance/translucidité macOS, détection du thème système, accès système de fichiers.
-- **Multiplateforme** macOS + Linux (+ Windows plus tard) **sans refonte**.
-- **Réutilise Vite** comme outil de build du frontend → on garde l'UI HTML/CSS/JS existante.
+- **Portage prévu** vers Windows puis Linux **sans refonte** (feuille de route, §10).
+- **Réutilise Vite** comme outil de build du frontend → UI HTML/CSS/JS conservée.
 
-Alternatives écartées : **Electron** (lourd, moins natif), **SwiftUI** (macOS uniquement + réécriture totale de l'UI).
+Alternatives écartées : **Electron** (lourd, moins natif), **SwiftUI** (macOS uniquement + réécriture
+totale de l'UI).
 
-## 2. Structure cible du dépôt
-Tauri se greffe **autour du projet Vite existant** :
+> **Plateformes.** Seul **macOS arm64** est livré aujourd'hui. Windows et Linux sont de la feuille de
+> route (ordre acté : **Moodle avant Linux**).
+
+## 2. Structure réelle du dépôt
+Tauri se greffe autour du projet Vite existant :
 ```
 doceria/
-├── index.html              # (existant) frontend Tauri — conservé
-├── src/                    # (existant) UI JS/CSS — conservé, adapté (couche réseau)
-│   ├── main.js  state.js  conversations.js  documents.js  ui.js  styles.css
-│   └── api.js              # ADAPTÉ : appelle les commandes Tauri natives au lieu de fetch(/ilaas)
-│   └── rag.js              # NOUVEAU (front) : pilote l'indexation/recherche via commandes Tauri
-├── src-tauri/              # NOUVEAU : la coquille Rust
-│   ├── Cargo.toml
-│   ├── tauri.conf.json     # config app (nom, icône, fenêtre, permissions, vibrance…)
-│   ├── build.rs
+├── index.html              # frontend (fenêtre Tauri)
+├── src/                    # UI JS/CSS — couche réseau via commandes Tauri
+│   ├── main.js             # orchestrateur : chat, RAG (recherche/rerank/top-k),
+│   │                       #   comparaison de modèles, synchro Moodle, usage
+│   ├── api.js              # façade IPC : invoke() vers les commandes Rust (pas de fetch)
+│   ├── state.js            # état global + persistance légère (localStorage, aucune clé)
+│   ├── conversations.js  documents.js  ui.js  theme.js  styles.css
+│   └── (pas de rag.js — le RAG est piloté depuis main.js via ragApi dans api.js)
+├── src-tauri/              # coquille Rust
+│   ├── Cargo.toml  build.rs  tauri.conf.json
 │   └── src/
-│       ├── main.rs         # point d'entrée, enregistre les commandes
-│       ├── ilaas.rs        # appels HTTP natifs à ILaaS (chat streaming, models)
-│       ├── keychain.rs     # lecture/écriture des clés au trousseau
-│       ├── rag/            # moteur RAG LOCAL (parse, chunk, embeddings, vector store, retrieval)
-│       └── library.rs      # scan dossier, indexation incrémentale, watch
-│                           # (V2 : rag_ilaas.rs — client passerelle gérée, voir docs/RAG-V2-ilaas.md)
+│       ├── lib.rs          # point d'entrée : menu natif, enregistrement des commandes
+│       ├── main.rs         # bootstrap (appelle lib::run)
+│       ├── ilaas.rs        # inférence ILaaS (chat streaming SSE, list_models, usage)
+│       ├── rag.rs          # client du RAG GÉRÉ (OpenGateLLM / rag-api.ilaas.fr)
+│       ├── moodle.rs       # connecteur Moodle REST (lecture seule) + HTML→Markdown maison
+│       ├── settings.rs     # profils (métadonnées non sensibles), profils Moodle
+│       ├── keychain.rs     # secrets au trousseau OS (rôles llm / rag / moodle)
+│       └── update.rs       # vérification de mise à jour, ouverture d'URL
 ├── package.json            # scripts vite + tauri
-├── docs/                   # cette passation
-└── (à retirer pendant la migration) vite.config.js:proxy, server.js, bouton Quitter
+└── docs/                   # passation
 ```
 
-## 3. Réutilisé vs remplacé
-**Réutilisé tel quel** (le frontend) : `index.html`, `styles.css`, `state.js`, `conversations.js`,
-`documents.js`, `ui.js`, et la logique de chat/streaming/conversations.
-
-**Remplacé / supprimé** :
-- `vite.config.js` → on **retire le proxy `/ilaas`** (plus besoin : appels natifs). Vite reste comme bundler frontend de Tauri.
-- `server.js` → **supprimé** (c'était le backend de prod web ; Tauri fait office d'hôte natif).
-- **Bouton « Quitter »** + endpoint `/__quit` → **supprimés** (fermer la fenêtre arrête tout).
-- `src/api.js` → **réécrit** pour appeler des **commandes Tauri** (`invoke('chat', …)`, `invoke('list_models', …)`)
-  au lieu de `fetch('/ilaas/...')`. Le streaming passe par des **events Tauri** (emit/listen) plutôt que SSE-fetch.
-- Stockage de la clé : `localStorage`/`sessionStorage` → **trousseau OS** via la coquille Rust.
+## 3. Frontend ⇄ coquille native
+- **Aucun secret côté JS.** Le front manipule des **identifiants/labels** de profils ; les clés vivent
+  au trousseau, résolues côté Rust.
+- **`src/api.js`** est une façade fine : chaque fonction fait `invoke('<commande>', …)`. Le streaming du
+  chat passe par des **events Tauri** (`chat://delta`, `chat://done`, `chat://error`), écoutés côté JS.
+- **`src/main.js`** orchestre : construction de la requête, pipeline RAG (recherche → rerank → top-k),
+  comparaison multi-modèles, synchro Moodle, affichage conso/coût.
 
 ## 4. Couche réseau (ILaaS, natif)
-- Les requêtes ILaaS partent du **Rust** (crate `reqwest`), donc **pas de CORS**.
-- La **clé est lue dans le trousseau côté Rust** et ajoutée à l'en-tête `Authorization` — elle ne
+- Les requêtes d'inférence partent du **Rust** (`reqwest`), donc **pas de CORS**.
+- La **clé est lue au trousseau côté Rust** (rôle `llm`) et ajoutée à l'en-tête `Authorization` : elle ne
   transite jamais par le JS/webview.
-- **Streaming** : la commande Rust lit le flux SSE et **émet des events Tauri** (`chat://delta`,
-  `chat://done`, `chat://error`) ; le frontend `listen()` et affiche au fil de l'eau. **Stop** = annuler
-  la requête côté Rust (token d'annulation).
-- `list_models` : GET `/v1/models` natif.
-- **Conso (V1)** : pas d'endpoint usage côté inférence (`/me/usage` → 404) → on lit le champ `usage` des
-  réponses chat. *(V2 : endpoints RAG + `/v1/me/usage` via Rust — voir `RAG-V2-ilaas.md`.)*
+- **Streaming** : la commande `chat` lit le flux SSE `POST /chat/completions` (avec
+  `stream_options.include_usage`) et **émet** `chat://delta`. **Stop** = annuler la requête côté Rust.
+- `list_models` : `GET /models`.
+- **Conso/coût** : commande `fetch_usage` — agrège `GET /me/usage` (paginé, fenêtre serveur ~30 jours)
+  par rôle (`llm` ou `rag`) : nombre de requêtes, tokens (entrée/sortie/total), **coût** et **CO₂**
+  best-effort (`impacts.gwp`). Le champ `usage` des réponses chat sert d'affichage immédiat.
 
-## 5. Trousseau (clés)
-- Crate `keyring` (multiplateforme : Keychain macOS, Secret Service Linux).
-- Une entrée par clé nommée. Le frontend ne voit jamais la valeur ; il manipule des **identifiants/labels**.
-- Profil par clé (nom, **URL de base**, **modèle par défaut**) : la valeur secrète au trousseau, les
-  métadonnées non sensibles dans le store de préférences (fichier app data).
+## 5. Trousseau & profils
+- Crate `keyring` (Keychain macOS). Un profil porte **deux jetons distincts** : clé **LLM**
+  (`llm.ilaas.fr`, rôle `llm`) et clé **RAG** (`rag-api.ilaas.fr`, rôle `rag`), stockées séparément.
+- Les **métadonnées non sensibles** (nom, URL LLM, modèle par défaut, URL RAG optionnelle, profil actif)
+  vont dans `settings.json` (dossier de données de l'app) ; le front n'obtient que la **présence** des
+  clés (`hasLlmKey`, `hasRagKey`), jamais leur valeur.
+- **URLs LLM/RAG en `https://` uniquement** (refus du clair, `upsert_profile`).
 
-## 6. RAG — local, géré par l'app (cœur V1)
-> **V1 = 100 % local** (le RAG géré ILaaS exige un **jeton RAG séparé**, demandé/en attente — V2).
+## 6. RAG — géré par l'infrastructure ESR (livré)
+> **Le RAG livré est le RAG GÉRÉ** (passerelle **OpenGateLLM**, `rag-api.ilaas.fr`), implémenté dans
+> `src-tauri/src/rag.rs`. Documents, embeddings, index et OCR **vivent côté infra ESR souveraine**, en
+> collections **« private »** (visibles/recherchables par le seul propriétaire). Contrat d'API vérifié :
+> `RAG-V2-ilaas.md`.
 
-Pipeline : **dossier → scan → parse → chunk → embeddings (LOCAL) → base vectorielle locale → retrieval → génération ILaaS**.
+Pipeline : **document → upload vers une collection gérée (vectorisation serveur bge-m3) →
+recherche (semantic/lexical/hybrid) → rerank optionnel → top-k → génération ILaaS avec citations**.
 
-- **Sélection du dossier** : dialogue natif Tauri ; permission persistée (bookmark macOS, chemin sous Linux).
-- **Parse** : pdf/docx/txt/md/csv/json… Recommandation : **côté Rust** (perf, hors-webview, multithread).
-- **Chunking** : par paragraphes/tokens avec léger chevauchement ; conserver `source` (fichier + page/offset).
-- **Embeddings — LOCAL** : crate Rust **`fastembed`** (ONNX), modèle **`bge-m3`** (multilingue, le même qu'ILaaS).
-  Garder une abstraction `Embedder` pour brancher l'embeddings ILaaS en V2 **sans refonte**.
-- **Base vectorielle locale** : **LanceDB** (native Rust) ou `sqlite-vec`, dans le dossier de données.
-- **Indexation incrémentale** : table `files(path, hash, mtime, chunks)` ; ne (ré)indexer que le nouveau/modifié.
-- **Scan** : commande Rust en tâche de fond, émet la progression ; bouton manuel + **auto au lancement**. Watch = P1.
-- **Retrieval** : embed de la requête → **top-k** cosinus → injection + **citations** (fichier, page).
-- **PDF scannés** : OCR local optionnel (tesseract) ou journalisés/ignorés.
+Commandes Rust (`rag.rs`), toutes authentifiées par la clé RAG du profil actif (résolue au trousseau) :
+- **Collections** : `rag_list_collections`, `rag_create_collection` (visibility `private`),
+  `rag_delete_collection`, `rag_me` (identité `GET /me/info`, pour ne lister que ses collections).
+- **Documents** : `rag_upload_document` (multipart, MIME deviné par extension), `rag_upload_text`
+  (contenu texte/markdown — sert pour le texte extrait localement et pour Moodle), `rag_list_documents`,
+  `rag_get_document` (résolution du nom pour les citations), `rag_delete_document`, `read_file` (IPC
+  binaire pour extraire le texte des PDF/DOCX côté front, ce qui **contourne le parser PDF instable**
+  du serveur).
+- **Recherche / rerank** : `rag_search` (`method` = `semantic | lexical | hybrid`, `limit`,
+  `score_threshold` optionnel) ; `rag_rerank` (`bge-reranker-v2-m3`, `top_n` optionnel).
 
-> **V2 — RAG géré ILaaS** (si jeton RAG) : bascule de l'`Embedder` + du store local vers la passerelle
-> OpenGateLLM (collections, documents, search, rerank, OCR serveur, `/me/usage`). Contrat d'API **vérifié**,
-> procédure d'accès et **brouillon de demande** : **`RAG-V2-ilaas.md`**.
+**Pilotage côté front** (`retrieveFromLibrary` dans `src/main.js`) : recherche hybride/… → si le rerank
+est activé, on récupère un vivier plus large (jusqu'à 20), on réordonne par pertinence, puis on **écrête
+au top-k** ; repli silencieux sur l'ordre de recherche si le rerank est indisponible. Les extraits sont
+injectés entre balises `<<<EXTRAIT n>>>…<<<FIN n>>>` **comme données**, avec anti-injection de prompt et
+**citations `[n]`**.
 
-## 7. Thème & fenêtre
-- **Dark auto** : écouter le thème système (Tauri `window.theme()` + `prefers-color-scheme` côté CSS) ;
-  toggle manuel clair/sombre/auto. Le CSS existant gère déjà des variables — ajouter un jeu sombre.
-- **Vibrance macOS** : `tauri.conf.json` (effet `under-window`/`sidebar`) pour le rendu translucide premium.
-- **Fenêtre** : taille mémorisée ; **fermer = quitter**.
+**Synchro « dossier → collection » (conservée).** Le front peut **lier un dossier** à une collection et
+la **synchroniser à l'ouverture du profil** (`state.ragAutoSync`, `autoSyncProfile()` dans `main.js`).
+Le Rust fournit `list_dir_files` / `list_dir_entries` (parcours récursif, extensions supportées, ignore
+cachés et liens symboliques, renvoie taille + mtime pour détecter ajouts/modifs/suppressions).
 
-## 8. Persistance
-- **Préférences** + **métadonnées de clés** + **conversations** : fichiers JSON dans le **dossier de données
-  de l'app** (Tauri `appDataDir`), plus robuste que le `localStorage` web.
-- **Secrets** (valeurs de clés) : **trousseau** uniquement.
-- **Index vectoriel (V1)** : base **locale** (LanceDB / `sqlite-vec`) dans le dossier de données + table
-  `files(path, hash, mtime, chunks)` pour l'indexation incrémentale.
+> **Design V1 abandonné (RAG 100 % local).** Le premier design prévoyait un moteur RAG **local** :
+> embeddings **`fastembed`/`bge-m3`** en local, base vectorielle **LanceDB / `sqlite-vec`**, index et
+> embeddings sur la machine, **OCR `tesseract` local**, table `files(path, hash, mtime, chunks)` pour
+> l'indexation incrémentale, et **watch** du dossier. **Cette architecture n'a pas été retenue** : elle
+> alourdissait l'app (~100–400 Mo pour l'embedder) et dupliquait des capacités déjà offertes par la
+> passerelle gérée. Elle ne subsiste **pas** dans le code livré ; seule demeure la synchro
+> « dossier → collection gérée » ci-dessus.
 
-## 9. Prérequis & build
+### Correctif — mode Requête (blocage sans appel facturé)
+Deux modes de bibliothèque (interrupteur « Utiliser la bibliothèque ») :
+- **Chat** (`ragMode = 'chat'`) : s'appuie sur les extraits **en priorité**, complète avec les
+  connaissances générales si utile. Si la recherche **échoue**, l'app **prévient** et **répond quand
+  même** (repli assumé, avec avertissement).
+- **Requête** (`ragMode = 'requete'`) : répond **exclusivement** à partir des extraits. **Correctif
+  clé** (`runGeneration` dans `main.js`) : si la recherche RAG **échoue** ou aboutit **sans aucun
+  extrait**, le modèle **n'est pas interrogé** (aucun appel facturé) — l'app affiche un message explicite
+  (recherche indisponible, ou phrase de refus configurable `ragRefusal`) au lieu de laisser le modèle
+  répondre sur ses connaissances générales.
+
+## 7. Connecteur Moodle (livré, branche `moodle`)
+Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée personnelle**.
+
+- **Client REST bas niveau `ws_call`** : `POST /webservice/rest/server.php` en form-urlencoded
+  (`wstoken`, `wsfunction`, `moodlewsrestformat=json`). Moodle renvoyant souvent ses erreurs en HTTP 200
+  (`{exception, errorcode, message}`), on **parse toujours le corps** et on traduit les codes courants en
+  messages lisibles.
+- **Client HTTP dédié `moodle_client` — redirections DÉSACTIVÉES.** Le jeton voyage dans le **corps** du
+  POST ; suivre une 3xx le réémettrait vers l'hôte cible (exfiltration possible sur `http://` LAN ou
+  Moodle compromis). Toute redirection est refusée et diagnostiquée.
+- **Liste blanche stricte de 8 fonctions de CONTENU** (constante `WHITELIST`, pour audit) :
+  `core_webservice_get_site_info`, `core_course_get_categories`, `core_course_get_courses_by_field`,
+  `core_course_get_contents`, `mod_page_get_pages_by_courses`, `mod_label_get_labels_by_courses`,
+  `mod_resource_get_resources_by_courses`, `mod_book_get_books_by_courses`. Ni notes, ni inscriptions,
+  ni participants.
+- **Test de connexion** (`test_moodle_connection`, `_ephemeral`) : `get_site_info` → renvoie
+  site/utilisateur/version, **`downloadfiles`**, et les **fonctions de la liste blanche manquantes** du
+  service.
+- **Convertisseur HTML → Markdown maison, en Rust, zéro dépendance** (`html_to_markdown` : tokenizer,
+  titres/paragraphes/listes/gras/italique/liens/entités, gestion des `<` littéraux et des `>` dans les
+  attributs, éléments inline vides supprimés). **Tests unitaires** dans le module. Choix acté (Lot 0) :
+  garder l'app légère, pas de `html2md`/`turndown`/`html2text`.
+- **Markdown de cours** (`moodle_course_markdown`) : assemble le **texte** d'un cours (résumé du cours +
+  titre/résumé de section + descriptions de modules) en un Markdown hiérarchisé (H1 cours · H2 section ·
+  H3 module). **Texte seul** ; PDF/fichiers = Lot 4.
+- **Profils de connexion Moodle** (`settings.rs`) : nom + URL (`http://` LAN ou `https://` prod), **jeton
+  au trousseau sous le rôle `moodle`**, **indépendants des profils ILaaS**, **plusieurs connexions**
+  possibles ; les **cours cochés** sont persistés (`course_ids`).
+- **Explorateur de cours (front, `main.js`)** : recherche + filtre par catégorie + cases à cocher,
+  sélection persistée ; le bouton **Synchroniser** ingère le texte vers une collection RAG
+  **« Moodle · <cours> »** du profil ILaaS actif, interrogeable avec citations ; **barre de progression
+  par cours** ; **verrou anti-corruption inter-profils** pendant la synchro.
+
+## 8. Fonctionnalités v8 livrées (rappel)
+- **Comparaison multi-modèles** : `state.compareMode` envoie la même question à **deux modèles en
+  parallèle**, affichés côte à côte (`runComparison` dans `main.js`).
+- **Modes de bibliothèque** Chat / Requête (voir §6) ; **recherche hybride / sémantique / lexicale**,
+  **rerank** activable, **top-k** et **seuil de similarité** réglables ; **phrase de refus configurable**.
+- **Document de contexte** : un document chargé en mémoire est injecté dans le message système
+  (`state.doc`, non persisté).
+- **Conso / coût / CO₂** par rôle (§4).
+- **Rendu LaTeX** via **KaTeX** (`src/ui.js`) : blocs `$$…$$` / `\[…\]` et en ligne `$…$` / `\(…\)`,
+  rendu sûr (sortie KaTeX, `\href` désactivé).
+- **Mémoire de conversation** bornée (`memoryTurns`), thème clair/sombre/auto, menu natif macOS.
+
+## 9. Persistance
+- **Préférences de génération** + **conversations** : `localStorage` côté webview (migration prévue vers
+  `appData`). Aucune clé n'y figure.
+- **Métadonnées de profils** (ILaaS et Moodle) + profil actif : `settings.json` dans le dossier de
+  données de l'app (`app_data_dir`).
+- **Secrets** (clés LLM/RAG, jeton Moodle) : **trousseau OS uniquement**.
+- **Documents, embeddings, index RAG** : **côté infra ESR** (collections « private »), pas sur la machine.
+
+## 10. Feuille de route (résumé)
+- **Lot 4** — fichiers/PDF Moodle (`pluginfile.php?token=` → `rag_upload_document`).
+- **Lot 5** — synchro **incrémentale** + déduplication (planifiable la nuit).
+- **Lot 6** — interrupteur « inclure les cours Moodle » dans le chat.
+- **Portage Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode**.
+- **Version serveur / web** — deux formats (app de bureau vs serveur central sans installation).
+- **Linux** (après Moodle).
+- **Signature / notarisation** — quarantaine macOS + SmartScreen Windows.
+
+## 11. Prérequis & build
 Voir `SETUP.md`. En bref : chaîne Rust + dépendances système, `npm run tauri dev` (dev),
-`npm run tauri build` (produit .app/.dmg et AppImage non signés).
+`npm run tauri build` (produit `.app`/`.dmg` **non signés** — macOS arm64).
 
-## 10. Risques & points de vigilance
-- **1ʳᵉ indexation longue** (gros dossier) → progression + tâche de fond obligatoires.
-- **Taille de l'app** avec l'embedder local (`bge-m3`, ~100–400 Mo) → acceptable, à mesurer.
-- **Permissions FS macOS** (sandbox/bookmarks) → tester la persistance de l'autorisation au redémarrage.
-- **PDF scannés** (sans couche texte) → OCR local optionnel, sinon journaliser/ignorer.
-- **Souveraineté (V1)** : embeddings et index **restent locaux** ; seule la génération sort vers ILaaS.
-- **V2 (RAG géré)** : conditionné à l'obtention d'un **jeton RAG** séparé — voir `RAG-V2-ilaas.md`.
+## 12. Points de vigilance
+- **Non signé** : quarantaine macOS à lever manuellement au premier lancement (voir mode d'emploi).
+- **Parser PDF serveur instable** (HTTP 502) → extraction du texte **côté front** avant upload en
+  `text/markdown` (`read_file` + `rag_upload_text`).
+- **Redirections Moodle** : refusées par conception (jeton dans le corps du POST). Une 3xx est souvent le
+  symptôme d'un `wwwroot`/https mal configuré côté Moodle.
+- **Souveraineté** : en RAG géré, les documents quittent la machine vers l'infra ESR (collections
+  « private ») ; c'est le compromis assumé du design retenu.

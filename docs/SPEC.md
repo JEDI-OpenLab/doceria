@@ -1,21 +1,40 @@
 # Doceria — Cahier des charges (application de bureau)
 
-> Document de passation. Lu en début de la conversation de développement.
-> État : **spec figée**, décisions actées. Voir aussi `ARCHITECTURE.md`, `ROADMAP.md`, `SETUP.md`.
+> **⚠️ DOCUMENT DE CADRAGE HISTORIQUE.** Ce cahier des charges décrit les intentions **de départ**
+> du projet (passation, début du développement). Il est conservé pour mémoire, mais **plusieurs
+> décisions ont évolué depuis** — voir les encarts « ⟳ Depuis » ci-dessous. Pour l'état **courant**
+> et le mode d'emploi, se référer à `../README.md`, au site (section « Mode d'emploi »),
+> à `MOODLE-IMPLEMENTATION-ROADMAP.md` et à `src-tauri/src/`.
 >
-> **⚠️ Doc de cadrage (historique).** L'application est désormais **réalisée**. Le **RAG géré ILaaS** est le mode implémenté (le RAG local est resté optionnel/différé). Pour l'état courant et le mode d'emploi : `../README.md` et le site (section « Mode d'emploi »).
+> **Filiation.** Doceria est la **filiation directe du POC Learnix** : ce dernier a servi de preuve
+> de concept d'un portail RAG pour l'ESR ; Doceria en est la version application de bureau, mono-
+> utilisateur, s'appuyant désormais sur le **RAG géré ILaaS** (OpenGateLLM).
+>
+> **Décisions structurantes ayant changé depuis ce cadrage :**
+> - **RAG livré = RAG GÉRÉ ILaaS** (OpenGateLLM, `rag-api.ilaas.fr`). Le « RAG 100 % local » décrit
+>   plus bas (embedder `bge-m3` local, base vectorielle locale type LanceDB/`sqlite-vec`, index et
+>   OCR locaux) était le design **V1 abandonné** : documents, embeddings et index vivent côté infra
+>   ESR (collections « private »).
+> - **Plateformes : seul macOS arm64 est livré.** Windows et Linux relèvent de la feuille de route
+>   (ordre acté : **Moodle avant Linux**).
+> - **Connecteur Moodle livré** (lecture seule) sur la branche `moodle`, destiné à la **prochaine**
+>   version — voir `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
+> - **Correctif RAG mode Requête** en place (voir § E).
+> - **Question ouverte « jeton RAG » : RÉSOLUE** — le RAG géré ILaaS est **en service** (§ 8).
 
 ## 1. Problème & objectif
 Le portail ILaaS existe en application web (Vite + JS vanilla, fonctionnelle), mais son usage
 suppose un terminal (lancer un serveur, ouvrir un onglet). Cible : un·e enseignant·e-chercheur·e,
 pas un·e développeur·se.
 
-**Objectif : une application de bureau native, double-cliquable (macOS + Linux), sans terminal**,
-qui par construction :
+**Objectif : une application de bureau native, double-cliquable, sans terminal**, qui par construction :
 - règle le CORS (requêtes hors navigateur, en natif) ;
 - sécurise les clés API dans le **trousseau du système** ;
-- et apporte un **RAG local** sur une **bibliothèque = un dossier de l'ordinateur** (indexation **locale**
-  en V1 ; bascule possible vers le **RAG géré ILaaS** en V2 — voir `RAG-V2-ilaas.md`).
+- et apporte un **RAG** sur une **bibliothèque = une collection interrogeable**.
+
+> **⟳ Depuis.** Cible de départ « macOS + Linux ». **Livré : macOS arm64 uniquement.** Linux relève
+> de la feuille de route (**après Moodle**). Le RAG livré est le **RAG géré ILaaS** (OpenGateLLM),
+> pas l'indexation locale décrite ici (design V1 abandonné — voir bandeau).
 
 ## 2. Techno retenue
 **Tauri** (coquille Rust + webview système). Voir `ARCHITECTURE.md` pour le détail et la
@@ -23,20 +42,23 @@ justification. Décision définitive.
 
 ## 3. Objectifs mesurables
 - **Zéro commande** : installer = poser l'app ; utiliser = double-clic ; quitter = fermer la fenêtre.
-- **Souveraineté** : clés au trousseau ; en V1, **documents et vecteurs 100 % locaux** (aucune donnée ne
-  sort sauf la génération finale envoyée à ILaaS).
+- **Souveraineté** : clés au trousseau. *(Objectif de départ « documents et vecteurs 100 % locaux »
+  abandonné : le RAG livré est **géré par ILaaS** ; documents, embeddings et index vivent côté infra
+  ESR, en collections « private ».)*
 - **Continuité** : tout ce que fait l'app web aujourd'hui marche à l'identique.
-- **RAG utile** : pointer l'app sur un dossier → bibliothèque interrogeable, avec citation des sources.
+- **RAG utile** : une bibliothèque (collection) interrogeable, avec citation des sources.
 
 ## 4. Non-objectifs (hors périmètre, assumés)
 - ❌ Pas de compte / pas de cloud : 100 % local, mono-utilisateur.
 - ❌ Pas de multi-fournisseurs : **ILaaS uniquement**.
 - ❌ Pas de signature/notarisation : **app non signée** (sur macOS : « Ouvrir quand même » au 1ᵉʳ lancement).
-- ❌ Pas de Windows en V1 (impossible à tester) — Tauri le permettra plus tard sans refonte.
+- ❌ Pas de Windows ni de Linux au lancement — feuille de route (ordre acté : **Moodle avant Linux** ;
+  Windows = Tauri multiplateforme + WebView2 + signature Authenticode). Seul **macOS arm64** est livré.
 - ❌ Pas de mise à jour automatique en V1.
-- ❌ Ce portail n'est PAS Learnix : Learnix reste le RAG **institutionnel/gouverné, multi-utilisateurs**
-  (corpus partagé, AnythingLLM) ; ce portail est un RAG **personnel et local** (un dossier sur ta machine,
-  indexé **localement** en V1). Deux outils, deux usages.
+- ❌ Ce portail n'est PAS Learnix, mais en est **la filiation directe** : Learnix a été le **POC** d'un
+  portail RAG pour l'ESR (institutionnel/gouverné, multi-utilisateurs, corpus partagé) ; Doceria en est
+  la version **application de bureau mono-utilisateur**, adossée au **RAG géré ILaaS**. Deux outils,
+  deux usages, une même filiation.
 
 ## 5. Exigences fonctionnelles (par domaine)
 
@@ -54,19 +76,23 @@ justification. Décision définitive.
 - **P1** — Fenêtre Préférences dédiée ; **vibrance/translucidité macOS**.
 - **P2** — Taille de police / accessibilité ; langue FR/EN.
 
-### C. RAG sur dossier — local, géré par l'app (cœur de la V1)
-> **V1 = RAG 100 % local.** La passerelle RAG ILaaS exige un **jeton RAG séparé** (distinct de la clé
-> d'inférence) — demandé, en attente. Le passage au **RAG géré ILaaS** est prévu en **V2** : voir `RAG-V2-ilaas.md`.
-- **P0** — **Choisir un dossier** via dialogue natif ; **autorisation persistée** (security-scoped bookmark macOS).
-- **P0** — **Scanner** (récursif) : lire chaque fichier supporté → découper → **vectoriser (embedder local `bge-m3`)** → ranger dans une **base vectorielle locale** persistée.
-- **P0** — **Indexation incrémentale** : empreinte (hash + date) par fichier ; au re-scan, ne traiter que le nouveau/modifié ; retirer de l'index les fichiers disparus.
-- **P0** — **Bouton « Scanner la bibliothèque »** + option **scan auto au lancement** (incrémental).
-- **P0** — À la question : **récupérer les passages pertinents (top-k)** en local et les injecter ; **citer les sources** (fichier, page).
-- **P0** — État visible : nb de documents, nb de passages, date du dernier scan, progression pendant l'indexation.
-- **P1** — **Surveillance temps réel** du dossier (auto-indexation à l'ajout d'un fichier).
-- **P1** — Plusieurs dossiers / exclusions ; bouton « ré-indexer tout ».
-- **P1** — **PDF scannés** : OCR local optionnel (sinon journalisés et ignorés).
-- **P2** — Réglages de récupération (taille de chunk, top-k, seuil) exposés.
+### C. RAG — géré par ILaaS (cœur de l'app livrée)
+> **⟳ Depuis — RAG géré ILaaS.** Cette section décrivait le design **V1 « RAG 100 % local »
+> (ABANDONNÉ)** : embedder `bge-m3` local, base vectorielle locale, index et OCR sur la machine.
+> Le RAG **livré** est le **RAG géré ILaaS** (OpenGateLLM, `rag-api.ilaas.fr`, `src-tauri/src/rag.rs`) :
+> l'app **téléverse** les documents vers des **collections « private »** côté infra ESR ; découpage,
+> vectorisation (`bge-m3` **côté serveur**), stockage et recherche top-k se font **côté ILaaS**.
+> Les puces ci-dessous sont conservées pour mémoire et **réinterprétées** en conséquence.
+- **P0** — **Choisir un dossier** via dialogue natif ; **autorisation persistée** (security-scoped bookmark macOS). *(Livré : la synchro « dossier local → collection » existe — Lier un dossier, « Synchroniser à l'ouverture du profil », `ragAutoSync` — mais elle **téléverse** vers une collection ILaaS ; elle n'indexe pas localement.)*
+- **P0** — ~~**Scanner** (récursif) → découper → **vectoriser (embedder local `bge-m3`)** → **base vectorielle locale**~~ → **remplacé** par : téléversement des fichiers vers la collection ILaaS ; découpe/vectorisation **côté serveur**.
+- **P0** — **Indexation incrémentale** : empreinte (hash + date) par fichier ; au re-scan, ne traiter que le nouveau/modifié. *(Design V1 local ; côté ILaaS, la dédup/synchro incrémentale est en feuille de route — Lot 5.)*
+- **P0** — **Bouton de synchronisation** + option **synchro à l'ouverture du profil**.
+- **P0** — À la question : **récupérer les passages pertinents (top-k)** côté ILaaS et les injecter ; **citer les sources**.
+- **P0** — État visible : progression pendant la synchronisation, collections listées.
+- **P1** — **Surveillance temps réel** du dossier (auto-synchronisation à l'ajout d'un fichier). *(Piste ; la synchro à l'ouverture du profil est livrée.)*
+- **P1** — Plusieurs dossiers / exclusions ; re-synchroniser.
+- **P1** — ~~**PDF scannés** : OCR local~~ → OCR **côté ILaaS** (piste abandonnée en local).
+- **P2** — Réglages de récupération (top-k, seuil).
 
 ### D. Document de contexte ponctuel (existant, conservé)
 - **P0** — Charger un ou **plusieurs documents** ponctuels (txt/md/csv/json/pdf/docx) injectés tels quels, en plus du RAG.
@@ -74,6 +100,10 @@ justification. Décision définitive.
 
 ### E. Chat & génération
 - **P0** — Streaming + **Stop** (existant), réglages température/longueur/consigne.
+- **P0** — **Modes RAG (livré) : Chat ⇄ Requête** (`state.ragMode`, `src/main.js`). En mode **Requête**,
+  si la recherche RAG **échoue** (ou renvoie **0 extrait**), le modèle **NE répond PLUS** sur ses
+  connaissances générales : il **bloque** et l'explique (**aucun appel facturé**). En mode **Chat**,
+  repli assumé **avec avertissement**.
 - **P0** — **Suivi de consommation** : **tokens par échange** (champ `usage` des réponses chat). *(La conso
   agrégée via `GET /v1/me/usage` n'existe que sur la passerelle RAG → V2 ; l'API ILaaS n'expose pas de
   notion de « parts », seulement le coût/tokens consommés par requête.)*
@@ -87,41 +117,65 @@ justification. Décision définitive.
 
 ### G. Application & distribution
 - **P0** — Fenêtre native ; **fermer = tout arrêter** ; icône + nom.
-- **P0** — Builds **macOS (.app/.dmg)** + **Linux (AppImage)**, **non signés**.
-- **P2** — Windows ; mise à jour automatique ; signature/notarisation.
+- **P0** — Build **macOS (.app/.dmg)**, **non signé** (version publiée `20260626.8.0`, macOS arm64).
+  *(Linux AppImage = feuille de route, après Moodle ; Windows plus tard.)*
+- **P2** — Windows (Tauri + WebView2 + signature Authenticode) ; Linux ; mise à jour automatique ;
+  signature/notarisation (quarantaine macOS + SmartScreen Windows).
+
+### H. Connecteur Moodle (livré — voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
+> **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Livré et validé** sur la
+> branche `moodle`, destiné à la **prochaine** version (pas encore dans le `.dmg` publié `20260626.8.0`).
+> Référence de vérité : `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
+- **Lecture seule stricte** (web services REST Moodle).
+- **Profils de connexion Moodle** (nom + URL + jeton ; jeton au **trousseau**, rôle « moodle » ;
+  indépendants des profils ILaaS ; plusieurs connexions possibles).
+- **Test de connexion** : liste blanche de **8 fonctions de contenu** + `downloadfiles` ; client HTTP dédié
+  **sans redirections** (le jeton voyage dans le corps du POST).
+- **Explorateur de cours** central (recherche + filtre par catégorie + cases à cocher ; sélection persistée).
+- **Synchroniser** = ingestion du **texte** (résumés de section + descriptions de modules) via un
+  **convertisseur HTML → Markdown maison en Rust** (zéro dépendance, tests unitaires — **pas**
+  html2md/turndown/html2text) vers une collection RAG **« Moodle · <cours> »** dans le profil ILaaS actif,
+  interrogeable avec citations. **Barre de progression** par cours ; synchro **anti-corruption** inter-profils.
+- **À venir** : **fichiers/PDF** (Lot 4, `pluginfile.php?token=` → `rag_upload_document`) ; synchro
+  incrémentale + dédup planifiable (Lot 5) ; interrupteur « inclure les cours Moodle » dans le chat (Lot 6).
 
 ## 6. Exigences non-fonctionnelles
-- **Sécurité/souveraineté** : clés au trousseau ; **documents et vecteurs locaux (V1)** ; zéro télémétrie ; aucune dépendance CDN.
-- **Multiplateforme** : macOS + Linux a minima.
+- **Sécurité/souveraineté** : clés et jetons au trousseau ; zéro télémétrie ; aucune dépendance CDN.
+  *(L'objectif « documents et vecteurs locaux » n'a pas été retenu : le RAG est **géré par ILaaS**,
+  documents et index côté infra ESR, collections « private ».)*
+- **Multiplateforme** : **macOS arm64 livré** ; Linux en feuille de route (après Moodle), Windows plus tard.
 - **Réutilisation** : l'UI HTML/CSS/JS existante est conservée ; seule la couche réseau + la coquille changent.
-- **Performance** : 1ʳᵉ indexation potentiellement longue (progression + tâche de fond) ;
-  scans suivants quasi instantanés (incrémental).
-- **Hors-ligne** : l'app se lance sans réseau ; en V1, le réseau ne sert qu'au **chat** ILaaS (l'indexation RAG est locale).
+- **Performance** : la 1ʳᵉ synchronisation d'une bibliothèque peut être longue (progression + tâche de fond).
+- **Hors-ligne** : l'app se lance sans réseau ; le RAG **géré ILaaS** requiert le réseau (téléversement,
+  recherche, chat).
 - **Maintenabilité** : l'auteur édite HTML/CSS/JS ; la coquille Rust est écrite par l'assistant et bouge peu.
 
 ## 7. Décisions actées (rappel)
-| Sujet | Décision |
-|---|---|
-| Techno | **Tauri** |
-| Plateformes | **macOS + Linux** (Windows hors V1) |
-| Signature | **Non signée** |
-| Clés | **Multi-clés nommées + profil par clé** (URL + modèle), au **trousseau** |
-| Documents | **Plusieurs** à la fois |
-| Conso | **Suivi tokens + estimation parts** |
-| RAG (V1) | **Local, géré par l'app** : embedder local + base vectorielle locale |
-| RAG (V2) | **Service géré ILaaS** (OpenGateLLM) si **jeton RAG** obtenu — voir `RAG-V2-ilaas.md` |
-| Embeddings (V1) | **`bge-m3` en local** (via `fastembed`/ONNX) — même modèle qu'ILaaS |
-| Bibliothèque | Un **dossier local**, indexé **localement** |
-| Conso | **Tokens par échange** en V1 ; `GET /v1/me/usage` en V2 (jeton RAG) |
-| Modèle chat | **`mistral-medium-latest`** (id réel ; plus « Mistral Medium 3 ») |
-| Positionnement | RAG **personnel et local**, distinct de **Learnix** (institutionnel) |
+> Colonne « ⟳ Livré » = ce qui a effectivement été retenu quand la décision de cadrage a évolué.
 
-## 8. Questions ouvertes (à résoudre pendant le dev)
-1. **Jeton RAG ILaaS (V2)** : **demandé via `ilaas.fr/demande-dacces`, en attente** du comité de pilotage.
-   ILaaS émet **deux jetons distincts** (inférence + RAG) ; la clé d'inférence renvoie « Invalid API key »
-   sur `rag-api.ilaas.fr` (testé). Conditionne **toute la V2**. La demande doit être **rattachée à un
-   établissement ESR** (les demandes individuelles sont refusées).
-2. **Modèle d'embeddings local (V1)** : retenir **`bge-m3`** (multilingue, le même qu'ILaaS) via `fastembed`/ONNX
-   — vérifier disponibilité/poids/quantization.
-3. **Base vectorielle locale (V1)** : LanceDB (embarquée, Rust) vs `sqlite-vec` — à trancher selon intégration Tauri.
-4. **OCR local (V1)** : intégrer un OCR local (tesseract) pour les PDF scannés, ou les ignorer en V1 ?
+| Sujet | Décision (cadrage) | ⟳ Livré |
+|---|---|---|
+| Techno | **Tauri** | inchangé |
+| Plateformes | macOS + Linux (Windows hors V1) | **macOS arm64 seul** ; Linux en feuille de route (**après Moodle**) |
+| Signature | **Non signée** | inchangé (quarantaine macOS au 1ᵉʳ lancement) |
+| Clés | **Multi-clés nommées + profil par clé** (URL + modèle), au **trousseau** | inchangé |
+| Documents | **Plusieurs** à la fois | inchangé |
+| RAG | Local, géré par l'app (embedder + base vectorielle locale) | **Géré ILaaS** (OpenGateLLM, `rag-api.ilaas.fr`) — design local **abandonné** |
+| Embeddings | `bge-m3` en local (via `fastembed`/ONNX) | `bge-m3` **côté serveur ILaaS** |
+| Bibliothèque | Un dossier local, indexé localement | **Collections ILaaS « private »** (téléversement + recherche côté serveur) |
+| Modes RAG | — | **Chat ⇄ Requête** ; en Requête, pas de repli si échec/0 extrait (aucun appel facturé) |
+| Conso | **Tokens par échange** | inchangé (`usage` des réponses chat) |
+| Modèle chat | **`mistral-medium-latest`** (id réel) | inchangé |
+| Connecteur Moodle | *(non prévu)* | **Livré** (lecture seule) — branche `moodle`, prochaine version (§ H) |
+| Positionnement | RAG personnel, distinct de **Learnix** | RAG personnel adossé à ILaaS ; **filiation directe du POC Learnix** |
+
+## 8. Questions ouvertes (au moment du cadrage) — **résolues depuis**
+1. **Jeton RAG ILaaS** : ✅ **RÉSOLUE — le RAG géré ILaaS est en service.** Le jeton RAG (distinct de la
+   clé d'inférence) a été obtenu et stocké au trousseau ; l'app crée des collections « private »,
+   téléverse et interroge le RAG géré ILaaS (`rag-api.ilaas.fr`, `src-tauri/src/rag.rs`). Ce qui était
+   présenté comme « toute la V2 » **est le mode livré**.
+2. ~~Modèle d'embeddings local (`bge-m3` via `fastembed`/ONNX)~~ — **caduque** : l'embedding `bge-m3` se fait
+   **côté serveur ILaaS**. Pas d'embedder local.
+3. ~~Base vectorielle locale (LanceDB vs `sqlite-vec`)~~ — **caduque** : stockage/recherche **côté ILaaS**.
+4. ~~OCR local (tesseract) pour PDF scannés~~ — **caduque en local** : traitement des fichiers **côté ILaaS**
+   (fichiers/PDF Moodle = Lot 4, voir § H).

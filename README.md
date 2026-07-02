@@ -2,11 +2,13 @@
 
 > **Enseigner avec l'IA.**
 
-Application de bureau **native** (macOS + Linux) pour interroger l'**API ILaaS** — la
+Application de bureau **native** pour interroger l'**API ILaaS** — la
 fédération d'inférence souveraine de l'enseignement supérieur et de la recherche français
 (API compatible OpenAI ; modèle de chat `mistral-medium-latest`). Doceria fait aussi du
 **RAG** sur une bibliothèque de documents via le **service RAG géré ILaaS** (collections
-privées OpenGateLLM ; le RAG local reste une option différée).
+privées OpenGateLLM ; documents, embeddings et index vivent côté infrastructure ESR — l'ancien
+projet de RAG 100 % local est une piste abandonnée). **Seul macOS (Apple Silicon) est livré à ce
+jour** ; Windows et Linux relèvent de la feuille de route.
 
 Double-clic pour lancer : pas de terminal, pas de CORS, clés au trousseau du système.
 
@@ -14,18 +16,47 @@ Fonctionnalités : **profils de connexion** multiples (chaque profil porte ses c
 au trousseau, son URL et son modèle), **chat en streaming** avec Stop, réglages de génération
 (température, longueur, consigne système + **modèles de consigne** enregistrables), **mémoire
 ajustable** (nombre de tours d'historique envoyés), **multi-conversations** (créer / renommer /
-supprimer + export Markdown), **bibliothèque RAG** (collections + ajout de documents/dossier)
-avec **modes Chat ⇄ Requête** (réponse strictement fondée sur les documents, sinon « non trouvé »)
-et **réglages de récupération** (méthode `hybrid`/`semantic`/`lexical`, nombre d'extraits, seuil
-de similarité), chargement de documents de contexte ponctuels (txt, md, csv, json, pdf, docx).
+supprimer + export Markdown), **comparaison multi-modèles côte à côte** (la même question posée
+à plusieurs modèles en même temps, contexte RAG partagé, résultat éphémère tant qu'on ne l'a pas
+enregistré), **rendu LaTeX/KaTeX** des formules dans les réponses (`$…$`, `$$…$$`, `\(…\)`,
+`\[…\]`), **bibliothèque RAG** (collections + ajout de documents/dossier) avec **modes
+Chat ⇄ Requête** et **réglages de récupération** (méthode `hybrid`/`semantic`/`lexical`, nombre
+d'extraits, seuil de similarité), chargement de documents de contexte ponctuels
+(txt, md, csv, json, pdf, docx). En **mode Requête**, la réponse est strictement fondée sur les
+documents : si la recherche RAG échoue ou ne renvoie **aucun extrait**, le modèle **n'est pas
+interrogé** (aucun appel facturé) et un message l'explique — pas de repli sur ses connaissances
+générales. En **mode Chat**, un tel repli reste possible mais s'accompagne d'un avertissement.
 Interface soignée : **thème clair/sombre/auto**, **vibrance macOS**, **colonnes et sections
 pliables**, aides contextuelles.
 
 La **bibliothèque** peut aussi être **liée à un dossier local** : un bouton « Synchroniser »
-(ou une synchro automatique à l'ouverture du profil) ajoute les nouveaux fichiers, met à jour
-les modifiés et **retire** de la collection ceux supprimés du dossier — indexation incrémentale,
-sans tout re-téléverser. Les **PDF/DOCX sont extraits en texte localement** (pdf.js/mammoth) avant
-l'envoi, ce qui contourne les limites du parseur serveur.
+(ou une synchro automatique à l'ouverture du profil, `ragAutoSync`) ajoute les nouveaux fichiers,
+met à jour les modifiés et **retire** de la collection ceux supprimés du dossier — indexation
+incrémentale, sans tout re-téléverser. Les **PDF/DOCX sont extraits en texte localement**
+(pdf.js/mammoth) avant l'envoi, ce qui contourne les limites du parseur serveur.
+
+### Connecteur Moodle (jalon phare — livré sur la branche `moodle`, pour la prochaine version)
+
+Le connecteur **Moodle** est **livré et validé** sur la branche `moodle` ; il ne fait **pas encore
+partie du `.dmg` publié** (version actuelle 20260626.8.0) et est destiné à la **prochaine version**.
+En bref :
+
+- **Lecture seule stricte** : aucune donnée personnelle (ni notes, ni inscriptions, ni
+  participants). Le test de connexion s'appuie sur une **liste blanche de 8 fonctions de contenu**
+  plus `downloadfiles`, via un **client HTTP dédié sans redirections** (le jeton voyageant dans le
+  corps du POST, suivre une 3xx pourrait l'exfiltrer).
+- **Profils de connexion Moodle** (nom + URL + jeton) **indépendants** des profils ILaaS,
+  plusieurs connexions possibles ; le **jeton va au trousseau** (rôle « moodle »).
+- **Explorateur de cours** central : recherche, filtre par catégorie, cases à cocher, **sélection
+  persistée** dans les métadonnées du profil.
+- Bouton **Synchroniser** = ingestion du **texte** (résumés de section + descriptions de modules)
+  via un **convertisseur HTML → Markdown maison en Rust** (zéro dépendance, tests unitaires — ni
+  html2md, ni turndown, ni html2text) vers une collection RAG « **Moodle · &lt;cours&gt;** » du
+  profil ILaaS actif, ensuite interrogeable avec citations. **Barre de progression** par cours et
+  garde-fou anti-corruption inter-profils (verrou pendant la synchro).
+- Les **fichiers/PDF** joints aux cours relèvent du **Lot 4** (à venir).
+
+Référence d'implémentation : `src-tauri/src/moodle.rs` et `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
 
 Également : **glisser-déposer** de fichiers vers une collection (avec barre de progression),
 **gestion documentaire** (lister / supprimer un document), **suivi de consommation** (requêtes,
@@ -48,7 +79,7 @@ différents, pensés pour l'**enseignement supérieur souverain** et la simplici
   jour, **retrait**) à la demande ou à l'ouverture du profil. La synchro de documents d'AnythingLLM
   est, à ce jour, limitée à **un seul fichier** à la fois (« *you currently cannot watch an entire
   directory* »).
-- **Léger & natif** — **Tauri** (webview système + cœur Rust, ~13 Mo, vibrance macOS) plutôt
+- **Léger & natif** — **Tauri** (webview système + cœur Rust, ~15 Mo, vibrance macOS) plutôt
   qu'**Electron**.
 - **Clés au trousseau du système** — jamais dans un fichier de l'app ni dans la page ; réseau en
   Rust (pas de CORS). AnythingLLM chiffre les clés au repos dans sa base SQLite applicative.
@@ -76,7 +107,8 @@ Voir `docs/ARCHITECTURE.md` pour le détail, `docs/ROADMAP.md` pour le phasage.
 ## Prérequis
 
 Chaîne Rust + dépendances système (et Node 18+). Procédure complète : **`docs/SETUP.md`**.
-En bref : `rustup` (cargo/rustc), Xcode (macOS) ou `libwebkit2gtk-4.1-dev` & co (Linux), Node.
+En bref : `rustup` (cargo/rustc), Xcode (macOS), Node. (Les dépendances Linux —
+`libwebkit2gtk-4.1-dev` & co — ne concernent que le portage Linux, qui n'est pas encore livré.)
 
 ## Développement
 
@@ -98,12 +130,15 @@ npm run tauri build
 
 Le numéro de version suit le schéma **`AAAAMMJJ.ii.0`** (date · itération du jour · 0), valide semver — voir `src-tauri/Cargo.toml`. Pour une release, taguer `vAAAAMMJJ.ii.0` (le bouton « Télécharger » du site et la vérification de mise à jour s'appuient dessus).
 
-- **macOS — Apple Silicon (arm64) uniquement** : `Doceria.app` + `Doceria_<version>_aarch64.dmg`
-  (`src-tauri/target/release/bundle/`). Le build se fait sur un Mac Apple Silicon → app **arm64**
-  native (pas d'Intel — cible arm64 conforme au matériel Apple Silicon visé). Build **non signé** → au 1ᵉʳ lancement :
-  clic droit → **Ouvrir**, ou Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ».
-  Guide utilisateur pas-à-pas : [`INSTALLATION-macOS.md`](INSTALLATION-macOS.md).
-- **Linux** (à builder sur une machine Linux) : `.AppImage` (+ `.deb`/`.rpm`).
+- **macOS — Apple Silicon (arm64), seule plateforme livrée** : `Doceria.app` +
+  `Doceria_<version>_aarch64.dmg` (`src-tauri/target/release/bundle/`). Le build se fait sur un Mac
+  Apple Silicon → app **arm64** native (pas d'Intel — cible arm64 conforme au matériel Apple Silicon
+  visé). Build **non signé** → au 1ᵉʳ lancement : clic droit → **Ouvrir**, ou Réglages Système →
+  Confidentialité et sécurité → « Ouvrir quand même ». Guide utilisateur pas-à-pas :
+  [`INSTALLATION-macOS.md`](INSTALLATION-macOS.md).
+- **Linux** (`.AppImage`, `.deb`, `.rpm`) : **non livré** — cibles prévues dans la feuille de route
+  (le portage Linux est planifié **après** le connecteur Moodle). Windows relève également de la
+  feuille de route.
 
 ## Structure du dépôt
 
@@ -119,14 +154,30 @@ doceria/
 │   ├── state.js  ui.js  conversations.js  documents.js  styles.css
 ├── src-tauri/              # coquille Rust (Tauri v2)
 │   ├── src/ilaas.rs        # réseau ILaaS : list_models, chat streaming, cancel, test
-│   ├── src/keychain.rs     # secrets au trousseau OS (write-only)
+│   ├── src/rag.rs          # RAG géré ILaaS : collections, upload, search, rerank
+│   ├── src/keychain.rs     # secrets au trousseau OS (write-only ; rôles llm/rag/moodle)
 │   ├── src/settings.rs     # profils (métadonnées non sensibles, appData)
-│   ├── src/rag.rs          # RAG géré : collections, upload, search, rerank
+│   ├── src/moodle.rs       # connecteur Moodle : WS REST lecture seule + HTML→Markdown maison
+│   ├── src/update.rs       # vérification de mise à jour (GitHub Releases, hors webview)
 │   ├── src/lib.rs  main.rs # entrée, commandes, fenêtre (fermer = quitter)
 │   ├── tauri.conf.json     # config app (nom, fenêtre, identifiant, bundle)
 │   ├── capabilities/  icons/  Cargo.toml
-└── docs/                   # index.html (site), SPEC, ARCHITECTURE, ROADMAP, SETUP, RAG-V2-ilaas, POINT-DE-REPRISE
+└── docs/                   # index.html (site), SPEC, ARCHITECTURE, ROADMAP, SETUP, RAG-V2-ilaas,
+                            #   MOODLE-IMPLEMENTATION-ROADMAP, MOODLE-TEST-PLAN, POINT-DE-REPRISE
 ```
+
+## Feuille de route à venir
+
+- **Moodle — Lot 4** : ingestion des **fichiers/PDF** joints aux cours (`pluginfile.php` avec
+  `token=` → `rag_upload_document`).
+- **Moodle — Lot 5** : **synchro incrémentale + déduplication**, planifiable la nuit.
+- **Moodle — Lot 6** : interrupteur « inclure les cours Moodle » directement dans le chat.
+- **Portage Windows** : Tauri multiplateforme + WebView2 + **signature Authenticode**.
+- **Version serveur/web** : deux formats visés (app de bureau vs serveur central sans installation).
+- **Portage Linux** : `.AppImage` / `.deb` / `.rpm` (planifié **après** Moodle).
+- **Signature / notarisation** : lève la quarantaine macOS et le SmartScreen Windows.
+
+Détail du phasage : `docs/ROADMAP.md` et `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
 
 ## Sécurité de la clé
 

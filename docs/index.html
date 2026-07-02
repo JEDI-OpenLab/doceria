@@ -398,7 +398,7 @@
           <summary><i class="fa-solid fa-magnifying-glass"></i> Bibliothèque (RAG) : interroger</summary>
           <dl>
             <dt>Utiliser la bibliothèque</dt><dd>À cocher (sous la zone de message) pour que chaque question cherche dans la collection active et <strong>cite ses sources</strong> sous la réponse.</dd>
-            <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales. <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit (« non trouvé »).</dd>
+            <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales (avec un avertissement si la bibliothèque est indisponible). <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit (« non trouvé »). Si la recherche est momentanément indisponible, le mode Requête <strong>ne bascule jamais</strong> sur les connaissances générales — il bloque et vous le signale.</dd>
             <dt>Méthode de recherche</dt><dd><strong>Hybride</strong> (sens + mots-clés, recommandé), <strong>Sémantique</strong> (proximité de sens), <strong>Lexicale</strong> (correspondance de termes).</dd>
             <dt>Extraits récupérés (top-k)</dt><dd>Nombre maximum de passages fournis au modèle à chaque question (défaut 5).</dd>
             <dt>Seuil de similarité</dt><dd>Écarte les passages sous ce score. 0 = aucun filtre ; plus haut = plus strict (et davantage de « non trouvé » en mode Requête).</dd>
@@ -499,17 +499,18 @@
         <span class="kicker light">La suite</span>
         <h2 class="section-serif light">Feuille de route</h2>
         <p class="deep-lead" style="margin:0 auto">
-          Doceria vient de gagner la <strong>comparaison multi-modèles</strong>, le <strong>rendu LaTeX</strong>
-          et beaucoup de confort. La suite, dans l'ordre&nbsp;: l'<strong>intégration Moodle</strong>
-          (le différenciateur), puis le <strong>build Linux</strong> — sans jamais trahir l'ADN&nbsp;:
-          souverain, simple, en français.
+          Doceria vient de gagner la <strong>comparaison multi-modèles</strong>, le <strong>rendu LaTeX</strong>,
+          et surtout le <strong>connecteur Moodle</strong> (le différenciateur) — l'indexation du texte de vos
+          cours est <strong>fonctionnelle</strong>. La suite&nbsp;: les <strong>fichiers joints</strong>, une
+          <strong>version Windows</strong> puis <strong>Linux</strong> — sans jamais trahir l'ADN&nbsp;: souverain,
+          simple, en français.
         </p>
       </div>
 
       <figure class="diagram">
         <img class="diagram-img" src="assets/doceria-roadmap.svg"
              alt="Feuille de route : aujourd'hui (chat et RAG souverain sur macOS, plus les nouveautés livrées — comparaison multi-modèles côte à côte, rendu LaTeX, régénérer/annuler/modifier/copier, menu Aide, message de refus configurable), puis l'intégration Moodle (RAG sur vos cours), puis le build Linux.">
-        <figcaption>Les nouveautés sont là. Ensuite&nbsp;: Moodle (le différenciateur), puis Linux.</figcaption>
+        <figcaption>Les nouveautés sont là, connecteur Moodle compris. Ensuite&nbsp;: fichiers joints, Windows, puis Linux.</figcaption>
       </figure>
 
       <!-- Nouveautés en vedette -->
@@ -533,24 +534,31 @@
 
       <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature flex-lg-row-reverse">
         <div class="col-lg-5">
-          <span class="roadmap-pill">en cours · le différenciateur</span>
+          <span class="roadmap-pill">fonctionnel · le différenciateur</span>
           <h3>Du RAG sur vos cours Moodle</h3>
           <p>
-            Doceria pourra <strong>aspirer les contenus pédagogiques de votre Moodle</strong> (sections, Pages,
-            Étiquettes, Ressources, Books…) via ses web services, et les indexer dans une collection privée —
-            <strong>sans aucune donnée personnelle d'étudiant</strong>. Votre RAG, nourri par votre propre cours,
-            sans copier-coller.
+            Doceria <strong>indexe le texte de vos cours Moodle</strong> (résumés de section et descriptions
+            d'activités) via ses web services, dans une collection privée «&nbsp;Moodle&nbsp;·&nbsp;votre cours&nbsp;» —
+            <strong>sans aucune donnée personnelle d'étudiant</strong>. Vous posez ensuite vos questions dessus,
+            <strong>avec citations</strong>. Votre RAG, nourri par votre propre cours, sans copier-coller.
           </p>
           <p class="mt-3">
-            <strong>Faisabilité validée</strong> de bout en bout sur une instance Moodle réelle&nbsp;: accès
-            <strong>en lecture seule</strong> via un <strong>compte technique à privilèges minimaux</strong>, une
-            <strong>liste blanche</strong> de fonctions de contenu, et <strong>zéro donnée personnelle</strong>.
+            <strong>Validé de bout en bout</strong> sur une instance Moodle réelle&nbsp;: <strong>lecture seule</strong>
+            via un <strong>compte technique à privilèges minimaux</strong>, une <strong>liste blanche</strong> de
+            8&nbsp;fonctions de contenu, jeton au <strong>trousseau du système</strong>, <strong>zéro donnée
+            personnelle</strong>. On sélectionne les cours dans un explorateur (recherche + catégories), puis
+            «&nbsp;Synchroniser&nbsp;» les importe avec une barre de progression.
+          </p>
+          <p class="mt-3">
+            <em>Le connecteur est prêt et testé&nbsp;; il arrive dans la <strong>prochaine version</strong> — la
+            version téléchargeable ci-dessus ne l'inclut pas encore. La suite&nbsp;: les fichiers joints (PDF) et
+            la synchronisation planifiée.</em>
           </p>
         </div>
         <div class="col-lg-7">
           <figure class="diagram">
             <img class="diagram-img" src="assets/doceria-moodle.svg"
-                 alt="Schéma de l'intégration Moodle : Doceria interroge Moodle en lecture seule via les web services REST (jeton dédié), n'extrait que des contenus pédagogiques, les met en forme en Markdown après revue humaine, et les indexe dans une collection privée OpenGateLLM qui enrichit le RAG — sans données personnelles.">
+                 alt="Schéma de l'intégration Moodle : Doceria interroge Moodle en lecture seule via les web services REST (jeton dédié), n'extrait que des contenus pédagogiques, les convertit en Markdown, et les indexe dans une collection privée OpenGateLLM qui enrichit le RAG — sans données personnelles.">
           </figure>
         </div>
       </div>

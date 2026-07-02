@@ -97,19 +97,19 @@ l'utilisateur.)*
 
 1. ✅ **v-next « confort prof »** — les chantiers du §1 (LaTeX + comparaison multi-modèles +
    régénérer/modifier/copier + menu Aide + message de refus). **Livré** en `20260626.8.0`.
-2. **Chantier Moodle** — le différenciateur, en chantier dédié — voir §4. *(Choix acté : Moodle
-   **avant** Linux.)*
+2. ✅ **Chantier Moodle** — le différenciateur, voir §4. **Livré (Lots 0-3 + 2.5) sur la branche
+   `moodle`, pas encore publié en `.dmg`** (destiné à la prochaine version). Reste les Lots 4/5/6
+   (§4.5). *(Choix acté : Moodle **avant** Linux.)*
 3. **Build Linux** — voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
 ### v.9 — petits correctifs & polish (rapides, avant/pendant Moodle)
-- **Première ouverture macOS : commande Terminal en évidence.** Sur macOS récent, « Ouvrir
-  quand même » n'apparaît **pas** pour le message « endommagé » (quarantaine posée sur une app
-  non signée téléchargée). → **Remonter en tête** du LISEZ-MOI du `.dmg` **ET la faire figurer
-  sur le site web, dans la rubrique « Installer »**, la commande :
-  `xattr -dr com.apple.quarantine /Applications/Doceria.app`
-  (c'est le chemin réel et fiable sur macOS récent). *(Le vrai correctif — la **notarisation
-  Apple** — reste « plus tard », §5.4.)*
+- ✅ **FAIT — Première ouverture macOS : commande Terminal en évidence.** Sur macOS récent,
+  « Ouvrir quand même » n'apparaît **pas** pour le message « endommagé » (quarantaine posée sur
+  une app non signée téléchargée). La commande
+  `xattr -dr com.apple.quarantine /Applications/Doceria.app` est **déjà remontée sur le site web
+  (rubrique « Installer », `docs/index.html`) ET dans le LISEZ-MOI** du `.dmg`. *(Le vrai
+  correctif — la **notarisation Apple** — reste « plus tard », §5.4.)*
 - **Menu natif : entrée « Vérifier les mises à jour… ».** Ajouter une entrée dans le menu
   **Doceria**, **sous « À propos »**, qui déclenche manuellement `check_update` (déjà appelée au
   démarrage). Effort S.
@@ -133,62 +133,100 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
   dépendance à libdbus C).
 - Dépendances système **`webkit2gtk-4.1`** & co.
 - TLS **rustls** (déjà retenu) → AppImage portable, sans OpenSSL système.
-- Livrables `.AppImage` (+ `.deb`/`.rpm`). Build à produire/tester sur une machine Linux
-  (accès SSH `lcn-ubuntu` prévu).
+- Livrables `.AppImage` (+ `.deb`/`.rpm`). Build à produire/tester sur une machine Linux dédiée.
 - **macOS sert de modèle** : même base de code, mêmes commandes Tauri.
 
 ---
 
 ## 4. Chantier Moodle — le différenciateur
 
-> Inspiré du POC **[Learnix](https://jedi-openlab.github.io/Learnix/)** (extraction nocturne via
-> WS REST, compte technique à jeton révocable limité aux fonctions de contenu, lecture seule
-> après validation, revue humaine, **jamais** la base Moodle, **sans données personnelles** ;
-> contenus = **Pages / Étiquettes / Ressources fichiers / Books** ; sortie **Markdown** avec
-> hiérarchie ; RAG strict « uniquement depuis les documents »).
+> Inspiré du POC **[Learnix](https://jedi-openlab.github.io/Learnix/)** (extraction via WS REST,
+> compte technique à jeton révocable limité aux fonctions de contenu, **lecture seule stricte**,
+> **jamais** la base Moodle, **sans données personnelles** ; contenus = **résumés de section +
+> descriptions de modules** (fichiers/PDF = Lot 4 à venir) ; sortie **Markdown** avec hiérarchie ;
+> RAG strict « uniquement depuis les documents »).
 
-**Verdict : à FAIRE, en `should`**, en **prochain chantier dédié** (la v-next étant livrée) — **avant** le build Linux.
-C'est la fonctionnalité **la plus alignée « prof ESR souverain »** : elle **nourrit le RAG du
-prof avec son propre cours Moodle**, sans copier-coller, en restant dans le périmètre ESR.
-**Techniquement faisable et peu risquée côté client.**
+**Verdict : LIVRÉ (Lots 0-3 + 2.5) sur la branche `moodle` — pas encore publié en `.dmg`.** Le
+connecteur est **implémenté et validé** sur un Moodle 5.1.4 de test, mais il **n'est pas dans le
+`.dmg` publié `20260626.8.0`** : il est destiné à la **prochaine version**. C'était le prochain
+chantier dédié après la v-next, **avant** le build Linux (choix acté). C'est la fonctionnalité
+**la plus alignée « prof ESR souverain »** : elle **nourrit le RAG du prof avec son propre cours
+Moodle**, sans copier-coller, en restant dans le périmètre ESR.
+
+> **Référence de vérité :** `docs/MOODLE-IMPLEMENTATION-ROADMAP.md` (journal des Lots 0-3) et
+> `src-tauri/src/moodle.rs`.
 
 ### 4.1 Sous-étapes
-| Pri | Effort | Item |
+| État | Effort | Item |
 |---|---|---|
-| should | L | **Connecteur Moodle WS REST en lecture seule** (compte technique à jeton, au trousseau) |
-| should | M | **Écran de configuration + sélection des cours/catégories** à indexer |
-| should | M | **Mapping HTML Moodle → Markdown hiérarchisé + revue humaine** avant publication |
-| could | M | **Synchro nocturne + gestion des suppressions** (réutilise le diff de la synchro dossier) |
+| ✅ FAIT | L | **Connecteur Moodle WS REST en lecture seule** (profils Moodle indépendants ; jeton au trousseau, rôle « moodle » ; test de connexion : liste blanche de 8 fonctions de contenu + `downloadfiles`) — Lots 0-1 |
+| ✅ FAIT | M | **Configuration + sélection des cours** (explorateur central : recherche + filtre catégorie + cases à cocher, sélection persistée) — Lots 2 + 2.5 |
+| ✅ FAIT | M | **Mapping HTML Moodle → Markdown hiérarchisé** (convertisseur **maison en Rust**, zéro dépendance) → ingestion du texte dans « Moodle · <cours> », synchro one-shot avec barre de progression — Lot 3. *(Pas de revue humaine / prévisualisation implémentée : ingestion directe.)* |
+| should | M | **Fichiers / PDF des cours** (`pluginfile.php?token=` → `rag_upload_document`) — **Lot 4, à venir** |
+| could | M | **Synchro incrémentale + suppressions** (index de diff, dédup, planifiable la nuit) — **Lot 5**, réutilise le diff de la synchro dossier |
 
-### 4.2 Plan technique
+### 4.2 Plan technique (livré — Lots 0-3)
 - **Module `src-tauri/src/moodle.rs`** : un seul endpoint `POST /webservice/rest/server.php`
-  via `reqwest` (déjà compilé : json / multipart / stream / rustls). Jeton **rangé au
-  trousseau** (modèle `settings::resolve`), **jamais** exposé à la webview ni journalisé.
-- **Liste blanche STRICTE — fonctions de contenu uniquement** :
+  via `reqwest` (déjà compilé : json / stream / rustls). Jeton **résolu côté Rust au
+  trousseau** (modèle `settings::resolve_moodle`, rôle « moodle »), **jamais** exposé à la
+  webview ni journalisé. **Client HTTP Moodle dédié `redirect(Policy::none())`** : le jeton
+  voyageant dans le **corps** du POST, une 3xx d'un Moodle malveillant/compromis (ou MITM sur
+  `http://` LAN) pourrait l'exfiltrer → toute redirection est **refusée** (revue sécurité Lot 2).
+- **Liste blanche STRICTE (`WHITELIST` — fonctions de contenu uniquement, constante pour audit)** :
   - `core_webservice_get_site_info` (test de connexion / diagnostic),
   - `core_course_get_categories`, `core_course_get_courses_by_field`, `core_course_get_contents`,
   - `mod_page_get_pages_by_courses`, `mod_label_get_labels_by_courses`,
     `mod_resource_get_resources_by_courses`, `mod_book_get_books_by_courses`,
-  - téléchargement des fichiers via `pluginfile.php?token=…`.
+  - téléchargement des fichiers via `pluginfile.php?token=…` (**Lot 4, à venir**).
 - **EXCLURE impérativement** : `core_user_*`, `core_enrol_*`, `gradereport_*`,
   `mod_assign_get_submissions`, etc. → garantit **« sans données personnelles »**.
 - **Robustesse Moodle** : **toujours parser le corps JSON même en HTTP 200** (Moodle renvoie ses
-  erreurs `{exception, errorcode, message}` avec un statut 200). Réécrire les
-  `@@PLUGINFILE@@`/liens relatifs. Parsing **tolérant aux millésimes** 3.x / 4.x / 5.x.
-- **Pipeline** : extraction → **Markdown hiérarchisé** (H1 catégorie/cours · H2 section ·
-  H3 activité, + en-tête de provenance pour de bonnes citations) → **revue humaine** (prévisu)
-  → `rag_upload_text` (réutilise `uploadFileSmart`, en `text/markdown`, qui **contourne déjà le
-  parseur PDF instable d'ILaaS**) dans une **collection privée**.
-- **Synchro** : réutiliser la logique de **diff de la synchro dossier** ; un contenu **supprimé**
-  côté Moodle doit **sortir** de la collection (sinon le RAG cite du périmé).
+  erreurs `{exception, errorcode, message}` avec un statut 200 ; `moodle_error()` les traduit en
+  français). Parsing **tolérant aux millésimes** 3.x / 4.x / 5.x. Le cours « site » (`id==1`) est
+  **filtré**.
+- **Convertisseur HTML → Markdown MAISON en Rust (`html_to_markdown`, zéro dépendance —
+  PAS html2md/turndown)** : tokenise → sérialise → normalise ; gère titres, `p/div`, `br`,
+  `ul/ol/li`, `strong/em`, `a[href]`, `blockquote`, `code` ; décode les entités nommées +
+  numériques ; découpes char-safe (aucun panic sur l'UTF-8 accentué) ; **7 tests unitaires**
+  (`cargo test`, dont « `<` » littéral, « `>` » dans un attribut, éléments inline vides).
+- **Pipeline (Lot 3, texte)** : `moodle_course_markdown` → **Markdown hiérarchisé** (H1 cours ·
+  H2 section + `summary` · H3 module, + en-tête de provenance pour de bonnes citations) →
+  `uploadText` dans la **collection « Moodle · <cours> » du profil ILaaS actif** (dédup par nom,
+  filtre par propriétaire). Périmètre = **texte** (résumés de section + descriptions de modules) ;
+  **fichiers/PDF = Lot 4**. **Pas de revue humaine ni de prévisualisation** : l'ingestion est
+  directe (à réintroduire si besoin plus tard). **Barre de progression par cours** ; **verrou
+  anti-corruption inter-profils** (destination RAG figée `dest=ip.id`, gel des sélecteurs de
+  profil pendant la synchro).
+- **Synchro incrémentale (à venir — Lot 5)** : réutiliser la logique de **diff de la synchro
+  dossier** ; un contenu **supprimé** côté Moodle doit **sortir** de la collection (sinon le RAG
+  cite du périmé). Le Lot 3 livre une synchro **one-shot** (une re-synchro peut créer un doublon
+  de document tant que le Lot 5 n'est pas là).
 
-### 4.3 Frein principal = organisationnel (pas technique)
+### 4.3 Correctif RAG mode Requête (livré)
+En mode **Requête**, si la recherche RAG **échoue** (ou remonte 0 extrait), le modèle **ne répond
+plus sur ses connaissances générales** : il **bloque** et l'explique (« mode Requête : recherche
+indisponible, réponse bloquée » / « aucun extrait pertinent trouvé »), **sans appel facturé**. En
+mode **Chat**, repli assumé sur les connaissances générales **avec avertissement**. Ce garde-fou
+s'applique aussi bien au chat mono-modèle qu'à la comparaison multi-modèles (§1.6).
+
+### 4.4 Frein principal = organisationnel (pas technique)
 Il faut que l'**administrateur·rice Moodle** : active **Web Services + protocole REST**, crée un
 **service externe dédié** + un **compte technique** + un **jeton**, et coche **« files
 download »** sur le service. → Doceria doit livrer une **checklist claire** et des **messages
 d'erreur explicites** (capability manquante, jeton invalide, WS désactivés…).
 
-*(Le **mode Requête + citations** de Doceria couvrent déjà l'exigence « RAG strict » de Learnix.)*
+*(Le **mode Requête + citations** de Doceria couvrent déjà l'exigence « RAG strict » de Learnix ;
+le correctif §4.3 le renforce.)*
+
+### 4.5 Suite du chantier Moodle (à venir)
+- **Lot 4 — Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
+  `Content-Type` pour ne pas créer de faux document) → `uploadFileSmart` / `rag_upload_document`.
+- **Lot 5 — Synchro incrémentale + dédup** : index de diff (delete + re-upload), suppressions,
+  **planifiable la nuit** (à l'échelle).
+- **Lot 6 — Interrupteur composeur « Inclure les cours Moodle »** : fait remonter les passages
+  Moodle avec citations dans le chat ; grisé tant qu'aucune collection Moodle n'est synchronisée.
+- *(Portage **Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode** —, version
+  **serveur/web**, **Linux** et **notarisation** : voir §3 et §5.4.)*
 
 ---
 
