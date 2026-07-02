@@ -10,7 +10,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::State;
 
-use crate::ilaas::{client, http_error, normalize_base, send_error};
+use crate::ilaas::{http_error, normalize_base, send_error};
 use crate::settings::{self, SettingsState};
 
 const REST_PATH: &str = "/webservice/rest/server.php";
@@ -31,6 +31,19 @@ fn ws_url(base: &str) -> String {
     format!("{}{}", normalize_base(base), REST_PATH)
 }
 
+/// Client dédié Moodle : **redirections DÉSACTIVÉES**. Le jeton voyage dans le CORPS
+/// du POST (paramètre `wstoken`) ; suivre une 3xx réémettrait ce corps vers l'hôte
+/// cible → un Moodle malveillant/compromis (ou un MITM sur du `http://` LAN) pourrait
+/// exfiltrer le jeton. On refuse donc toute redirection (cf. revue sécurité Lot 2).
+fn moodle_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(std::time::Duration::from_secs(30))
+        .read_timeout(std::time::Duration::from_secs(60))
+        .build()
+        .map_err(|e| format!("Client HTTP indisponible : {e}"))
+}
+
 /// Appel REST bas niveau (POST form-urlencoded). Parse toujours le corps JSON et
 /// remonte une erreur applicative Moodle même en HTTP 200.
 pub(crate) async fn ws_call(
@@ -46,13 +59,22 @@ pub(crate) async fn ws_call(
     ];
     form.extend_from_slice(params);
 
-    let res = client()?
+    let res = moodle_client()?
         .post(ws_url(base))
         .form(&form)
         .send()
         .await
         .map_err(send_error)?;
     let status = res.status();
+    // Redirections refusées (jeton dans le corps) : on ne suit jamais, on diagnostique.
+    // C'est aussi le symptôme classique d'un `wwwroot`/https mal configuré côté Moodle.
+    if status.is_redirection() {
+        return Err(format!(
+            "Redirection Moodle inattendue (HTTP {}) — vérifie l'URL (wwwroot/https). \
+             Le jeton n'a pas été transmis à la cible.",
+            status.as_u16()
+        ));
+    }
     let body = res.text().await.map_err(send_error)?;
 
     if body.trim().is_empty() {
@@ -126,13 +148,26 @@ fn parse_site_info(v: &Value) -> SiteInfo {
     }
 }
 
-/// Test d'une connexion Moodle ENREGISTRÉE (jeton résolu au trousseau).
+/// Test d'une connexion Moodle ENREGISTRÉE (jeton résolu au trousseau). `base_url`
+/// optionnel : si fourni (URL en cours d'édition à l'écran), il PRIME sur l'URL
+/// persistée, pour tester exactement ce que l'utilisateur voit (cf. revue Lot 2).
 #[tauri::command]
 pub async fn test_moodle_connection(
     settings: State<'_, SettingsState>,
     profile_id: String,
+    base_url: Option<String>,
 ) -> Result<SiteInfo, String> {
-    let (base, token) = settings::resolve_moodle(&settings, &profile_id)?;
+    let (persisted, token) = settings::resolve_moodle(&settings, &profile_id)?;
+    let base = match base_url {
+        Some(u) if !u.trim().is_empty() => {
+            let u = u.trim();
+            if !u.starts_with("http://") && !u.starts_with("https://") {
+                return Err("L'URL Moodle doit commencer par http:// ou https://.".to_string());
+            }
+            u.to_string()
+        }
+        _ => persisted,
+    };
     let v = ws_call(&base, &token, "core_webservice_get_site_info", &[]).await?;
     Ok(parse_site_info(&v))
 }
@@ -149,4 +184,50 @@ pub async fn test_moodle_connection_ephemeral(
     }
     let v = ws_call(base, token.trim(), "core_webservice_get_site_info", &[]).await?;
     Ok(parse_site_info(&v))
+}
+
+/// Cours accessible à la connexion (métadonnées d'affichage — pas de contenu).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CourseBrief {
+    pub id: i64,
+    pub shortname: String,
+    pub fullname: String,
+    pub category: String,
+    pub visible: bool,
+}
+
+fn parse_courses(v: &Value) -> Vec<CourseBrief> {
+    v.get("courses")
+        .and_then(|c| c.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|c| {
+                    let id = c.get("id").and_then(|x| x.as_i64())?;
+                    // id=1 = cours « site » (page d'accueil Moodle) : jamais indexé.
+                    if id == 1 {
+                        return None;
+                    }
+                    Some(CourseBrief {
+                        id,
+                        shortname: c.get("shortname").and_then(|s| s.as_str()).unwrap_or("").to_string(),
+                        fullname: c.get("fullname").and_then(|s| s.as_str()).unwrap_or("").to_string(),
+                        category: c.get("categoryname").and_then(|s| s.as_str()).unwrap_or("").to_string(),
+                        visible: c.get("visible").and_then(|x| x.as_i64()).unwrap_or(1) == 1,
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Liste les cours accessibles à la connexion (hors cours « site »). Lecture seule.
+#[tauri::command]
+pub async fn list_moodle_courses(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+) -> Result<Vec<CourseBrief>, String> {
+    let (base, token) = settings::resolve_moodle(&settings, &profile_id)?;
+    let v = ws_call(&base, &token, "core_course_get_courses_by_field", &[]).await?;
+    Ok(parse_courses(&v))
 }

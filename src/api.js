@@ -42,8 +42,11 @@ export const moodleApi = {
   // Write-only : jeton au trousseau sous le rôle « moodle » (efface si secret vide).
   setKey: (profileId, secret) => invoke('set_profile_key', { profileId, role: 'moodle', secret }),
   // Test de connexion : profil enregistré (jeton au trousseau) ou URL+jeton saisis.
-  test: (profileId) => invoke('test_moodle_connection', { profileId }),
+  // baseUrl (optionnel) prime sur l'URL persistée → on teste l'URL affichée à l'écran.
+  test: (profileId, baseUrl) => invoke('test_moodle_connection', { profileId, baseUrl }),
   testEphemeral: (baseUrl, token) => invoke('test_moodle_connection_ephemeral', { baseUrl, token }),
+  // Liste des cours accessibles (hors cours « site ») pour cocher ceux à indexer.
+  listCourses: (profileId) => invoke('list_moodle_courses', { profileId }),
 };
 
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */

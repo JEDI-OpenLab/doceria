@@ -891,7 +891,7 @@ async function refreshMoodleProfiles() {
     const payload = await moodleApi.list();
     state.moodleProfiles = payload.profiles || [];
     state.activeMoodleId = payload.activeId || state.moodleProfiles[0]?.id || null;
-    ui.renderMoodleProfiles();
+    renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -903,7 +903,7 @@ async function switchMoodleProfile(id) {
     const payload = await moodleApi.setActive(id);
     state.moodleProfiles = payload.profiles;
     state.activeMoodleId = payload.activeId;
-    ui.renderMoodleProfiles();
+    renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -919,12 +919,14 @@ function openMoodleEditor(forNew) {
     p && p.hasMoodleToken
       ? 'jeton défini — laisser vide pour le conserver.'
       : 'stocké au trousseau du système — jamais en clair, jamais affiché.';
+  $('moTestHint').textContent = ''; // résultat de test réinitialisé à l'ouverture
   $('moodleEditor').hidden = false;
 }
 
 function closeMoodleEditor() {
   // Ne jamais laisser le jeton saisi traîner dans le DOM après fermeture/annulation.
   $('moToken').value = '';
+  $('moTestHint').textContent = '';
   $('moodleEditor').hidden = true;
   moodleEditingId = null;
 }
@@ -963,7 +965,7 @@ async function onSaveMoodleProfile() {
     state.moodleProfiles = payload.profiles;
     state.activeMoodleId = payload.activeId;
     closeMoodleEditor();
-    ui.renderMoodleProfiles();
+    renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -978,7 +980,7 @@ async function onDeleteMoodleProfile() {
     state.moodleProfiles = payload.profiles;
     state.activeMoodleId = payload.activeId;
     closeMoodleEditor();
-    ui.renderMoodleProfiles();
+    renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -987,7 +989,8 @@ async function onDeleteMoodleProfile() {
 // Test de connexion Moodle : appelle core_webservice_get_site_info et affiche un
 // diagnostic (site, compte, version, téléchargement fichiers, fonctions manquantes).
 async function onTestMoodle() {
-  const hint = $('moTokenHint');
+  // Résultat dans un hint DÉDIÉ : ne pas écraser le rappel « jeton défini » (revue Lot 2).
+  const hint = $('moTestHint');
   const url = $('moUrl').value.trim();
   const token = $('moToken').value.trim();
   if (!url) { hint.textContent = '✗ URL manquante.'; return; }
@@ -997,8 +1000,7 @@ async function onTestMoodle() {
     if (token) {
       info = await moodleApi.testEphemeral(url, token); // rien n'est écrit
     } else if (moodleEditingId) {
-      info = await moodleApi.test(moodleEditingId); // jeton au trousseau
-    } else {
+      info = await moodleApi.test(moodleEditingId, url); // jeton au trousseau, URL affichée
       hint.textContent = '✗ Colle le jeton pour tester.';
       return;
     }
@@ -1011,6 +1013,271 @@ async function onTestMoodle() {
   } catch (err) {
     hint.textContent = '✗ ' + describeError(err);
   }
+}
+
+// Rendu complet de la zone Moodle : liste des connexions + zone « cours à indexer ».
+function renderMoodleAll() {
+  ui.renderMoodleProfiles();
+  refreshMoodleCoursesUI();
+}
+
+// Affiche/masque la zone « cours à indexer » du rail + son résumé (nombre de cours
+// sélectionnés, lu depuis les métadonnées du profil — aucune requête réseau ici).
+function refreshMoodleCoursesUI() {
+  const p = activeMoodleProfile();
+  const box = $('moodleCoursesBox');
+  if (p && p.hasMoodleToken) {
+    box.hidden = false;
+    const n = (p.courseIds || []).length;
+    $('moodleCoursesHint').textContent = n
+      ? n + ' cours sélectionné' + (n > 1 ? 's' : '') + '. « Gérer les cours… » pour modifier.'
+      : 'Aucun cours sélectionné. « Gérer les cours… » pour choisir.';
+  } else {
+    box.hidden = true;
+  }
+  // Ferme l'explorateur s'il reste ouvert sur une connexion qui n'est plus l'active
+  // (ou qui a perdu son jeton) : évite d'afficher/modifier les cours d'une autre connexion.
+  if (!$('moodleView').hidden && (!(p && p.hasMoodleToken) || p.id !== mvOpenFor)) {
+    closeMoodleView();
+  }
+}
+
+/* ---------- Explorateur de cours Moodle (vue centrale) ---------- */
+let mvCourses = [];          // cours récupérés (dernier Rafraîchir)
+let mvSelected = new Set();  // ids cochés — SOURCE DE VÉRITÉ (survit à la recherche/au filtre)
+let mvCollapsed = new Set(); // catégories repliées
+let mvLoadedFor = null;      // id de la connexion dont mvCourses contient les cours
+let mvOpenFor = null;        // id de la connexion actuellement affichée (null si fermé)
+
+// Ouvre l'explorateur sur la connexion active : la sélection est initialisée depuis le
+// profil, puis les cours sont chargés (une seule fois par connexion). Couvre le chat.
+async function openMoodleExplorer() {
+  const p = activeMoodleProfile();
+  if (!p || !p.hasMoodleToken) return;
+  mvOpenFor = p.id;
+  $('mvConn').textContent = p.name || 'Moodle';
+  mvSelected = new Set((p.courseIds || []).map(Number));
+  $('mvSearch').value = '';
+  $('mvCategory').value = '';
+  $('moodleView').hidden = false;
+  if (mvLoadedFor !== p.id) {
+    mvCourses = [];
+    mvCollapsed = new Set();
+    await onMvRefresh();
+  } else {
+    renderMoodleView();
+    updateMvCount();
+  }
+}
+
+function closeMoodleView() {
+  $('moodleView').hidden = true;
+  mvOpenFor = null;
+}
+
+// (Re)charge la liste des cours de la connexion active et reconstruit le filtre catégories.
+async function onMvRefresh() {
+  const p = activeMoodleProfile();
+  if (!p) return;
+  const reqId = p.id; // connexion capturée à l'entrée (cf. garde anti-course ci-dessous)
+  const list = $('mvList');
+  list.textContent = '';
+  const status = document.createElement('div');
+  status.className = 'mv-empty';
+  status.textContent = 'chargement des cours…';
+  list.appendChild(status);
+  try {
+    const courses = await moodleApi.listCourses(reqId);
+    // GARDE ANTI-COURSE (revue Lot 2.5, bloquant) : si la connexion active a changé ou si
+    // l'explorateur a été fermé pendant l'await réseau, on IGNORE cette réponse tardive —
+    // sinon on écrirait la sélection de la connexion A dans le profil de la connexion B.
+    if (mvOpenFor !== reqId || activeMoodleProfile()?.id !== reqId) return;
+    mvCourses = courses;
+    mvLoadedFor = reqId;
+    // Réconcilie : oublie les cours cochés qui n'existent plus côté Moodle (revue Lot 2),
+    // et persiste si la sélection a changé (pas de fantôme dans courseIds).
+    const available = new Set(courses.map((c) => Number(c.id)));
+    const before = mvSelected.size;
+    mvSelected = new Set([...mvSelected].filter((id) => available.has(id)));
+    populateCategoryFilter(courses);
+    renderMoodleView();
+    updateMvCount();
+    if (mvSelected.size !== before) await persistMoodleSelection();
+  } catch (err) {
+    // N'affiche l'erreur que si l'explorateur est toujours sur cette connexion.
+    if (mvOpenFor === reqId) {
+      list.textContent = '';
+      status.textContent = '✗ ' + describeError(err);
+      list.appendChild(status);
+    }
+  }
+}
+
+// Alimente le menu déroulant des catégories (valeurs uniques, triées).
+function populateCategoryFilter(courses) {
+  const sel = $('mvCategory');
+  const current = sel.value;
+  const cats = [...new Set(courses.map((c) => c.category || 'Sans catégorie'))].sort((a, b) =>
+    a.localeCompare(b, 'fr')
+  );
+  sel.textContent = '';
+  const all = document.createElement('option');
+  all.value = '';
+  all.textContent = 'Toutes les catégories';
+  sel.appendChild(all);
+  cats.forEach((cat) => {
+    const o = document.createElement('option');
+    o.value = cat;
+    o.textContent = cat;
+    sel.appendChild(o);
+  });
+  sel.value = cats.includes(current) ? current : '';
+}
+
+// Cours après application de la recherche (nom/code/catégorie) + du filtre catégorie.
+function mvFilteredCourses() {
+  const q = $('mvSearch').value.trim().toLowerCase();
+  const cat = $('mvCategory').value;
+  return mvCourses.filter((c) => {
+    const category = c.category || 'Sans catégorie';
+    if (cat && category !== cat) return false;
+    if (!q) return true;
+    return (
+      (c.fullname || '').toLowerCase().includes(q) ||
+      (c.shortname || '').toLowerCase().includes(q) ||
+      category.toLowerCase().includes(q)
+    );
+  });
+}
+
+// Reconstruit la liste, groupée par catégorie repliable (DOM sûr : textContent partout).
+function renderMoodleView() {
+  const list = $('mvList');
+  list.textContent = '';
+  const filtered = mvFilteredCourses();
+  if (!filtered.length) {
+    const empty = document.createElement('div');
+    empty.className = 'mv-empty';
+    empty.textContent = mvCourses.length
+      ? 'Aucun cours ne correspond à la recherche.'
+      : 'Aucun cours accessible à cette connexion.';
+    list.appendChild(empty);
+    return;
+  }
+  const groups = new Map();
+  filtered.forEach((c) => {
+    const cat = c.category || 'Sans catégorie';
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(c);
+  });
+  [...groups.keys()].sort((a, b) => a.localeCompare(b, 'fr')).forEach((cat) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'mv-cat' + (mvCollapsed.has(cat) ? ' collapsed' : '');
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'mv-cat-head';
+    const chev = document.createElement('span');
+    chev.className = 'chevron';
+    chev.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = cat + ' ';
+    const count = document.createElement('span');
+    count.className = 'mv-cat-count';
+    count.textContent = '(' + groups.get(cat).length + ')';
+    label.appendChild(count);
+    head.appendChild(chev);
+    head.appendChild(label);
+    head.addEventListener('click', () => {
+      if (mvCollapsed.has(cat)) mvCollapsed.delete(cat);
+      else mvCollapsed.add(cat);
+      wrap.classList.toggle('collapsed');
+    });
+    const body = document.createElement('div');
+    body.className = 'mv-cat-body';
+    groups.get(cat).forEach((c) => body.appendChild(courseRow(c)));
+    wrap.appendChild(head);
+    wrap.appendChild(body);
+    list.appendChild(wrap);
+  });
+}
+
+// Une ligne cours (case à cocher). textContent uniquement : noms non fiables (anti-XSS).
+function courseRow(c) {
+  const row = document.createElement('label');
+  row.className = 'course-row';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = mvSelected.has(Number(c.id));
+  cb.addEventListener('change', () => {
+    if (cb.checked) mvSelected.add(Number(c.id));
+    else mvSelected.delete(Number(c.id));
+    updateMvCount();
+    persistMoodleSelection();
+  });
+  const span = document.createElement('span');
+  span.textContent = c.fullname + (c.shortname ? ' (' + c.shortname + ')' : '');
+  if (!c.visible) {
+    const dim = document.createElement('em');
+    dim.textContent = ' · masqué';
+    span.appendChild(dim);
+  }
+  row.appendChild(cb);
+  row.appendChild(span);
+  return row;
+}
+
+// Coche tous les cours actuellement filtrés (recherche + catégorie).
+function mvSelectAllFiltered() {
+  mvFilteredCourses().forEach((c) => mvSelected.add(Number(c.id)));
+  renderMoodleView();
+  updateMvCount();
+  persistMoodleSelection();
+}
+
+// Met à jour le compteur du pied + le libellé/état du bouton Synchroniser.
+function updateMvCount() {
+  const n = mvSelected.size;
+  $('mvCount').textContent = n + ' cours coché' + (n > 1 ? 's' : '');
+  $('mvStatus').textContent = ''; // efface un éventuel message (ex. stub Synchroniser)
+  const sync = $('mvSync');
+  sync.textContent = 'Synchroniser (' + n + ')';
+  sync.disabled = n === 0;
+}
+
+// Persiste la sélection (source = mvSelected) dans le profil : métadonnées seules, jeton intact.
+async function persistMoodleSelection() {
+  const p = activeMoodleProfile();
+  if (!p) return;
+  const profile = {
+    id: p.id,
+    name: p.name,
+    moodleBaseUrl: p.moodleBaseUrl,
+    courseIds: [...mvSelected],
+  };
+  try {
+    const payload = await moodleApi.upsert(profile);
+    state.moodleProfiles = payload.profiles;
+    state.activeMoodleId = payload.activeId || state.activeMoodleId;
+    // Met à jour le résumé du rail sans fermer l'explorateur (même connexion active).
+    const box = $('moodleCoursesBox');
+    if (!box.hidden) {
+      const n = [...mvSelected].length;
+      $('moodleCoursesHint').textContent = n
+        ? n + ' cours sélectionné' + (n > 1 ? 's' : '') + '. « Gérer les cours… » pour modifier.'
+        : 'Aucun cours sélectionné. « Gérer les cours… » pour choisir.';
+    }
+  } catch (err) {
+    ui.showError(describeError(err));
+  }
+}
+
+// Synchronisation (ingestion des cours cochés vers le RAG) : implémentée au Lot 3.
+// Message dans un élément DÉDIÉ (#mvStatus) : ne pas écraser le compteur (revue Lot 2.5).
+function onMoodleSync() {
+  const n = mvSelected.size;
+  if (!n) return;
+  $('mvStatus').textContent =
+    'Synchro de ' + n + ' cours : à venir au Lot 3 (ingestion du texte des cours).';
 }
 
 /* ---------- Construction de la requête ---------- */
@@ -1816,6 +2083,17 @@ function wireEvents() {
   $('moSave').addEventListener('click', onSaveMoodleProfile);
   $('moCancel').addEventListener('click', closeMoodleEditor);
   $('moTest').addEventListener('click', onTestMoodle);
+  // Explorateur de cours Moodle (vue centrale)
+  $('moodleOpenExplorer').addEventListener('click', openMoodleExplorer);
+  $('mvClose').addEventListener('click', closeMoodleView);
+  $('mvRefresh').addEventListener('click', onMvRefresh);
+  $('mvSearch').addEventListener('input', renderMoodleView);
+  $('mvCategory').addEventListener('change', renderMoodleView);
+  $('mvSelectAll').addEventListener('click', mvSelectAllFiltered);
+  $('mvSync').addEventListener('click', onMoodleSync);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('moodleView').hidden) closeMoodleView();
+  });
   // Coller la clé LLM puis quitter le champ récupère automatiquement les modèles.
   $('pfLlmKey').addEventListener('change', () => {
     if ($('pfLlmKey').value.trim()) onTestProfile('llm');

@@ -228,4 +228,62 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     *version* · téléchargement fichiers OK · 8 fonctions OK », ou le diagnostic d'erreur. Build ✅.
   - *Fait quand :* le bouton **Tester** confirme `downloadFiles=true` et **0 fonction manquante**
     sur le Moodle de test ; un mauvais jeton/URL affiche un message clair.
-- *(à suivre : Lot 2 — liste des cours `core_course_get_courses_by_field` + cases à cocher.)*
+- **2026-07-02 — Lot 2 (Liste des cours + cases à cocher) ✅.**
+  - **Empirique d'abord** : `curl core_course_get_courses_by_field` (sans `field`) sur le Moodle de
+    test → `{courses:[…], warnings:[]}`, 7 cours dont **id=1 = cours « site »** (page d'accueil, à ne
+    jamais indexer). Champs utiles : `id, shortname, fullname, categoryname, visible`. Le `summary` du
+    cours est du HTML riche (Bootstrap) → réservé au Lot 3.
+  - **Rust (`moodle.rs`)** : `CourseBrief { id, shortname, fullname, category, visible }` +
+    `parse_courses()` (**filtre `id==1`**) + commande `list_moodle_courses(profile_id)` (jeton au
+    trousseau via `resolve_moodle`, `core_course_get_courses_by_field`). Enregistrée dans `lib.rs`.
+    `cargo check` ✅.
+  - **Front** : `moodleApi.listCourses` (api.js) ; zone **« Cours à indexer »** (index.html, sous
+    l'éditeur) avec bouton **Rafraîchir** ; `main.js` : `renderMoodleAll` (= liste connexions +
+    zone cours), `refreshMoodleCoursesUI` (affiche la zone si jeton présent, **charge à la demande**),
+    `onRefreshMoodleCourses`, `renderCourseCheckboxes` (**DOM sûr : `createElement`/`textContent`,
+    jamais `innerHTML`** — noms de cours non fiables), `persistSelectedCourses` (coche → `upsert`
+    métadonnées seules, jeton intact, `courseIds` persistés). CSS `.moodle-courses/.course-row`. Build ✅.
+  - **Revue adversariale (11 agents, 3 dimensions + vérification)** → 4 findings confirmés, **tous
+    corrigés** avant le test utilisateur :
+    1. *(sécurité, medium)* le client HTTP suivait les redirections ; le jeton étant dans le **corps**
+       du POST, une 3xx d'un Moodle malveillant/compromis (ou MITM sur `http://` LAN) pouvait
+       l'exfiltrer → **client Moodle dédié `redirect(Policy::none())`** + erreur explicite sur 3xx
+       (diagnostique aussi un `wwwroot`/https mal réglé). `moodle.rs`.
+    2. *(correction, medium)* « Tester » validait l'URL **persistée**, pas celle éditée à l'écran quand
+       le jeton restait vide → `test_moodle_connection(base_url: Option)` **prime l'URL affichée** ;
+       `moodleApi.test(id, url)`. `moodle.rs`, `api.js`, `main.js`.
+    3. *(UX, low)* le résultat du test écrasait le rappel « jeton défini » → **hint dédié `#moTestHint`**.
+       `index.html`, `main.js`.
+    4. *(robustesse, low)* un cours coché puis supprimé côté Moodle restait compté/stocké → **réconcilie
+       `courseIds` au Rafraîchir** (purge silencieuse des cours disparus). `main.js`.
+    - Faux positifs correctement **réfutés** par les vérificateurs (ex. `moodleHint` statique = copie
+      fidèle du patron ILaaS validé).
+  - *Fait quand :* les cours accessibles s'affichent, on coche/décoche, la sélection est mémorisée
+    (persiste après fermeture/réouverture), le cours « site » n'apparaît pas.
+- **2026-07-02 — Lot 2.5 (Explorateur de cours, vue centrale) ✅ — décision UX de l'utilisateur.**
+  - **Pourquoi** : la liste à cocher dans le rail étroit ne passe pas l'échelle (centaines de cours).
+    Choix retenu (question posée) : **explorateur dans la fenêtre du milieu** (recherche + filtre par
+    catégorie + liste groupée + bouton Synchroniser). Le rail garde connexion + résumé « N cours
+    sélectionnés » + bouton **« Gérer les cours… »**.
+  - **Front (100 % — pas de Rust)** : `#moodleView` (index.html) couvre `.main` (`position:absolute`,
+    z-index ; rail + conversations restent visibles). Machine à états (main.js) : `mvCourses`,
+    **`mvSelected` = `Set` source de vérité** (survit à la recherche/au filtre — on ne lit jamais
+    « coché » depuis le DOM), `mvCollapsed`, `mvLoadedFor` (cache par connexion), `mvOpenFor` (ferme
+    l'explorateur si la connexion active change). Recherche (nom/code/catégorie), filtre catégorie,
+    groupes repliables, « Tout cocher (filtré) », compteur, réconciliation des cours disparus, rendu
+    **anti-XSS** (`createElement`/`textContent`). CSS `.moodle-view/.mv-*`. Le bouton **Synchroniser**
+    est en place mais son action (ingestion) est le **Lot 3** (stub honnête pour l'instant). Build ✅.
+  - **Revue adversariale (8 agents)** → 3 findings, **tous corrigés** :
+    1. *(BLOQUANT — course async)* si on **change de connexion pendant** le `await listCourses(A)`, la
+       réponse tardive réconciliait puis **écrivait la sélection de A dans le profil de B** (corruption
+       inter-connexions). → **Garde anti-course** : `reqId` capturé à l'entrée ; après l'`await`, on
+       ignore la réponse si `mvOpenFor !== reqId` ou si la connexion active a changé. `main.js`.
+    2. *(idem, vu par la dimension UX)* → couvert par la même garde.
+    3. *(UX, low)* le stub Synchroniser écrasait le **compteur** `#mvCount`. → message dans un élément
+       **dédié `#mvStatus`**, effacé au prochain changement de sélection. `index.html`, `styles.css`, `main.js`.
+    - Faux positif **réfuté** : « un refresh tardif écrase le précédent » — non reproductible (pas de
+      garde manquante pour ce cas précis).
+  - *Fait quand :* on ouvre l'explorateur au centre, on cherche/filtre par catégorie, on coche sur
+    plusieurs pages de recherche sans rien perdre, le résumé du rail suit, et changer de connexion
+    ferme proprement la vue.
+- *(à suivre : Lot 3 — ingestion texte d'un cours `core_course_get_contents` → Markdown → `rag_upload_text`, déclenché par le bouton **Synchroniser**.)*

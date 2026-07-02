@@ -61,6 +61,27 @@
         </div>
         <div class="meta" id="composerMeta"></div>
       </div>
+
+      <!-- Explorateur de cours Moodle : couvre le chat quand ouvert (rail + convs restent visibles) -->
+      <section class="moodle-view" id="moodleView" hidden aria-label="Explorateur de cours Moodle">
+        <header class="mv-head">
+          <div class="mv-title">Cours Moodle · <span id="mvConn">—</span></div>
+          <button type="button" id="mvClose" class="filebtn">Fermer</button>
+        </header>
+        <div class="mv-toolbar">
+          <input type="search" id="mvSearch" placeholder="Rechercher un cours…" aria-label="Rechercher un cours" spellcheck="false" autocomplete="off">
+          <select id="mvCategory" aria-label="Filtrer par catégorie"><option value="">Toutes les catégories</option></select>
+          <button type="button" id="mvRefresh" class="filebtn">Rafraîchir</button>
+        </div>
+        <div class="mv-list" id="mvList" role="group" aria-label="Cours à indexer"></div>
+        <footer class="mv-foot">
+          <span class="mv-count" id="mvCount">0 cours coché</span>
+          <span class="mv-status" id="mvStatus" aria-live="polite"></span>
+          <span class="mv-spacer"></span>
+          <button type="button" id="mvSelectAll" class="filebtn">Tout cocher (filtré)</button>
+          <button type="button" id="mvSync" class="btnfull mv-sync">Synchroniser (0)</button>
+        </footer>
+      </section>
     </main>
 
     <!-- Rail de réglages -->
@@ -158,11 +179,21 @@
             <button type="button" id="moTest" class="filebtn">Tester</button>
           </div>
           <div class="hint" id="moTokenHint">Stocké au trousseau du système — jamais en clair, jamais affiché.</div>
+          <div class="hint" id="moTestHint" aria-live="polite"></div>
         </div>
         <div class="profile-editor-actions">
           <button type="button" id="moSave" class="btnfull">Enregistrer la connexion</button>
           <button type="button" id="moCancel" class="filebtn">Annuler</button>
         </div>
+      </div>
+
+      <!-- Cours à indexer (connexion active) : résumé + accès à l'explorateur central -->
+      <div class="field" id="moodleCoursesBox" hidden>
+        <div class="courses-head">
+          <label>Cours à indexer</label>
+          <button type="button" id="moodleOpenExplorer" class="filebtn">Gérer les cours…</button>
+        </div>
+        <div class="hint" id="moodleCoursesHint">Aucun cours sélectionné. « Gérer les cours… » pour choisir.</div>
       </div>
 
       <h2 class="section-head" data-section="rag"><span class="chevron" aria-hidden="true"></span>Bibliothèque (RAG)<button class="help up" type="button" aria-label="Le RAG laisse l'IA répondre à partir de TES documents. 1) Crée une collection. 2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS). 3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations des sources.">?<span class="help-bubble" aria-hidden="true">Le RAG laisse l'IA répondre à partir de <strong>tes documents</strong>.<br>1) Crée une collection.<br>2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS).<br>3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations.</span></button></h2>

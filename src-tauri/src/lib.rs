@@ -46,6 +46,7 @@ pub fn run() {
       settings::set_active_moodle_profile,
       moodle::test_moodle_connection,
       moodle::test_moodle_connection_ephemeral,
+      moodle::list_moodle_courses,
       rag::rag_me,
       rag::rag_list_collections,
       rag::rag_create_collection,
