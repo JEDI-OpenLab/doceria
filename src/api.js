@@ -47,15 +47,19 @@ export const moodleApi = {
   testEphemeral: (baseUrl, token) => invoke('test_moodle_connection_ephemeral', { baseUrl, token }),
   // Liste des cours accessibles (hors cours « site ») pour cocher ceux à indexer.
   listCourses: (profileId) => invoke('list_moodle_courses', { profileId }),
+  // Texte d'un cours (résumés de section + descriptions) assemblé en Markdown (pas les fichiers).
+  courseMarkdown: (profileId, courseId) => invoke('moodle_course_markdown', { profileId, courseId }),
 };
 
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */
 // Toutes les commandes résolvent l'URL + la clé RAG du profil actif côté Rust.
 export const ragApi = {
   me: () => invoke('rag_me', { profileId: state.activeId }),
-  listCollections: () => invoke('rag_list_collections', { profileId: state.activeId }),
-  createCollection: (name, description) =>
-    invoke('rag_create_collection', { profileId: state.activeId, name, description: description || null }),
+  // profileId optionnel : la synchro Moodle le fige pour tout diriger vers le MÊME profil,
+  // même si l'utilisateur change de profil actif pendant une tâche de fond.
+  listCollections: (profileId) => invoke('rag_list_collections', { profileId: profileId || state.activeId }),
+  createCollection: (name, description, profileId) =>
+    invoke('rag_create_collection', { profileId: profileId || state.activeId, name, description: description || null }),
   deleteCollection: (collectionId) =>
     invoke('rag_delete_collection', { profileId: state.activeId, collectionId }),
   // profileId optionnel : la synchro le fige pour ne jamais cibler le mauvais profil si

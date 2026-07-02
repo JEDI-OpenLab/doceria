@@ -75,11 +75,14 @@
         </div>
         <div class="mv-list" id="mvList" role="group" aria-label="Cours à indexer"></div>
         <footer class="mv-foot">
-          <span class="mv-count" id="mvCount">0 cours coché</span>
-          <span class="mv-status" id="mvStatus" aria-live="polite"></span>
-          <span class="mv-spacer"></span>
-          <button type="button" id="mvSelectAll" class="filebtn">Tout cocher (filtré)</button>
-          <button type="button" id="mvSync" class="btnfull mv-sync">Synchroniser (0)</button>
+          <div class="mv-progress" id="mvProgress" hidden><div class="mv-progress-fill" id="mvProgressFill"></div></div>
+          <div class="mv-foot-row">
+            <span class="mv-count" id="mvCount">0 cours coché</span>
+            <span class="mv-status" id="mvStatus" aria-live="polite"></span>
+            <span class="mv-spacer"></span>
+            <button type="button" id="mvSelectAll" class="filebtn">Tout cocher (filtré)</button>
+            <button type="button" id="mvSync" class="btnfull mv-sync">Synchroniser (0)</button>
+          </div>
         </footer>
       </section>
     </main>

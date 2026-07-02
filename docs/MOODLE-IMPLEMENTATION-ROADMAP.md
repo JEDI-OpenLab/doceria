@@ -286,4 +286,44 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
   - *Fait quand :* on ouvre l'explorateur au centre, on cherche/filtre par catégorie, on coche sur
     plusieurs pages de recherche sans rien perdre, le résumé du rail suit, et changer de connexion
     ferme proprement la vue.
-- *(à suivre : Lot 3 — ingestion texte d'un cours `core_course_get_contents` → Markdown → `rag_upload_text`, déclenché par le bouton **Synchroniser**.)*
+- **2026-07-02 — Lot 3 (Synchroniser : ingestion du texte) ✅.**
+  - **Empirique** : `core_course_get_contents(courseid=4)` → 5 sections ; le **texte pédagogique est
+    dans les `summary` de section** (McLuhan 8 k, Serres 12 k…), les PDF sont des modules `resource`.
+    Balises réelles des résumés : `<br>` (417), `<strong>` (358), `<p>` (8), `<span>` (6, `data-*` à
+    ignorer), beaucoup d'accents/entités.
+  - **Convertisseur HTML→Markdown MAISON (`moodle.rs`, zéro dépendance — décision Lot 0)** :
+    `html_to_markdown` (tokenise → sérialise → normalise). Gère titres, `p/div`, `br`, `ul/ol/li`,
+    `strong/em`, `a[href]`, `blockquote`, `code` ; strip le reste ; **décode les entités** nommées +
+    numériques ; découpes **char-safe** (aucun panic sur l'UTF-8 accentué — `decode_entities` borne le
+    `;` via `char_indices().take(12)`). **4 tests unitaires** (`cargo test`). Validé sur le contenu réel.
+  - **Commande `moodle_course_markdown(profileId, courseId)`** → `{ fullname, markdown, sections,
+    chars }` : 2 appels WS (méta cours + contenus), assemble **H1 cours · H2 section · H3 module**,
+    saute les sections sans texte (fichiers seuls → Lot 4). Enregistrée dans `lib.rs`. `cargo check` ✅.
+  - **Front** : `moodleApi.courseMarkdown` (api.js) ; **`onMoodleSync` réel** (main.js) : pour chaque
+    cours coché → Markdown → collection **« Moodle · <cours> »** dans le **RAG du profil ILaaS actif**
+    (`ragApi`, dédup par nom) → `uploadText`. **Barre de progression** par cours (`mvProgress` +
+    `#mvProgress`), **verrouillage des contrôles et des sélecteurs de profil** pendant la synchro
+    (`setMvSyncing` — anti-corruption inter-profils), poursuite malgré échec + bilan, refus clair si
+    RAG non configuré. `loadCollections()` rafraîchit le rail. Build ✅.
+  - **Prérequis** : un **profil ILaaS actif avec RAG configuré** (URL + clé) = destination. Re-synchro
+    peut créer un doublon de document (**dédup/incrémental = Lot 5**).
+  - **Revue adversariale (15 agents, harnais Rust autonome)** → **9 findings, tous corrigés** :
+    - *(convertisseur, bloquant+high #1/#4/#8)* un « `<` » **littéral** (« 3 < 5 ») ou une balise non
+      fermée **tronquait le texte** ingéré → réécriture `tokenize_html` : « `<` » n'est une balise que
+      s'il est suivi d'une lettre/`/`/`!`/`?`, sinon littéral.
+    - *(convertisseur, high #3)* un « `>` » **dans un attribut** (`data-x="a>b"`) coupait la balise et
+      **fuyait du HTML brut** → scan de fin de balise **en respectant les guillemets**.
+    - *(convertisseur, low #6)* éléments inline vides → `****`/`` `` ``/`[](url)` → **garde « contenu
+      vide »** à la fermeture (pile inline). **+3 tests unitaires** (7 au total).
+    - *(synchro, bloquant+high #2/#5)* **corruption inter-profils** : `createCollection`/`listCollections`
+      suivaient `state.activeId` alors que `uploadText` seul était figé, et les **boutons du rail**
+      restaient cliquables → **destination figée `dest=ip.id`** pour TOUTES les ops RAG (profileId
+      optionnel ajouté à `listCollections`/`createCollection`), **verrou `moodleSyncing`** + gel des
+      boutons de profil + gardes sur `switchProfile`/`onSaveProfile`/`onDeleteProfile`, boucle en
+      `try/finally` (déverrouillage garanti).
+    - *(synchro, low #7)* dédup sur collections d'autrui → **filtre par propriété** (comme `loadCollections`).
+    - *(assemblage, low #9)* `createCollection` sans id → **erreur claire** au lieu d'un plantage Tauri.
+    - Vérification ciblée supplémentaire du blocker inter-profils par un agent adversarial dédié.
+  - *Fait quand :* on coche des cours, on clique **Synchroniser**, la barre progresse cours par cours,
+    et les collections « Moodle · … » apparaissent dans la Bibliothèque, interrogeables (avec citations).
+- *(à suivre : Lot 4 — fichiers/PDF des cours via `pluginfile.php?token=` → `rag_upload_document`.)*

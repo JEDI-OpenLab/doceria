@@ -725,7 +725,7 @@ async function loadModels() {
 }
 
 async function switchProfile(id) {
-  if (state.busy || id === state.activeId) return;
+  if (moodleSyncing || state.busy || id === state.activeId) return;
   try {
     const payload = await profilesApi.setActive(id);
     state.profiles = payload.profiles;
@@ -818,6 +818,7 @@ async function saveProfileFromEditor() {
 }
 
 async function onSaveProfile() {
+  if (moodleSyncing) { ui.showError('Synchronisation Moodle en cours — réessaie après.'); return; }
   try {
     const id = await saveProfileFromEditor();
     // setActive renvoie déjà le payload complet (profils + activeId) : pas de list() en plus.
@@ -863,6 +864,7 @@ async function onTestProfile(target) {
 }
 
 async function onDeleteProfile() {
+  if (moodleSyncing) { ui.showError('Synchronisation Moodle en cours — réessaie après.'); return; }
   const p = activeProfile();
   if (!p) return;
   if (!window.confirm('Supprimer le profil « ' + p.name + ' » et ses clés du trousseau ? Action définitive.')) return;
@@ -1048,6 +1050,7 @@ let mvSelected = new Set();  // ids cochés — SOURCE DE VÉRITÉ (survit à la
 let mvCollapsed = new Set(); // catégories repliées
 let mvLoadedFor = null;      // id de la connexion dont mvCourses contient les cours
 let mvOpenFor = null;        // id de la connexion actuellement affichée (null si fermé)
+let moodleSyncing = false;   // synchro en cours → verrou global (bloque tout changement de profil)
 
 // Ouvre l'explorateur sur la connexion active : la sélection est initialisée depuis le
 // profil, puis les cours sont chargés (une seule fois par connexion). Couvre le chat.
@@ -1271,13 +1274,100 @@ async function persistMoodleSelection() {
   }
 }
 
-// Synchronisation (ingestion des cours cochés vers le RAG) : implémentée au Lot 3.
-// Message dans un élément DÉDIÉ (#mvStatus) : ne pas écraser le compteur (revue Lot 2.5).
-function onMoodleSync() {
-  const n = mvSelected.size;
-  if (!n) return;
-  $('mvStatus').textContent =
-    'Synchro de ' + n + ' cours : à venir au Lot 3 (ingestion du texte des cours).';
+// Active/désactive l'état « synchronisation en cours » (verrouille les contrôles + barre).
+// On gèle AUSSI les sélecteurs de profil (ILaaS + Moodle) : changer de profil pendant la
+// synchro écrirait dans le mauvais RAG (createCollection/listCollections ciblent le profil actif).
+function setMvSyncing(on) {
+  moodleSyncing = on;
+  // Gèle les contrôles de l'explorateur ET tout ce qui peut changer de profil pendant la
+  // synchro (sélecteurs + boutons du rail) : sinon la destination RAG pourrait bouger.
+  for (const id of [
+    'mvSync', 'mvRefresh', 'mvSelectAll', 'mvClose', 'mvSearch', 'mvCategory',
+    'profileSelect', 'profileNew', 'profileEdit', 'profileDelete',
+    'moodleProfileSelect', 'moodleNew', 'moodleEdit', 'moodleDelete',
+  ]) {
+    const el = $(id);
+    if (el) el.disabled = on;
+  }
+  if (!on) $('mvSync').disabled = mvSelected.size === 0; // rétablit selon la sélection
+  $('moodleView').classList.toggle('syncing', on); // gèle les cases (CSS pointer-events)
+  $('mvProgress').hidden = !on;
+  if (!on) $('mvProgressFill').style.width = '0%';
+}
+
+// Met à jour la barre + le libellé « Cours i/N : <nom>… » pendant la synchro.
+function mvProgress(done, total, label) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  $('mvProgressFill').style.width = pct + '%';
+  if (done < total) {
+    $('mvStatus').textContent = 'Cours ' + (done + 1) + '/' + total + ' : ' + (label || '…');
+  }
+}
+
+// Synchronisation (Lot 3) : pour chaque cours coché, récupère son texte (Markdown) et le
+// pousse dans une collection RAG « Moodle · <cours> » du PROFIL ILAAS ACTIF. Barre de
+// progression par cours ; poursuit malgré un échec ponctuel et fait un bilan.
+async function onMoodleSync() {
+  if (mvSelected.size === 0) return;
+  const mp = activeMoodleProfile();
+  if (!mp) return;
+  const ip = activeProfile(); // profil ILaaS = destination du RAG
+  if (!ip || !ip.ragBaseUrl || !ip.hasRagKey) {
+    $('mvStatus').textContent =
+      '✗ Configure une URL + clé RAG dans ton profil (panneau « Connexion ») pour synchroniser.';
+    return;
+  }
+  const dest = ip.id; // destination RAG FIGÉE : toutes les ops ciblent ce profil, pas l'actif courant
+  const ids = [...mvSelected];
+  const results = [];
+  setMvSyncing(true);
+  try {
+    mvProgress(0, ids.length, '');
+    // Collections existantes du profil, filtrées comme loadCollections (mes collections
+    // uniquement) : évite de retomber sur une collection publique homonyme d'autrui.
+    let existing = [];
+    try {
+      existing = collectionsFrom(await ragApi.listCollections(dest)).filter(
+        (c) => c.visibility === 'private' || (state.ragOwner && c.owner === state.ragOwner)
+      );
+    } catch { existing = []; }
+    for (let i = 0; i < ids.length; i++) {
+      const courseId = ids[i];
+      const known = mvCourses.find((c) => Number(c.id) === courseId);
+      const label = known ? known.fullname : 'cours ' + courseId;
+      mvProgress(i, ids.length, label);
+      try {
+        const doc = await moodleApi.courseMarkdown(mp.id, courseId);
+        if (!doc.markdown || !doc.markdown.trim()) {
+          results.push({ ok: false, label, error: 'aucun texte (fichiers seuls → Lot 4)' });
+          continue;
+        }
+        const collName = 'Moodle · ' + doc.fullname;
+        let coll = existing.find((c) => c.name === collName);
+        if (!coll) {
+          const created = await ragApi.createCollection(collName, 'Cours Moodle importé — ' + mp.name, dest);
+          const cid = created && (created.id ?? (created.data && created.data.id));
+          if (cid == null) throw new Error('collection créée mais identifiant introuvable');
+          coll = { id: cid, name: collName, visibility: 'private' };
+          existing.push(coll);
+        }
+        await ragApi.uploadText(coll.id, doc.fullname + '.md', doc.markdown, dest);
+        results.push({ ok: true, label });
+      } catch (err) {
+        results.push({ ok: false, label, error: describeError(err) });
+      }
+    }
+    mvProgress(ids.length, ids.length, '');
+  } finally {
+    setMvSyncing(false); // TOUJOURS déverrouillé, même si une exception inattendue survient
+  }
+  const ok = results.filter((r) => r.ok).length;
+  const failed = results.filter((r) => !r.ok);
+  $('mvStatus').textContent = failed.length
+    ? '⚠ ' + ok + '/' + results.length + ' synchronisés — échec : ' + failed.map((r) => r.label).join(', ')
+    : '✓ ' + ok + ' cours synchronisé' + (ok > 1 ? 's' : '') + ' → bibliothèque (collections « Moodle · … »)';
+  // Rafraîchit la liste des collections RAG pour que les nouvelles apparaissent dans le rail.
+  try { await loadCollections(); } catch { /* non bloquant */ }
 }
 
 /* ---------- Construction de la requête ---------- */
