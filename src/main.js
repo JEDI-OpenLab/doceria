@@ -1530,6 +1530,7 @@ async function runGeneration(conv, text) {
   let ragContext = '';
   let ragSources = [];
   let ragSearched = false; // true seulement si la recherche a abouti (pas d'erreur réseau)
+  let ragError = null; // message d'erreur si la recherche a échoué (pour bloquer le mode Requête)
   if (state.useLibrary && state.activeCollectionId != null) {
     try {
       const r = await retrieveFromLibrary(text);
@@ -1537,19 +1538,25 @@ async function runGeneration(conv, text) {
       ragSources = r.sources;
       ragSearched = true;
     } catch (err) {
-      ui.showError('Recherche RAG : ' + describeError(err) + ' — réponse sans la bibliothèque.');
+      ragError = describeError(err);
+      // Chat : on prévient et on répond quand même sur les connaissances générales.
+      // Requête : on NE répond PAS sur les connaissances générales → bloqué juste après.
+      if (state.ragMode !== 'requete') {
+        ui.showError('Recherche RAG : ' + ragError + ' — réponse sans la bibliothèque.');
+      }
     }
   }
 
-  // Mode Requête : la recherche a abouti mais n'a ramené AUCUN extrait → on ne sollicite pas
-  // le modèle (il répondrait sur ses connaissances générales, ce que ce mode interdit). On
-  // renvoie directement le refus, comme AnythingLLM en mode « Query » — et on évite un appel
-  // facturé inutile. (Sur erreur réseau on ne court-circuite pas : le repli ci-dessus s'applique.)
-  if (state.ragMode === 'requete' && ragSearched && !ragContext) {
-    const refusal = state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.';
-    addMessage(conv, 'assistant', refusal);
-    ui.finalizeBubble(ui.appendMessage('assistant', ''), refusal);
-    ui.setComposerMeta('mode Requête : aucun extrait pertinent trouvé.');
+  // Mode Requête : si la recherche a ÉCHOUÉ, ou a abouti mais sans AUCUN extrait, on
+  // n'interroge PAS le modèle — sinon il répondrait sur ses connaissances générales, ce que
+  // ce mode interdit (c'est tout l'intérêt de « Requête »). On renvoie un message explicite.
+  if (state.ragMode === 'requete' && (ragError || (ragSearched && !ragContext))) {
+    const msg = ragError
+      ? 'Recherche dans la bibliothèque indisponible (' + ragError + '). En mode Requête, aucune réponse n’est produite sans extraits — réessaie dans un instant.'
+      : (state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.');
+    addMessage(conv, 'assistant', msg);
+    ui.finalizeBubble(ui.appendMessage('assistant', ''), msg);
+    ui.setComposerMeta(ragError ? 'mode Requête : recherche indisponible, réponse bloquée.' : 'mode Requête : aucun extrait pertinent trouvé.');
     state.busy = false;
     ui.setSending(false);
     ui.renderConversationList(convHandlers);
@@ -1728,6 +1735,7 @@ async function runComparison(conv, text, models) {
   let ragContext = '';
   let ragSources = [];
   let ragSearched = false;
+  let ragError = null;
   if (state.useLibrary && state.activeCollectionId != null) {
     try {
       const r = await retrieveFromLibrary(text);
@@ -1735,15 +1743,21 @@ async function runComparison(conv, text, models) {
       ragSources = r.sources;
       ragSearched = true;
     } catch (err) {
-      ui.showError('Recherche RAG : ' + describeError(err) + ' — réponse sans la bibliothèque.');
+      ragError = describeError(err);
+      if (state.ragMode !== 'requete') {
+        ui.showError('Recherche RAG : ' + ragError + ' — réponse sans la bibliothèque.');
+      }
     }
   }
-  // Mode Requête sans extrait : refus direct (pas d'appel facturé), comme en mono-modèle.
-  if (state.ragMode === 'requete' && ragSearched && !ragContext) {
-    const refusal = state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.';
-    addMessage(conv, 'assistant', refusal);
-    ui.finalizeBubble(ui.appendMessage('assistant', ''), refusal);
-    ui.setComposerMeta('mode Requête : aucun extrait pertinent trouvé.');
+  // Mode Requête : recherche en échec OU sans extrait → aucune réponse (pas de repli sur les
+  // connaissances générales, pas d'appel facturé), comme en mono-modèle.
+  if (state.ragMode === 'requete' && (ragError || (ragSearched && !ragContext))) {
+    const msg = ragError
+      ? 'Recherche dans la bibliothèque indisponible (' + ragError + '). En mode Requête, aucune réponse n’est produite sans extraits — réessaie dans un instant.'
+      : (state.ragRefusal || 'Je ne trouve pas la réponse dans la bibliothèque.');
+    addMessage(conv, 'assistant', msg);
+    ui.finalizeBubble(ui.appendMessage('assistant', ''), msg);
+    ui.setComposerMeta(ragError ? 'mode Requête : recherche indisponible, réponse bloquée.' : 'mode Requête : aucun extrait pertinent trouvé.');
     state.busy = false;
     ui.setSending(false);
     ui.renderConversationList(convHandlers);
