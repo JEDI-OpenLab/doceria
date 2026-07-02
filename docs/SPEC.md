@@ -17,8 +17,9 @@
 >   ESR (collections « private »).
 > - **Plateformes : seul macOS arm64 est livré.** Windows et Linux relèvent de la feuille de route
 >   (ordre acté : **Moodle avant Linux**).
-> - **Connecteur Moodle livré** (lecture seule) sur la branche `moodle`, destiné à la **prochaine**
->   version — voir `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
+> - **Connecteur Moodle quasi complet** (lecture seule, **opt-in par consentement**, Lots 0-7 fusionnés
+>   dans `main`), destiné à la **prochaine** version — voir `MOODLE-IMPLEMENTATION-ROADMAP.md` et
+>   `src-tauri/src/moodle.rs`.
 > - **Correctif RAG mode Requête** en place (voir § E).
 > - **Question ouverte « jeton RAG » : RÉSOLUE** — le RAG géré ILaaS est **en service** (§ 8).
 
@@ -85,7 +86,7 @@ justification. Décision définitive.
 > Les puces ci-dessous sont conservées pour mémoire et **réinterprétées** en conséquence.
 - **P0** — **Choisir un dossier** via dialogue natif ; **autorisation persistée** (security-scoped bookmark macOS). *(Livré : la synchro « dossier local → collection » existe — Lier un dossier, « Synchroniser à l'ouverture du profil », `ragAutoSync` — mais elle **téléverse** vers une collection ILaaS ; elle n'indexe pas localement.)*
 - **P0** — ~~**Scanner** (récursif) → découper → **vectoriser (embedder local `bge-m3`)** → **base vectorielle locale**~~ → **remplacé** par : téléversement des fichiers vers la collection ILaaS ; découpe/vectorisation **côté serveur**.
-- **P0** — **Indexation incrémentale** : empreinte (hash + date) par fichier ; au re-scan, ne traiter que le nouveau/modifié. *(Design V1 local ; côté ILaaS, la dédup/synchro incrémentale est en feuille de route — Lot 5.)*
+- **P0** — **Indexation incrémentale** : empreinte (hash + date) par fichier ; au re-scan, ne traiter que le nouveau/modifié. *(Design V1 local ; côté connecteur Moodle, la synchro incrémentale + dédup est **livrée** — Lot 5, voir § H.)*
 - **P0** — **Bouton de synchronisation** + option **synchro à l'ouverture du profil**.
 - **P0** — À la question : **récupérer les passages pertinents (top-k)** côté ILaaS et les injecter ; **citer les sources**.
 - **P0** — État visible : progression pendant la synchronisation, collections listées.
@@ -122,10 +123,12 @@ justification. Décision définitive.
 - **P2** — Windows (Tauri + WebView2 + signature Authenticode) ; Linux ; mise à jour automatique ;
   signature/notarisation (quarantaine macOS + SmartScreen Windows).
 
-### H. Connecteur Moodle (livré — voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
-> **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Livré et validé** sur la
-> branche `moodle`, destiné à la **prochaine** version (pas encore dans le `.dmg` publié `20260626.8.0`).
-> Référence de vérité : `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
+### H. Connecteur Moodle (quasi complet — voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
+> **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Quasi complet** (lecture
+> seule, **opt-in par consentement**) : Lots 0-7 livrés, relus par revues multi-agents adversariales et
+> **fusionnés dans `main`**, destinés à la **prochaine** version (**pas encore dans le `.dmg` publié
+> `20260626.8.0`**). Reste le Lot 6 (interrupteur « inclure les cours Moodle » dans le chat), puis
+> merge/release. Référence de vérité : `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
 - **Lecture seule stricte** (web services REST Moodle).
 - **Profils de connexion Moodle** (nom + URL + jeton ; jeton au **trousseau**, rôle « moodle » ;
   indépendants des profils ILaaS ; plusieurs connexions possibles).
@@ -136,8 +139,16 @@ justification. Décision définitive.
   **convertisseur HTML → Markdown maison en Rust** (zéro dépendance, tests unitaires — **pas**
   html2md/turndown/html2text) vers une collection RAG **« Moodle · <cours> »** dans le profil ILaaS actif,
   interrogeable avec citations. **Barre de progression** par cours ; synchro **anti-corruption** inter-profils.
-- **À venir** : **fichiers/PDF** (Lot 4, `pluginfile.php?token=` → `rag_upload_document`) ; synchro
-  incrémentale + dédup planifiable (Lot 5) ; interrupteur « inclure les cours Moodle » dans le chat (Lot 6).
+- **Fichiers/PDF des cours** (Lot 4) : téléchargement sécurisé (`pluginfile.php?token=` → `rag_upload_document`)
+  + extraction locale, contournant le 502 ILaaS.
+- **Synchro incrémentale + déduplication** (Lot 5) : index local ; une re-synchro ne duplique plus, avec
+  bilan détaillé. **Bouton « Nouveautés »** (Lot 5.1) → badge « ⟳ à mettre à jour » sur les cours modifiés
+  côté Moodle.
+- **Filtre opt-in « cours inscrits »** (Lot 7) = **consentement de l'enseignant** : l'inscription du compte
+  technique vaut accord ; `core_enrol_get_users_courses` appelée **uniquement pour le compte technique**
+  (zéro donnée d'étudiant) ; interrupteur, **défaut ON** ; le mode « tout indexer » relève d'une décision
+  de la Direction.
+- **À venir** : interrupteur « inclure les cours Moodle » dans le chat (Lot 6), puis merge/release.
 
 ## 6. Exigences non-fonctionnelles
 - **Sécurité/souveraineté** : clés et jetons au trousseau ; zéro télémétrie ; aucune dépendance CDN.
@@ -166,7 +177,7 @@ justification. Décision définitive.
 | Modes RAG | — | **Chat ⇄ Requête** ; en Requête, pas de repli si échec/0 extrait (aucun appel facturé) |
 | Conso | **Tokens par échange** | inchangé (`usage` des réponses chat) |
 | Modèle chat | **`mistral-medium-latest`** (id réel) | inchangé |
-| Connecteur Moodle | *(non prévu)* | **Livré** (lecture seule) — branche `moodle`, prochaine version (§ H) |
+| Connecteur Moodle | *(non prévu)* | **Quasi complet** (lecture seule, opt-in par consentement) — Lots 0-7 dans `main`, prochaine version (§ H) |
 | Positionnement | RAG personnel, distinct de **Learnix** | RAG personnel adossé à ILaaS ; **filiation directe du POC Learnix** |
 
 ## 8. Questions ouvertes (au moment du cadrage) — **résolues depuis**

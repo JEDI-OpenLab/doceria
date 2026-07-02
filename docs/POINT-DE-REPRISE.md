@@ -5,14 +5,22 @@
 > `docs/ROADMAP-V2.md`, `docs/ARCHITECTURE.md`, `docs/RAG-V2-ilaas.md`.
 > Mis à jour : **2026-07-02**.
 >
-> **Jalon en cours — CONNECTEUR MOODLE en lecture seule** (branche `moodle`, validé de bout en
-> bout, **pas encore publié en .dmg**) : profils de connexion Moodle (jeton au **trousseau**,
-> rôle « moodle »), test de connexion (**liste blanche de 8 fonctions de contenu**), **explorateur
-> de cours** central (recherche + filtre catégorie + cases à cocher), bouton **Synchroniser** =
-> ingestion du **texte** des cours (convertisseur **HTML→Markdown maison** en Rust) → collection
-> RAG « Moodle · <cours> » → interrogeable avec citations, **barre de progression** par cours.
+> **Jalon en cours — CONNECTEUR MOODLE en lecture seule, QUASI COMPLET** (branche `moodle`, validé
+> de bout en bout, **pas encore publié en .dmg** — destiné à la prochaine version) : **Lots 0-7 +
+> 5.1 LIVRÉS et relus**. Profils de connexion Moodle (jeton au **trousseau**), test de connexion
+> (**liste blanche de 8 fonctions de contenu**), **explorateur de cours** central (recherche +
+> filtre catégorie + cases à cocher), **Synchroniser** = ingestion du **texte** ET des **fichiers/
+> PDF** des cours → collection RAG « Moodle · <cours> » interrogeable avec citations, **synchro
+> incrémentale + déduplication** (index local ; re-sync ne duplique plus), bouton **Nouveautés**
+> (badge « ⟳ à mettre à jour »), filtre **opt-in « cours inscrits »** (consentement de l'enseignant).
 > Détail + journal : `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`. **Chaque lot passe une revue
 > multi-agents adversariale** avant validation.
+>
+> **Gouvernance actée — indexation Moodle OPT-IN par consentement** (opt-in par défaut, **jamais
+> opt-out**) : l'inscription du compte technique à un cours = accord de l'enseignant ;
+> `core_enrol_get_users_courses` appelée **uniquement pour le compte technique** → **zéro donnée
+> d'étudiant**. Mode « tout indexer » = décision de la Direction. Sécurité : **lecture seule
+> stricte**, jeton au trousseau, client HTTP dédié sans redirections.
 >
 > **Correctif RAG récent** : en mode **Requête**, si la recherche RAG échoue (ou 0 extrait), le
 > modèle **ne répond plus** sur ses connaissances générales — il **bloque** et l'explique (pas
@@ -29,8 +37,10 @@ du POC **Learnix**.
 - **Version publiée : `20260626.8.0`** (macOS **arm64**, **non signée** — pas de compte Apple).
   Guide : `INSTALLATION-macOS.md`.
 - **macOS : fonctionnellement complet et soigné** (chat, RAG, comparaison multi-modèles, LaTeX…).
-- **Connecteur Moodle : Lots 0 → 3 livrés et validés** sur la branche `moodle` (voir encart ci-dessus).
-  **Pas encore intégré au .dmg publié** → à embarquer dans la prochaine version.
+- **Connecteur Moodle : Lots 0-7 + 5.1 livrés et relus** sur la branche `moodle` (voir encart
+  ci-dessus). Lecture seule quasi complète. **Reste = Lot 6** (interrupteur « inclure les cours
+  Moodle » dans le chat) puis **fusion `moodle` → `main` + release**. **Pas encore intégré au .dmg
+  publié** → à embarquer dans la prochaine version.
 - **Windows / Linux : non livrés** (feuille de route). Tauri est multiplateforme → portage Windows
   surtout conditionné par la **signature Authenticode** (+ WebView2), Linux par le build AppImage.
 
@@ -57,8 +67,23 @@ du rail pliables. **Site web** (GitHub Pages, `docs/`) en ligne : https://jedi-o
 **CONNECTEUR MOODLE (branche `moodle`)** — voir encart en tête + `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
 Module `src-tauri/src/moodle.rs` : client REST `ws_call` (client HTTP **dédié sans redirections** car
 le jeton voyage dans le corps du POST), **liste blanche de 8 fonctions de contenu**, convertisseur
-`html_to_markdown` **maison** (zéro dépendance, tests unitaires), commandes `test_moodle_connection`,
-`list_moodle_courses`, `moodle_course_markdown`. Front : section Moodle du rail + explorateur central.
+`html_to_markdown` **maison** (zéro dépendance, tests unitaires). Front : section Moodle du rail +
+explorateur central. **Lots livrés et relus par revue adversariale** :
+- **Lot 0-1 — profils + test** : profils de connexion Moodle (jeton au **trousseau**, rôle « moodle »),
+  test de connexion via `get_site_info` (liste blanche de 8 fonctions).
+- **Lot 2-2.5 — explorateur central** : liste des cours (recherche + filtre catégorie + cases à
+  cocher), **sélection persistée**.
+- **Lot 3 — texte des cours** : **Synchroniser** = ingestion du **texte** des cours cochés → collection
+  RAG « Moodle · <cours> » du profil ILaaS actif, interrogeable avec citations, **barre de progression**.
+- **Lot 4 — fichiers/PDF** : téléchargement sécurisé des ressources + **extraction locale** (réutilise
+  pdf.js/mammoth, contourne le 502 du parser ILaaS).
+- **Lot 5 — synchro incrémentale + déduplication** : index local ; une re-sync **ne duplique plus** ;
+  bilan détaillé (ajoutés / inchangés / retirés).
+- **Lot 5.1 — Nouveautés** : bouton qui pose un badge **« ⟳ à mettre à jour »** sur les cours modifiés
+  côté Moodle.
+- **Lot 7 — filtre opt-in « cours inscrits »** : `core_enrol_get_users_courses` appelée **uniquement
+  pour le compte technique** (→ zéro donnée d'étudiant) ; interrupteur, **défaut ON** ; l'inscription
+  du compte technique vaut consentement de l'enseignant. Mode « tout indexer » = décision Direction.
 
 ## 4. Carte du code
 **Front** (`src/`) : `main.js` (orchestration + Moodle : explorateur, synchro), `api.js` (invoke :
@@ -109,25 +134,24 @@ autorisant KaTeX, bundle « all »).
 - **Webview Tauri** : `window.prompt()` **ne marche pas** → toujours des champs inline.
 
 ## 7. Prochaines étapes (feuille de route, dans l'ordre)
-1. **Lot 4 — fichiers/PDF des cours Moodle** : télécharger via `pluginfile.php?token=` →
-   `rag_upload_document` dans la collection du cours (réutilise l'extraction locale).
-2. **Lot 5 — synchro incrémentale + déduplication** : ne ré-ingérer que ce qui a changé ; à terme
-   **planifiée la nuit** au passage à l'échelle.
-3. **Lot 6 — interrupteur « inclure les cours Moodle »** dans le chat.
-4. **Fusionner `moodle` → `main`** et publier une version embarquant le connecteur.
-5. **Portage Windows** : Tauri multiplateforme (WebView2) ; le vrai chantier = **signature
+1. **Lot 6 — interrupteur « inclure les cours Moodle »** dans le chat (**seul lot restant** du
+   connecteur avant la fusion).
+2. **Fusionner `moodle` → `main`** et publier une version embarquant le connecteur (Lots 0-7 + 5.1).
+3. **Portage Windows** : Tauri multiplateforme (WebView2) ; le vrai chantier = **signature
    Authenticode** (équivalent Windows de la quarantaine macOS). Appui B7 (certificat + build).
-6. **Version serveur/web** : deux formats partageant le cœur Rust (app de bureau vs serveur central
+4. **Version serveur/web** : deux formats partageant le cœur Rust (app de bureau vs serveur central
    sans installation). Décision d'archi + hébergement/auth (B7).
-7. **Linux** : build AppImage (+ .deb/.rpm), trousseau `async-secret-service`, `webkit2gtk-4.1`.
-8. **Signature / notarisation** (quarantaine macOS + SmartScreen Windows).
+5. **Linux** : build AppImage (+ .deb/.rpm), trousseau `async-secret-service`, `webkit2gtk-4.1`.
+6. **Signature / notarisation** (quarantaine macOS + SmartScreen Windows).
 - **Items UI (v.9)** : entrée de menu « Vérifier les mises à jour » ; regroupement du menu du site.
 
 ## 8. Fait / validé récemment
 - **v8 publiée** (macOS) : lancement OK, chat + RAG OK, PDF/DOCX en document de contexte OK, CSP stable.
-- **Connecteur Moodle** : Lots 0-3 testés par l'utilisateur sur une instance Moodle réelle (synchro
-  d'un cours → collection RAG → réponse sourcée). 9 findings de revue corrigés au Lot 3 (dont un
-  bloquant de corruption inter-profils, vérifié fermé).
+- **Connecteur Moodle** : **Lots 0-7 + 5.1 livrés et relus** (revues multi-agents adversariales),
+  testés sur une instance Moodle réelle (synchro texte **et** fichiers/PDF d'un cours → collection RAG
+  → réponse sourcée ; re-sync sans doublon ; badge « à mettre à jour » ; filtre « cours inscrits »).
+  **Gouvernance OPT-IN par consentement actée** (jamais opt-out ; zéro donnée d'étudiant).
+  **Reste : Lot 6** (interrupteur chat) puis **merge/release**.
 - **Correctif RAG Requête** : validé (« ça marche parfaitement ») — plus de repli trompeur.
 - **Site web** : en ligne. Reste (utilisateur) : captures `docs/assets/screen-*.png` + Release GitHub
   avec le `.dmg`.

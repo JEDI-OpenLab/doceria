@@ -34,10 +34,17 @@
       </button>
       <div class="collapse navbar-collapse" id="nav">
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-          <li class="nav-item"><a class="nav-link" href="#presentation">Présentation</a></li>
-          <li class="nav-item"><a class="nav-link" href="#fonctionnalites">Fonctionnalités</a></li>
-          <li class="nav-item"><a class="nav-link" href="#guide">Mode d'emploi</a></li>
-          <li class="nav-item"><a class="nav-link" href="#souverainete">Souveraineté</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#presentation" id="navProduit" role="button" data-bs-toggle="dropdown" aria-expanded="false">Le produit</a>
+            <ul class="dropdown-menu" aria-labelledby="navProduit">
+              <li><a class="dropdown-item" href="#presentation">Présentation</a></li>
+              <li><a class="dropdown-item" href="#fonctionnalites">Fonctionnalités</a></li>
+              <li><a class="dropdown-item" href="#apercu">Aperçu</a></li>
+              <li><a class="dropdown-item" href="#souverainete">Souveraineté</a></li>
+              <li><a class="dropdown-item" href="#guide">Mode d'emploi</a></li>
+            </ul>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#moodle">Moodle</a></li>
           <li class="nav-item"><a class="nav-link" href="#roadmap">Feuille de route</a></li>
           <li class="nav-item"><a class="nav-link" href="#installer">Installer</a></li>
           <li class="nav-item ms-lg-2"><a class="nav-link nav-gh" href="https://github.com/JEDI-OpenLab/doceria" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a></li>
@@ -331,6 +338,55 @@
     </div>
   </section>
 
+  <!-- Moodle : le connecteur (différenciateur) -->
+  <section id="moodle" class="band-deep">
+    <div class="container">
+      <div class="row justify-content-center text-center mb-5">
+        <div class="col-lg-9">
+          <span class="kicker light">Le différenciateur</span>
+          <h2 class="section-serif light">Vos cours Moodle, dans votre IA.</h2>
+          <p class="deep-lead" style="margin:0 auto">
+            Doceria <strong>indexe le texte et les fichiers de vos cours Moodle</strong> — en
+            <strong>lecture seule</strong> — dans votre bibliothèque privée, pour les interroger
+            <strong>avec citations</strong>. Sans copier-coller, sans quitter le périmètre souverain.
+          </p>
+        </div>
+      </div>
+
+      <div class="row align-items-center g-4 g-lg-5">
+        <div class="col-lg-5">
+          <h3>Indexation sur <em>consentement</em></h3>
+          <p class="deep-lead" style="margin:0 0 1.1rem">
+            <strong>Opt-in par défaut</strong> : un cours n'est indexé <strong>que si l'enseignant a
+            inscrit le compte de lecture</strong> de Doceria. L'inscription <strong>vaut accord</strong> —
+            jamais à son insu. À rebours du « l'IA est partout, à vous de la désactiver », on part de
+            l'inverse : <strong>transparence, choix, liberté</strong>.
+          </p>
+          <ul class="moodle-points">
+            <li><i class="fa-solid fa-check"></i> Texte des cours <strong>+ fichiers joints</strong> (PDF…)</li>
+            <li><i class="fa-solid fa-check"></i> Synchronisation <strong>incrémentale</strong> — jamais de doublon</li>
+            <li><i class="fa-solid fa-check"></i> Une collection par cours, interrogeable <strong>avec citations</strong></li>
+            <li><i class="fa-solid fa-check"></i> <strong>Zéro donnée d'étudiant</strong> — uniquement du contenu de cours</li>
+          </ul>
+        </div>
+        <div class="col-lg-7">
+          <figure class="diagram">
+            <img class="diagram-img" src="assets/doceria-moodle-setup.svg"
+                 alt="Schéma de configuration Moodle : un compte technique doceria-rag-readonly reçoit un rôle en lecture seule et un jeton web-service ; un service dédié n'expose qu'une liste blanche de fonctions de contenu ; le compte n'est inscrit que dans les cours dont l'enseignant a donné son accord (consentement) ; Doceria lit ces cours via le jeton et les indexe dans une collection privée, sans aucune donnée d'étudiant.">
+            <figcaption>Comment on paramètre Moodle : compte de lecture, rôle dédié, liste blanche de fonctions, et inscription&nbsp;=&nbsp;consentement.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <p class="deep-lead" style="margin:0 auto;max-width:44rem">
+          <em>Le connecteur est <strong>fonctionnel et validé de bout en bout</strong> ; il arrive dans la
+          <strong>prochaine version</strong> — la version téléchargeable ne l'inclut pas encore.</em>
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- Captures : 4 vues (assets/screen-*.png) -->
   <section id="apercu" class="band-paper" data-shots>
     <div class="container">
@@ -514,17 +570,16 @@
         <h2 class="section-serif light">Feuille de route</h2>
         <p class="deep-lead" style="margin:0 auto">
           Doceria vient de gagner la <strong>comparaison multi-modèles</strong>, le <strong>rendu LaTeX</strong>,
-          et surtout le <strong>connecteur Moodle</strong> (le différenciateur) — l'indexation du texte de vos
-          cours est <strong>fonctionnelle</strong>. La suite&nbsp;: les <strong>fichiers joints</strong>, une
-          <strong>version Windows</strong> puis <strong>Linux</strong> — sans jamais trahir l'ADN&nbsp;: souverain,
-          simple, en français.
+          et surtout le <strong>connecteur Moodle</strong> complet (le différenciateur — texte, fichiers, synchro
+          incrémentale, opt-in). La suite&nbsp;: une <strong>version Windows</strong> puis <strong>Linux</strong>
+          — sans jamais trahir l'ADN&nbsp;: souverain, simple, en français.
         </p>
       </div>
 
       <figure class="diagram">
         <img class="diagram-img" src="assets/doceria-roadmap.svg"
              alt="Feuille de route : aujourd'hui (chat et RAG souverain sur macOS, plus les nouveautés livrées — comparaison multi-modèles côte à côte, rendu LaTeX, régénérer/annuler/modifier/copier, menu Aide, message de refus configurable), puis l'intégration Moodle (RAG sur vos cours), puis le build Linux.">
-        <figcaption>Les nouveautés sont là, connecteur Moodle compris. Ensuite&nbsp;: fichiers joints, Windows, puis Linux.</figcaption>
+        <figcaption>Les nouveautés sont là, connecteur Moodle complet compris. Ensuite&nbsp;: Windows, puis Linux.</figcaption>
       </figure>
 
       <!-- Nouveautés en vedette -->
@@ -548,31 +603,17 @@
 
       <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature flex-lg-row-reverse">
         <div class="col-lg-5">
-          <span class="roadmap-pill">fonctionnel · le différenciateur</span>
-          <h3>Du RAG sur vos cours Moodle</h3>
+          <span class="roadmap-pill">complet · le différenciateur</span>
+          <h3>Le connecteur Moodle</h3>
           <p>
-            Doceria <strong>indexe le texte de vos cours Moodle</strong> (résumés de section et descriptions
-            d'activités) via ses web services, dans une collection privée «&nbsp;Moodle&nbsp;·&nbsp;votre cours&nbsp;» —
-            <strong>sans aucune donnée personnelle d'étudiant</strong>. Vous posez ensuite vos questions dessus,
-            <strong>avec citations</strong>. Votre RAG, nourri par votre propre cours, sans copier-coller.
+            <strong>Complet et validé de bout en bout</strong>&nbsp;: indexation du <strong>texte et des
+            fichiers</strong> de vos cours, <strong>synchronisation incrémentale</strong> (jamais de doublon)
+            et <strong>opt-in par consentement</strong> — un cours n'est indexé que si l'enseignant a inscrit
+            le compte de lecture. <a href="#moodle">↑ Voir la section Moodle</a> pour le détail et le schéma de configuration.
           </p>
           <p class="mt-3">
-            <strong>Validé de bout en bout</strong> sur une instance Moodle réelle&nbsp;: <strong>lecture seule</strong>
-            via un <strong>compte technique à privilèges minimaux</strong>, une <strong>liste blanche</strong> de
-            8&nbsp;fonctions de contenu, jeton au <strong>trousseau du système</strong>, <strong>zéro donnée
-            personnelle</strong>. On sélectionne les cours dans un explorateur (recherche + catégories), puis
-            «&nbsp;Synchroniser&nbsp;» les importe avec une barre de progression.
-          </p>
-          <p class="mt-3">
-            <strong>Indexation sur consentement.</strong> Un cours n'est indexé <strong>que si l'enseignant a
-            inscrit le compte de lecture</strong> dans son cours&nbsp;: <strong>opt-in par défaut</strong>, jamais
-            à son insu. L'inscription vaut accord ; le filtre applicatif qui n'affichera que les cours consentis
-            est <em>en cours</em>, pour la prochaine version.
-          </p>
-          <p class="mt-3">
-            <em>Le connecteur est prêt et testé&nbsp;; il arrive dans la <strong>prochaine version</strong> — la
-            version téléchargeable ci-dessus ne l'inclut pas encore. La suite&nbsp;: les fichiers joints (PDF) et
-            la synchronisation planifiée.</em>
+            <em>Il arrive dans la <strong>prochaine version</strong> — la version téléchargeable ci-dessus ne
+            l'inclut pas encore.</em>
           </p>
         </div>
         <div class="col-lg-7">
@@ -663,7 +704,7 @@
         </div>
       </div>
       <p class="footer-fine">Pédagogie ouverte, conçue avec soin. Enseigner avec l'IA.</p>
-      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-02.2</span></p>
+      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-02.3</span></p>
     </div>
   </footer>
 

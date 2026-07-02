@@ -83,6 +83,11 @@ img{max-width:100%}
 
 /* Bande profonde */
 .deep-lead{font-size:1.12rem;color:#CFDAD5;max-width:34rem}
+#moodle h3{color:#F4EFE6;font-family:var(--serif);font-size:1.5rem;margin:0 0 .8rem}
+.moodle-points{list-style:none;padding:0;margin:0}
+.moodle-points li{color:#CFDAD5;font-size:1.02rem;padding:7px 0;display:flex;align-items:baseline;gap:11px}
+.moodle-points li i{color:#D8B66A;font-size:.82rem;flex:none}
+.moodle-points li strong{color:#F4EFE6}
 .deep-list{list-style:none;padding:0;margin:1.4rem 0 0}
 .deep-list li{padding:.4rem 0;color:#DCE5E1}
 .deep-list i{color:#D8B66A;margin-right:10px}

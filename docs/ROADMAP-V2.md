@@ -97,9 +97,10 @@ l'utilisateur.)*
 
 1. ✅ **v-next « confort prof »** — les chantiers du §1 (LaTeX + comparaison multi-modèles +
    régénérer/modifier/copier + menu Aide + message de refus). **Livré** en `20260626.8.0`.
-2. ✅ **Chantier Moodle** — le différenciateur, voir §4. **Livré (Lots 0-3 + 2.5) sur la branche
-   `moodle`, pas encore publié en `.dmg`** (destiné à la prochaine version). Reste les Lots 4/5/6
-   (§4.6). *(Choix acté : Moodle **avant** Linux.)*
+2. ✅ **Chantier Moodle** — le différenciateur, voir §4. **Quasi terminé (Lots 0-5 + 5.1 + 7)
+   fusionnés dans `main`, pas encore publiés en `.dmg`** (destinés à la prochaine version). Reste
+   le Lot 6 (interrupteur composeur) puis le merge/release (§4.6). *(Choix acté : Moodle **avant**
+   Linux.)*
 3. **Build Linux** — voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
@@ -143,17 +144,19 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
 > Inspiré du POC **[Learnix](https://jedi-openlab.github.io/Learnix/)** (extraction via WS REST,
 > compte technique à jeton révocable limité aux fonctions de contenu, **lecture seule stricte**,
 > **jamais** la base Moodle, **sans données personnelles** ; contenus = **résumés de section +
-> descriptions de modules** (fichiers/PDF = Lot 4 à venir) ; sortie **Markdown** avec hiérarchie ;
+> descriptions de modules + fichiers/PDF** (Lot 4, livré) ; sortie **Markdown** avec hiérarchie ;
 > RAG strict « uniquement depuis les documents »).
 
-**Verdict : LIVRÉ (Lots 0-3 + 2.5) sur la branche `moodle` — pas encore publié en `.dmg`.** Le
-connecteur est **implémenté et validé** sur un Moodle 5.1.4 de test, mais il **n'est pas dans le
-`.dmg` publié `20260626.8.0`** : il est destiné à la **prochaine version**. C'était le prochain
-chantier dédié après la v-next, **avant** le build Linux (choix acté). C'est la fonctionnalité
-**la plus alignée « prof ESR souverain »** : elle **nourrit le RAG du prof avec son propre cours
-Moodle**, sans copier-coller, en restant dans le périmètre ESR.
+**Verdict : QUASI TERMINÉ (Lots 0-5 + 5.1 + 7) fusionné dans `main` — pas encore publié en
+`.dmg`.** Le connecteur est **implémenté, relu (revues multi-agents adversariales) et validé** sur
+un Moodle 5.1.4 de test, mais il **n'est pas encore dans le `.dmg` publié `20260626.8.0`** : il est
+destiné à la **prochaine version**. Il ne reste que le **Lot 6** (interrupteur composeur « Inclure
+les cours Moodle ») puis le **merge/release**. C'était le chantier dédié après la v-next,
+**avant** le build Linux (choix acté). C'est la fonctionnalité **la plus alignée « prof ESR
+souverain »** : elle **nourrit le RAG du prof avec son propre cours Moodle**, sans copier-coller,
+en restant dans le périmètre ESR.
 
-> **Référence de vérité :** `docs/MOODLE-IMPLEMENTATION-ROADMAP.md` (journal des Lots 0-3) et
+> **Référence de vérité :** `docs/MOODLE-IMPLEMENTATION-ROADMAP.md` (journal des Lots 0-7) et
 > `src-tauri/src/moodle.rs`.
 
 ### 4.1 Sous-étapes
@@ -162,10 +165,13 @@ Moodle**, sans copier-coller, en restant dans le périmètre ESR.
 | ✅ FAIT | L | **Connecteur Moodle WS REST en lecture seule** (profils Moodle indépendants ; jeton au trousseau, rôle « moodle » ; test de connexion : liste blanche de 8 fonctions de contenu + `downloadfiles`) — Lots 0-1 |
 | ✅ FAIT | M | **Configuration + sélection des cours** (explorateur central : recherche + filtre catégorie + cases à cocher, sélection persistée) — Lots 2 + 2.5 |
 | ✅ FAIT | M | **Mapping HTML Moodle → Markdown hiérarchisé** (convertisseur **maison en Rust**, zéro dépendance) → ingestion du texte dans « Moodle · <cours> », synchro one-shot avec barre de progression — Lot 3. *(Pas de revue humaine / prévisualisation implémentée : ingestion directe.)* |
-| should | M | **Fichiers / PDF des cours** (`pluginfile.php?token=` → `rag_upload_document`) — **Lot 4, à venir** |
-| could | M | **Synchro incrémentale + suppressions** (index de diff, dédup, planifiable la nuit) — **Lot 5**, réutilise le diff de la synchro dossier |
+| ✅ FAIT | M | **Fichiers / PDF des cours** (téléchargement sécurisé via `pluginfile.php?token=` + extraction locale → `rag_upload_document`, contourne le 502 ILaaS) — Lot 4 |
+| ✅ FAIT | M | **Synchro incrémentale + déduplication** (index local de diff : une re-synchro ne duplique plus ; suppressions ; bilan détaillé) — Lot 5 |
+| ✅ FAIT | S | **Bouton « Nouveautés »** → badge « ⟳ à mettre à jour » sur les cours modifiés côté Moodle — Lot 5.1 |
+| ✅ FAIT | M | **Filtre opt-in « cours inscrits » = consentement de l'enseignant·e** (inscription du compte technique = accord ; `core_enrol_get_users_courses` appelée **uniquement** pour le compte technique → zéro donnée d'étudiant·e ; interrupteur, **défaut ON**) — Lot 7 |
+| should | S | **Interrupteur composeur « Inclure les cours Moodle »** dans le chat — **Lot 6, à venir**, puis merge/release |
 
-### 4.2 Plan technique (livré — Lots 0-3)
+### 4.2 Plan technique (livré — Lots 0-5 + 5.1 + 7)
 - **Module `src-tauri/src/moodle.rs`** : un seul endpoint `POST /webservice/rest/server.php`
   via `reqwest` (déjà compilé : json / stream / rustls). Jeton **résolu côté Rust au
   trousseau** (modèle `settings::resolve_moodle`, rôle « moodle »), **jamais** exposé à la
@@ -177,7 +183,9 @@ Moodle**, sans copier-coller, en restant dans le périmètre ESR.
   - `core_course_get_categories`, `core_course_get_courses_by_field`, `core_course_get_contents`,
   - `mod_page_get_pages_by_courses`, `mod_label_get_labels_by_courses`,
     `mod_resource_get_resources_by_courses`, `mod_book_get_books_by_courses`,
-  - téléchargement des fichiers via `pluginfile.php?token=…` (**Lot 4, à venir**).
+  - téléchargement des fichiers via `pluginfile.php?token=…` (Lot 4, **livré**),
+  - `core_enrol_get_users_courses` **uniquement pour le compte technique** (filtre opt-in
+    « cours inscrits » — Lot 7, **livré** ; aucune donnée d'étudiant·e).
 - **EXCLURE impérativement** : `core_user_*`, `core_enrol_*`, `gradereport_*`,
   `mod_assign_get_submissions`, etc. → garantit **« sans données personnelles »**.
 - **Robustesse Moodle** : **toujours parser le corps JSON même en HTTP 200** (Moodle renvoie ses
@@ -193,14 +201,19 @@ Moodle**, sans copier-coller, en restant dans le périmètre ESR.
   H2 section + `summary` · H3 module, + en-tête de provenance pour de bonnes citations) →
   `uploadText` dans la **collection « Moodle · <cours> » du profil ILaaS actif** (dédup par nom,
   filtre par propriétaire). Périmètre = **texte** (résumés de section + descriptions de modules) ;
-  **fichiers/PDF = Lot 4**. **Pas de revue humaine ni de prévisualisation** : l'ingestion est
-  directe (à réintroduire si besoin plus tard). **Barre de progression par cours** ; **verrou
+  **fichiers/PDF = Lot 4 (livré)**. **Pas de revue humaine ni de prévisualisation** : l'ingestion
+  est directe (à réintroduire si besoin plus tard). **Barre de progression par cours** ; **verrou
   anti-corruption inter-profils** (destination RAG figée `dest=ip.id`, gel des sélecteurs de
   profil pendant la synchro).
-- **Synchro incrémentale (à venir — Lot 5)** : réutiliser la logique de **diff de la synchro
-  dossier** ; un contenu **supprimé** côté Moodle doit **sortir** de la collection (sinon le RAG
-  cite du périmé). Le Lot 3 livre une synchro **one-shot** (une re-synchro peut créer un doublon
-  de document tant que le Lot 5 n'est pas là).
+- **Fichiers / PDF (Lot 4, livré)** : téléchargement **sécurisé** via `pluginfile.php?token=…`
+  (client HTTP dédié sans redirections, validation `Content-Type`) puis **extraction locale** du
+  texte → `rag_upload_document`. L'extraction locale **contourne le 502 ILaaS** rencontré sur
+  certains PDF.
+- **Synchro incrémentale + déduplication (Lot 5, livré)** : **index local de diff** ; une
+  re-synchro **ne duplique plus** les documents ; un contenu **supprimé** côté Moodle **sort** de
+  la collection (sinon le RAG cite du périmé) ; **bilan détaillé** en fin de synchro. Le bouton
+  **« Nouveautés »** (Lot 5.1) pose un badge **« ⟳ à mettre à jour »** sur les cours modifiés côté
+  Moodle.
 
 ### 4.3 Correctif RAG mode Requête (livré)
 En mode **Requête**, si la recherche RAG **échoue** (ou remonte 0 extrait), le modèle **ne répond
@@ -229,7 +242,7 @@ l'enseignant·e sur ses propres contenus.
 (`doceria-rag-readonly`) n'est **inscrit que dans les cours** dont l'enseignant·e a donné son
 accord ; Doceria n'affiche et n'indexe **que ces cours**. Un rôle dédié
 **« Doceria — indexation IA (lecture seule) »** rend la présence du compte **transparente** pour
-l'enseignant·e. Techniquement, le filtre s'appuiera sur `core_enrol_get_users_courses` appelée
+l'enseignant·e. Techniquement, le filtre s'appuie sur `core_enrol_get_users_courses` appelée
 **uniquement pour le compte technique** — donc **aucune donnée d'étudiant·e** n'est lue.
 
 **Deux modes de gouvernance :**
@@ -241,17 +254,28 @@ l'enseignant·e. Techniquement, le filtre s'appuiera sur `core_enrol_get_users_c
   désactiver le filtre opt-in dans Doceria. C'est un **choix de gouvernance**, pas un réglage
   technique par défaut.
 
-> **Statut honnête.** Le **principe** et la **configuration Moodle** sont posés ; le **filtre
-> applicatif** (Doceria n'affiche que les cours consentis) est le **prochain lot, en cours** — ne
-> pas le présenter comme déjà livré. Procédure reproductible : `docs/MOODLE-TEST-PLAN.md`.
+> **Statut.** Le **principe**, la **configuration Moodle** et le **filtre applicatif** (Doceria
+> n'affiche et n'indexe que les cours consentis) sont **livrés (Lot 7)** : interrupteur opt-in
+> « cours inscrits », **défaut ON**, `core_enrol_get_users_courses` appelée **uniquement** pour le
+> compte technique (zéro donnée d'étudiant·e). Le mode « tout indexer » reste une **décision de la
+> Direction**. Non encore publié dans le `.dmg`. Procédure reproductible : `docs/MOODLE-TEST-PLAN.md`.
 
-### 4.6 Suite du chantier Moodle (à venir)
-- **Lot 4 — Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
-  `Content-Type` pour ne pas créer de faux document) → `uploadFileSmart` / `rag_upload_document`.
-- **Lot 5 — Synchro incrémentale + dédup** : index de diff (delete + re-upload), suppressions,
-  **planifiable la nuit** (à l'échelle).
+### 4.6 État du chantier Moodle
+**Livrés et relus (fusionnés dans `main`, pas encore publiés en `.dmg`) :**
+- ✅ **Lot 4 — Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
+  `Content-Type` pour ne pas créer de faux document) + **extraction locale** (contourne le 502
+  ILaaS) → `rag_upload_document`.
+- ✅ **Lot 5 — Synchro incrémentale + dédup** : index local de diff (delete + re-upload),
+  suppressions, bilan détaillé ; une re-synchro ne duplique plus.
+- ✅ **Lot 5.1 — Bouton « Nouveautés »** : badge « ⟳ à mettre à jour » sur les cours modifiés côté
+  Moodle.
+- ✅ **Lot 7 — Filtre opt-in « cours inscrits »** (consentement de l'enseignant·e ; interrupteur,
+  défaut ON ; `core_enrol_get_users_courses` **uniquement** pour le compte technique).
+
+**Reste à faire (avant merge/release) :**
 - **Lot 6 — Interrupteur composeur « Inclure les cours Moodle »** : fait remonter les passages
   Moodle avec citations dans le chat ; grisé tant qu'aucune collection Moodle n'est synchronisée.
+- **Merge / release** : embarquer le connecteur dans le prochain `.dmg`.
 - *(Portage **Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode** —, version
   **serveur/web**, **Linux** et **notarisation** : voir §3 et §5.4.)*
 

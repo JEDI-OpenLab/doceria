@@ -142,7 +142,9 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
   `core_webservice_get_site_info`, `core_course_get_categories`, `core_course_get_courses_by_field`,
   `core_course_get_contents`, `mod_page_get_pages_by_courses`, `mod_label_get_labels_by_courses`,
   `mod_resource_get_resources_by_courses`, `mod_book_get_books_by_courses`. Ni notes, ni inscriptions,
-  ni participants.
+  ni participants. **Hors liste blanche**, une seule fonction supplémentaire, **en option** (Lot 7) :
+  `core_enrol_get_users_courses`, appelée **uniquement pour le compte technique lui-même** (voir
+  filtre opt-in ci-dessous) → jamais de donnée d'étudiant.
 - **Test de connexion** (`test_moodle_connection`, `_ephemeral`) : `get_site_info` → renvoie
   site/utilisateur/version, **`downloadfiles`**, et les **fonctions de la liste blanche manquantes** du
   service.
@@ -152,14 +154,35 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
   garder l'app légère, pas de `html2md`/`turndown`/`html2text`.
 - **Markdown de cours** (`moodle_course_markdown`) : assemble le **texte** d'un cours (résumé du cours +
   titre/résumé de section + descriptions de modules) en un Markdown hiérarchisé (H1 cours · H2 section ·
-  H3 module). **Texte seul** ; PDF/fichiers = Lot 4.
+  H3 module). Renvoie aussi les **métadonnées des fichiers joints** (nom, URL `pluginfile`,
+  `timemodified`, taille) pour la synchro des PDF/fichiers.
+- **Téléchargement de fichiers** (`moodle_download_file`, Lot 4) : télécharge un fichier `pluginfile`
+  d'un cours (jeton dans le **corps** du POST, côté Rust) et renvoie ses **octets** au front, sous
+  **garde-fou dur (40 Mo)**. L'**extraction du texte** (PDF/DOCX via `pdf.js`/`mammoth`) se fait **en
+  local dans la webview**, puis l'envoi part en `.md` — ce qui **contourne le parser PDF d'ILaaS (502)**.
+  Un PDF **scanné** (sans couche texte) est signalé et ignoré, pas d'OCR.
 - **Profils de connexion Moodle** (`settings.rs`) : nom + URL (`http://` LAN ou `https://` prod), **jeton
   au trousseau sous le rôle `moodle`**, **indépendants des profils ILaaS**, **plusieurs connexions**
   possibles ; les **cours cochés** sont persistés (`course_ids`).
 - **Explorateur de cours (front, `main.js`)** : recherche + filtre par catégorie + cases à cocher,
-  sélection persistée ; le bouton **Synchroniser** ingère le texte vers une collection RAG
-  **« Moodle · <cours> »** du profil ILaaS actif, interrogeable avec citations ; **barre de progression
-  par cours** ; **verrou anti-corruption inter-profils** pendant la synchro.
+  sélection persistée ; le bouton **Synchroniser** ingère le texte **et les fichiers** vers une
+  collection RAG **« Moodle · <cours> »** du profil ILaaS actif, interrogeable avec citations ;
+  **barre de progression par cours/fichier** ; **verrou anti-corruption inter-profils** pendant la synchro.
+- **Synchro incrémentale + déduplication** (front, index local `moodleSyncMap`, Lot 5) : re-synchroniser
+  **ne duplique plus**. Un **index local** (localStorage) mémorise, par cours, la collection cible et,
+  par fichier, `documentId` + `timemodified` + taille. Le **texte** est comparé par **hash** ; les
+  **fichiers** par `timemodified` + taille (**pas de téléchargement si inchangé**) ; les fichiers
+  **disparus** côté Moodle sont retirés de la collection **et** de l'index. **Bilan détaillé** (ajouts /
+  maj / suppressions / ignorés) et **badge « synchronisé »**.
+- **Badge « à mettre à jour »** (Lot 5.1) : le bouton **Nouveautés** compare l'état Moodle à l'index
+  local et pose un badge **`⟳ à mettre à jour`** sur les cours modifiés côté Moodle depuis la dernière
+  synchro (état non conservé d'une ouverture à l'autre).
+- **Filtre opt-in « cours inscrits »** (Lot 7, interrupteur `moodleEnrolledOnly`, **défaut ON**) :
+  restreint l'explorateur aux **cours où le compte technique est inscrit** — l'inscription de ce compte
+  valant **consentement de l'enseignant**. `core_enrol_get_users_courses` n'est appelée que **pour ce
+  compte technique** (ses propres cours), **jamais pour un étudiant** → aucune donnée d'étudiant. Le
+  mode « tout indexer » (filtre désactivé) relève d'une **décision de la Direction**. Un cours coché
+  n'est **jamais retiré en silence** (revue Lot 7).
 
 ## 8. Fonctionnalités v8 livrées (rappel)
 - **Comparaison multi-modèles** : `state.compareMode` envoie la même question à **deux modèles en
@@ -182,9 +205,10 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
 - **Documents, embeddings, index RAG** : **côté infra ESR** (collections « private »), pas sur la machine.
 
 ## 10. Feuille de route (résumé)
-- **Lot 4** — fichiers/PDF Moodle (`pluginfile.php?token=` → `rag_upload_document`).
-- **Lot 5** — synchro **incrémentale** + déduplication (planifiable la nuit).
-- **Lot 6** — interrupteur « inclure les cours Moodle » dans le chat.
+- **Lots 4, 5, 5.1, 7** — **livrés** (voir §7) : fichiers/PDF, synchro incrémentale + déduplication,
+  badge « à mettre à jour », filtre opt-in « cours inscrits ».
+- **Lot 6** — interrupteur « inclure les cours Moodle » dans le chat (**reste à faire**), puis
+  merge/release dans le `.dmg`.
 - **Portage Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode**.
 - **Version serveur / web** — deux formats (app de bureau vs serveur central sans installation).
 - **Linux** (après Moodle).

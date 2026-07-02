@@ -35,11 +35,12 @@ met à jour les modifiés et **retire** de la collection ceux supprimés du doss
 incrémentale, sans tout re-téléverser. Les **PDF/DOCX sont extraits en texte localement**
 (pdf.js/mammoth) avant l'envoi, ce qui contourne les limites du parseur serveur.
 
-### Connecteur Moodle (jalon phare — livré sur la branche `moodle`, pour la prochaine version)
+### Connecteur Moodle (jalon phare — quasi complet, fusionné dans `main`, pour la prochaine version)
 
-Le connecteur **Moodle** est **livré et validé** sur la branche `moodle` ; il ne fait **pas encore
-partie du `.dmg` publié** (version actuelle 20260626.8.0) et est destiné à la **prochaine version**.
-En bref :
+Le connecteur **Moodle** (lecture seule) est **quasi complet** : texte des cours, fichiers/PDF,
+synchro incrémentale et indexation opt-in par consentement sont **livrés et fusionnés dans `main`**,
+après des revues multi-agents adversariales. Il ne fait **pas encore partie du `.dmg` publié**
+(version actuelle 20260626.8.0) et est destiné à la **prochaine version**. En bref :
 
 - **Lecture seule stricte** : aucune donnée personnelle (ni notes, ni inscriptions, ni
   participants). Le test de connexion s'appuie sur une **liste blanche de 8 fonctions de contenu**
@@ -48,10 +49,10 @@ En bref :
 - **Indexation opt-in par consentement de l'enseignant** : aucun cours n'est indexé sans une action
   explicite de l'enseignant — le compte technique de lecture seule (`doceria-rag-readonly`) n'est
   **inscrit** que dans les cours où l'enseignant a accepté, et Doceria n'indexe **que** ces cours ;
-  l'inscription du compte vaut consentement. Un mode « tout indexer » reste possible sur décision de
-  l'établissement (accès en lecture au niveau catégorie/système). Le **filtre applicatif** qui n'affiche
-  que les cours consentis (via `core_enrol_get_users_courses` appelée pour le seul compte technique —
-  donc aucune donnée d'étudiant) est le **prochain lot, en cours** ; procédure : `docs/MOODLE-TEST-PLAN.md`.
+  l'inscription du compte vaut consentement. Un **filtre opt-in « cours inscrits »** (interrupteur,
+  **défaut activé**) n'affiche que les cours consentis via `core_enrol_get_users_courses` appelée
+  **pour le seul compte technique** — donc **aucune donnée d'étudiant**. Un mode « tout indexer »
+  reste possible sur décision de l'établissement (accès en lecture au niveau catégorie/système).
 - **Profils de connexion Moodle** (nom + URL + jeton) **indépendants** des profils ILaaS,
   plusieurs connexions possibles ; le **jeton va au trousseau** (rôle « moodle »).
 - **Explorateur de cours** central : recherche, filtre par catégorie, cases à cocher, **sélection
@@ -61,9 +62,17 @@ En bref :
   html2md, ni turndown, ni html2text) vers une collection RAG « **Moodle · &lt;cours&gt;** » du
   profil ILaaS actif, ensuite interrogeable avec citations. **Barre de progression** par cours et
   garde-fou anti-corruption inter-profils (verrou pendant la synchro).
-- Les **fichiers/PDF** joints aux cours relèvent du **Lot 4** (à venir).
+- **Fichiers/PDF** joints aux cours : **téléchargement sécurisé** (`pluginfile.php` avec `token=`
+  dans le corps du POST) puis **extraction en texte localement** — ce qui contourne le 502 du
+  parseur serveur ILaaS.
+- **Synchro incrémentale + déduplication** : un **index local** évite de re-téléverser ; une
+  nouvelle synchro **ne duplique plus** et produit un **bilan détaillé** (ajoutés / mis à jour /
+  inchangés). Le bouton **« Nouveautés »** pose un badge « ⟳ à mettre à jour » sur les cours
+  modifiés côté Moodle.
 
-Référence d'implémentation : `src-tauri/src/moodle.rs` et `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
+Il **reste** un lot avant la publication : un interrupteur « inclure les cours Moodle » directement
+dans le chat (**Lot 6**). Référence d'implémentation : `src-tauri/src/moodle.rs`,
+`docs/MOODLE-IMPLEMENTATION-ROADMAP.md` et `docs/MOODLE-TEST-PLAN.md`.
 
 Également : **glisser-déposer** de fichiers vers une collection (avec barre de progression),
 **gestion documentaire** (lister / supprimer un document), **suivi de consommation** (requêtes,
@@ -175,10 +184,9 @@ doceria/
 
 ## Feuille de route à venir
 
-- **Moodle — Lot 4** : ingestion des **fichiers/PDF** joints aux cours (`pluginfile.php` avec
-  `token=` → `rag_upload_document`).
-- **Moodle — Lot 5** : **synchro incrémentale + déduplication**, planifiable la nuit.
-- **Moodle — Lot 6** : interrupteur « inclure les cours Moodle » directement dans le chat.
+- **Moodle — Lot 6** : interrupteur « inclure les cours Moodle » directement dans le chat
+  (**dernier lot** avant merge/release ; les fichiers/PDF, la synchro incrémentale et le filtre
+  opt-in « cours inscrits » sont **déjà livrés** dans `main`).
 - **Portage Windows** : Tauri multiplateforme + WebView2 + **signature Authenticode**.
 - **Version serveur/web** : deux formats visés (app de bureau vs serveur central sans installation).
 - **Portage Linux** : `.AppImage` / `.deb` / `.rpm` (planifié **après** Moodle).
