@@ -90,6 +90,8 @@ img{max-width:100%}
 
 /* Captures */
 .shot-img{width:100%;border-radius:14px;border:1px solid var(--line);box-shadow:0 22px 50px -30px rgba(17,48,46,.45)}
+.shot-cap{text-align:center;color:var(--muted);font-family:var(--serif);font-style:italic;font-size:.92rem;margin-top:12px}
+.shot-soon{display:inline-block;font-family:var(--sans);font-style:normal;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--petrol-ink);background:var(--gold-soft);border:1px solid var(--gold);border-radius:999px;padding:1px 8px;margin-left:5px;vertical-align:middle}
 
 /* Limites */
 .limit{height:100%;display:flex;gap:14px;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:0 14px 14px 0;padding:18px 20px}

@@ -331,16 +331,30 @@
     </div>
   </section>
 
-  <!-- Captures (optionnelles : déposez assets/screen-1.png … dans site/assets/) -->
+  <!-- Captures : 4 vues (assets/screen-*.png) -->
   <section id="apercu" class="band-paper" data-shots>
     <div class="container">
       <div class="text-center mb-5">
         <span class="kicker">Aperçu</span>
         <h2 class="section-serif">L'application en images.</h2>
       </div>
-      <div class="row g-4 justify-content-center">
-        <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-1.png" alt="Doceria — chat" loading="lazy" onerror="this.closest('.shot').remove()"></div>
-        <div class="col-md-6 shot"><img class="shot-img" src="assets/screen-2.png" alt="Doceria — comparaison de deux modèles côte à côte" loading="lazy" onerror="this.closest('.shot').remove()"></div>
+      <div class="row g-4 g-lg-5 justify-content-center">
+        <figure class="col-md-6 shot m-0">
+          <img class="shot-img" src="assets/screen-1-accueil.png" alt="Doceria au lancement sur macOS : écran d'accueil, prêt à interroger un modèle souverain." loading="lazy" onerror="this.closest('.shot').remove()">
+          <figcaption class="shot-cap">L'application au lancement — le chat souverain sur macOS.</figcaption>
+        </figure>
+        <figure class="col-md-6 shot m-0">
+          <img class="shot-img" src="assets/screen-2-side-by-side.png" alt="Comparaison de deux modèles : une même question envoyée à deux modèles souverains, réponses affichées côte à côte." loading="lazy" onerror="this.closest('.shot').remove()">
+          <figcaption class="shot-cap">Comparer deux modèles : la même question, deux réponses côte à côte.</figcaption>
+        </figure>
+        <figure class="col-md-6 shot m-0">
+          <img class="shot-img" src="assets/screen-3-synchro-moodle.png" alt="Explorateur de cours Moodle : recherche, cours groupés par catégorie et cases à cocher pour choisir ce qu'on synchronise vers la bibliothèque." loading="lazy" onerror="this.closest('.shot').remove()">
+          <figcaption class="shot-cap">Connecteur Moodle : on choisit les cours (recherche + catégories) et on synchronise. <span class="shot-soon">prochaine version</span></figcaption>
+        </figure>
+        <figure class="col-md-6 shot m-0">
+          <img class="shot-img" src="assets/screen-4-rag-moodle.png" alt="Réponse sur un cours Moodle : question posée en mode Requête, réponse structurée à partir du cours indexé, avec citations et bloc Sources." loading="lazy" onerror="this.closest('.shot').remove()">
+          <figcaption class="shot-cap">Une question sur un cours Moodle synchronisé — réponse sourcée, avec citations. <span class="shot-soon">prochaine version</span></figcaption>
+        </figure>
       </div>
     </div>
   </section>
