@@ -1,7 +1,7 @@
 import './styles.css';
 
 import { initTheme, applyTheme } from './theme.js';
-import { state, activeProfile, loadSettings, saveSettings, loadConversations } from './state.js';
+import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings, loadConversations } from './state.js';
 import {
   currentConversation,
   newConversation,
@@ -15,7 +15,7 @@ import {
   truncateConversation,
   downloadMarkdown,
 } from './conversations.js';
-import { listModels, streamChat, describeError, profilesApi, ragApi, dragDrop, updater, usageApi } from './api.js';
+import { listModels, streamChat, describeError, profilesApi, moodleApi, ragApi, dragDrop, updater, usageApi } from './api.js';
 import { readDocument } from './documents.js';
 import * as ui from './ui.js';
 
@@ -23,6 +23,7 @@ const $ = ui.$;
 let abortController = null;
 let compareCtx = null; // contexte de la comparaison multi-modèles en cours (null si aucune)
 let editingId = null; // id du profil en cours d'édition (null = création)
+let moodleEditingId = null; // id de la connexion Moodle en cours d'édition
 
 /* ---------- Initialisation ---------- */
 async function init() {
@@ -33,6 +34,7 @@ async function init() {
   hydrateGen();
   wireEvents();
   await refreshProfiles();
+  await refreshMoodleProfiles();
   refreshConversation();
   checkForUpdate(); // vérif de mise à jour en arrière-plan (silencieuse si indisponible)
 }
@@ -883,6 +885,105 @@ async function onDeleteProfile() {
   }
 }
 
+/* ---------- Connexions Moodle (profils) ---------- */
+async function refreshMoodleProfiles() {
+  try {
+    const payload = await moodleApi.list();
+    state.moodleProfiles = payload.profiles || [];
+    state.activeMoodleId = payload.activeId || state.moodleProfiles[0]?.id || null;
+    ui.renderMoodleProfiles();
+  } catch (err) {
+    ui.showError(describeError(err));
+  }
+}
+
+async function switchMoodleProfile(id) {
+  if (!id || id === state.activeMoodleId) return;
+  try {
+    const payload = await moodleApi.setActive(id);
+    state.moodleProfiles = payload.profiles;
+    state.activeMoodleId = payload.activeId;
+    ui.renderMoodleProfiles();
+  } catch (err) {
+    ui.showError(describeError(err));
+  }
+}
+
+function openMoodleEditor(forNew) {
+  const p = forNew ? null : activeMoodleProfile();
+  moodleEditingId = forNew ? null : (p ? p.id : null);
+  $('moName').value = p ? p.name : '';
+  $('moUrl').value = p ? p.moodleBaseUrl : '';
+  $('moToken').value = '';
+  $('moTokenHint').textContent =
+    p && p.hasMoodleToken
+      ? 'jeton défini — laisser vide pour le conserver.'
+      : 'stocké au trousseau du système — jamais en clair, jamais affiché.';
+  $('moodleEditor').hidden = false;
+}
+
+function closeMoodleEditor() {
+  // Ne jamais laisser le jeton saisi traîner dans le DOM après fermeture/annulation.
+  $('moToken').value = '';
+  $('moodleEditor').hidden = true;
+  moodleEditingId = null;
+}
+
+// Persiste la connexion Moodle + le jeton saisi (write-only). Renvoie l'id.
+async function saveMoodleProfileFromEditor() {
+  const id = moodleEditingId || newId();
+  const existing = state.moodleProfiles.find((p) => p.id === id);
+  const profile = {
+    id,
+    name: $('moName').value.trim() || 'Moodle',
+    moodleBaseUrl: $('moUrl').value.trim().replace(/\/+$/, ''),
+    courseIds: existing ? existing.courseIds || [] : [], // préservés (choix des cours = lot suivant)
+  };
+  let token = $('moToken').value.trim();
+  try {
+    await moodleApi.upsert(profile);
+    moodleEditingId = id;
+    if (token) await moodleApi.setKey(id, token);
+    return id;
+  } finally {
+    $('moToken').value = '';
+    token = null;
+  }
+}
+
+async function onSaveMoodleProfile() {
+  const url = $('moUrl').value.trim();
+  if (!/^https?:\/\//.test(url)) {
+    ui.showError('L’URL Moodle doit commencer par http:// ou https://.');
+    return;
+  }
+  try {
+    const id = await saveMoodleProfileFromEditor();
+    const payload = await moodleApi.setActive(id);
+    state.moodleProfiles = payload.profiles;
+    state.activeMoodleId = payload.activeId;
+    closeMoodleEditor();
+    ui.renderMoodleProfiles();
+  } catch (err) {
+    ui.showError(describeError(err));
+  }
+}
+
+async function onDeleteMoodleProfile() {
+  const p = activeMoodleProfile();
+  if (!p) return;
+  if (!window.confirm('Supprimer la connexion Moodle « ' + p.name + ' » et son jeton du trousseau ? Action définitive.')) return;
+  try {
+    const payload = await moodleApi.remove(p.id);
+    state.moodleProfiles = payload.profiles;
+    state.activeMoodleId = payload.activeId;
+    closeMoodleEditor();
+    ui.renderMoodleProfiles();
+  } catch (err) {
+    ui.showError(describeError(err));
+  }
+}
+
 /* ---------- Construction de la requête ---------- */
 function readGenerationFromInputs() {
   state.model = $('modelSelect').value || state.model;
@@ -1677,6 +1778,14 @@ function wireEvents() {
   $('pfCancel').addEventListener('click', closeEditor);
   $('pfLlmTest').addEventListener('click', () => onTestProfile('llm'));
   $('pfRagTest').addEventListener('click', () => onTestProfile('rag'));
+
+  // Connexions Moodle
+  $('moodleProfileSelect').addEventListener('change', (e) => switchMoodleProfile(e.target.value));
+  $('moodleNew').addEventListener('click', () => openMoodleEditor(true));
+  $('moodleEdit').addEventListener('click', () => openMoodleEditor(false));
+  $('moodleDelete').addEventListener('click', onDeleteMoodleProfile);
+  $('moSave').addEventListener('click', onSaveMoodleProfile);
+  $('moCancel').addEventListener('click', closeMoodleEditor);
   // Coller la clé LLM puis quitter le champ récupère automatiquement les modèles.
   $('pfLlmKey').addEventListener('change', () => {
     if ($('pfLlmKey').value.trim()) onTestProfile('llm');

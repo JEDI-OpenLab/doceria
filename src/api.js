@@ -32,6 +32,17 @@ export const profilesApi = {
   testEphemeral: (baseUrl, secret) => invoke('test_connection_ephemeral', { baseUrl, secret }),
 };
 
+/* ---------- Connexions Moodle (jeton au trousseau, rôle « moodle ») ---------- */
+// Renvoient { profiles:[{id,name,moodleBaseUrl,courseIds,hasMoodleToken}], activeId }.
+export const moodleApi = {
+  list: () => invoke('list_moodle_profiles'),
+  upsert: (profile) => invoke('upsert_moodle_profile', { profile }),
+  remove: (profileId) => invoke('delete_moodle_profile', { profileId }),
+  setActive: (profileId) => invoke('set_active_moodle_profile', { profileId }),
+  // Write-only : jeton au trousseau sous le rôle « moodle » (efface si secret vide).
+  setKey: (profileId, secret) => invoke('set_profile_key', { profileId, role: 'moodle', secret }),
+};
+
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */
 // Toutes les commandes résolvent l'URL + la clé RAG du profil actif côté Rust.
 export const ragApi = {

@@ -128,6 +128,40 @@
         <select id="modelSelect" aria-label="Modèle" disabled><option value="" disabled selected>connectez-vous d'abord</option></select>
       </div>
 
+      <h2 class="section-head" data-section="moodle"><span class="chevron" aria-hidden="true"></span>Moodle<button class="help" type="button" aria-label="Connecte Doceria à ton Moodle en lecture seule pour indexer le contenu de tes cours et l'interroger (RAG). Le jeton est stocké au trousseau du système, jamais en clair.">?<span class="help-bubble" aria-hidden="true">Connecte Doceria à ton Moodle <strong>en lecture seule</strong> pour indexer le contenu de tes cours et l'interroger. Plusieurs connexions possibles (école, université…). Le <strong>jeton</strong> va au <strong>trousseau du système</strong>.</span></button></h2>
+      <div class="field">
+        <label for="moodleProfileSelect">Connexion active</label>
+        <select id="moodleProfileSelect" aria-label="Connexion Moodle active"></select>
+        <div class="hint" id="moodleHint">Ajoute une connexion (URL + jeton) pour indexer tes cours.</div>
+      </div>
+      <div class="profile-bar">
+        <button id="moodleNew" type="button" class="filebtn">+ Nouveau</button>
+        <button id="moodleEdit" type="button" class="filebtn">Modifier</button>
+        <button id="moodleDelete" type="button" class="filebtn danger">Supprimer</button>
+      </div>
+
+      <!-- Éditeur de connexion Moodle (masqué hors édition) -->
+      <div class="profile-editor" id="moodleEditor" hidden>
+        <div class="field">
+          <label for="moName">Nom de la connexion</label>
+          <input type="text" id="moName" spellcheck="false" placeholder="ex. Moodle Centrale Lille">
+        </div>
+        <div class="field">
+          <label for="moUrl">URL Moodle</label>
+          <input type="text" id="moUrl" spellcheck="false" placeholder="https://moodle.mon-etablissement.fr">
+          <div class="hint">L'adresse de ton Moodle (http:// ou https://), sans « /webservice ».</div>
+        </div>
+        <div class="field">
+          <label for="moToken">Jeton (web service)</label>
+          <input type="password" id="moToken" spellcheck="false" autocomplete="off" placeholder="coller le jeton Moodle">
+          <div class="hint" id="moTokenHint">Stocké au trousseau du système — jamais en clair, jamais affiché.</div>
+        </div>
+        <div class="profile-editor-actions">
+          <button type="button" id="moSave" class="btnfull">Enregistrer la connexion</button>
+          <button type="button" id="moCancel" class="filebtn">Annuler</button>
+        </div>
+      </div>
+
       <h2 class="section-head" data-section="rag"><span class="chevron" aria-hidden="true"></span>Bibliothèque (RAG)<button class="help up" type="button" aria-label="Le RAG laisse l'IA répondre à partir de TES documents. 1) Crée une collection. 2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS). 3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations des sources.">?<span class="help-bubble" aria-hidden="true">Le RAG laisse l'IA répondre à partir de <strong>tes documents</strong>.<br>1) Crée une collection.<br>2) Ajoute-lui des fichiers ou un dossier (indexés en privé chez ILaaS).<br>3) Coche « Utiliser la bibliothèque » sous la zone de message : tes questions s'appuieront dessus, avec citations.</span></button></h2>
       <div class="field">
         <label for="collectionSelect">Collection active</label>

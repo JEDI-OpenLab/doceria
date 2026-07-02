@@ -25,6 +25,18 @@ pub struct ProfileMeta {
     pub rag_base_url: Option<String>,
 }
 
+/// Profil de connexion Moodle (source d'ingestion RAG). Le JETON va au trousseau
+/// sous le rôle « moodle », jamais ici. Un profil par Moodle (école, université…).
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoodleProfileMeta {
+    pub id: String,
+    pub name: String,
+    pub moodle_base_url: String,
+    #[serde(default)]
+    pub course_ids: Vec<i64>, // cours cochés pour la synchro
+}
+
 #[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
@@ -32,6 +44,10 @@ pub struct AppSettings {
     pub profiles: Vec<ProfileMeta>,
     #[serde(default)]
     pub active_id: Option<String>,
+    #[serde(default)]
+    pub moodle_profiles: Vec<MoodleProfileMeta>,
+    #[serde(default)]
+    pub active_moodle_id: Option<String>,
 }
 
 /// État partagé : réglages chargés en mémoire (source de vérité runtime).
@@ -94,6 +110,37 @@ fn to_payload(s: &AppSettings) -> ProfilesPayload {
     ProfilesPayload {
         profiles,
         active_id: s.active_id.clone(),
+    }
+}
+
+/// Vue Moodle renvoyée au front : métadonnées + PRÉSENCE du jeton (jamais sa valeur).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoodleProfileView {
+    #[serde(flatten)]
+    meta: MoodleProfileMeta,
+    has_moodle_token: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoodleProfilesPayload {
+    profiles: Vec<MoodleProfileView>,
+    active_id: Option<String>,
+}
+
+fn to_moodle_payload(s: &AppSettings) -> MoodleProfilesPayload {
+    let profiles = s
+        .moodle_profiles
+        .iter()
+        .map(|m| MoodleProfileView {
+            has_moodle_token: keychain::has_secret(&m.id, "moodle"),
+            meta: m.clone(),
+        })
+        .collect();
+    MoodleProfilesPayload {
+        profiles,
+        active_id: s.active_moodle_id.clone(),
     }
 }
 
@@ -191,4 +238,67 @@ pub fn set_active_profile(
     g.active_id = Some(profile_id);
     persist(&app, &g)?;
     Ok(to_payload(&g))
+}
+
+// ───────────────────────── Commandes Moodle ─────────────────────────
+
+#[tauri::command]
+pub fn list_moodle_profiles(settings: State<'_, SettingsState>) -> MoodleProfilesPayload {
+    to_moodle_payload(&settings.0.lock().unwrap())
+}
+
+#[tauri::command]
+pub fn upsert_moodle_profile(
+    app: AppHandle,
+    settings: State<'_, SettingsState>,
+    profile: MoodleProfileMeta,
+) -> Result<MoodleProfilesPayload, String> {
+    // Moodle peut être en http:// (instance LAN de test) ou https:// (prod).
+    let url = profile.moodle_base_url.trim();
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("L'URL Moodle doit commencer par http:// ou https://.".to_string());
+    }
+    let mut g = settings.0.lock().unwrap();
+    match g.moodle_profiles.iter_mut().find(|p| p.id == profile.id) {
+        Some(existing) => *existing = profile.clone(),
+        None => g.moodle_profiles.push(profile.clone()),
+    }
+    if g.active_moodle_id.is_none() {
+        g.active_moodle_id = Some(profile.id.clone());
+    }
+    persist(&app, &g)?;
+    Ok(to_moodle_payload(&g))
+}
+
+#[tauri::command]
+pub fn delete_moodle_profile(
+    app: AppHandle,
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+) -> Result<MoodleProfilesPayload, String> {
+    {
+        let mut g = settings.0.lock().unwrap();
+        g.moodle_profiles.retain(|p| p.id != profile_id);
+        if g.active_moodle_id.as_deref() == Some(profile_id.as_str()) {
+            g.active_moodle_id = g.moodle_profiles.first().map(|p| p.id.clone());
+        }
+        persist(&app, &g)?;
+    }
+    keychain::delete_moodle(&profile_id);
+    Ok(to_moodle_payload(&settings.0.lock().unwrap()))
+}
+
+#[tauri::command]
+pub fn set_active_moodle_profile(
+    app: AppHandle,
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+) -> Result<MoodleProfilesPayload, String> {
+    let mut g = settings.0.lock().unwrap();
+    if !g.moodle_profiles.iter().any(|p| p.id == profile_id) {
+        return Err("Profil Moodle introuvable.".to_string());
+    }
+    g.active_moodle_id = Some(profile_id);
+    persist(&app, &g)?;
+    Ok(to_moodle_payload(&g))
 }

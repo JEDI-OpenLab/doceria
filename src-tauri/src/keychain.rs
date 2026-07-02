@@ -49,12 +49,17 @@ pub fn delete_all(profile_id: &str) {
     let _ = delete_secret(profile_id, "rag");
 }
 
+/// Retire le jeton Moodle d'un profil Moodle supprimé. Best-effort.
+pub fn delete_moodle(profile_id: &str) {
+    let _ = delete_secret(profile_id, "moodle");
+}
+
 /// Commande : définit (ou efface si `secret` vide) la clé d'un profil/rôle.
 /// Write-only : aucune valeur de clé n'est jamais renvoyée au front.
 #[tauri::command]
 pub fn set_profile_key(profile_id: String, role: String, secret: String) -> Result<(), String> {
-    if role != "llm" && role != "rag" {
-        return Err("Rôle de clé invalide (attendu : « llm » ou « rag »).".to_string());
+    if role != "llm" && role != "rag" && role != "moodle" {
+        return Err("Rôle de clé invalide (attendu : « llm », « rag » ou « moodle »).".to_string());
     }
     let s = secret.trim();
     if s.is_empty() {

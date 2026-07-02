@@ -13,6 +13,9 @@ export const state = {
   // [{ id, name, llmBaseUrl, llmModel, ragBaseUrl, hasLlmKey, hasRagKey }]
   profiles: [],
   activeId: null,
+  // Connexions Moodle (miroir du backend — jeton au trousseau, jamais ici)
+  moodleProfiles: [], // [{ id, name, moodleBaseUrl, courseIds, hasMoodleToken }]
+  activeMoodleId: null,
   // Bibliothèque RAG (collections gérées ILaaS du profil actif ; brut du backend)
   collections: [],
   activeCollectionId: null,
@@ -46,6 +49,10 @@ export const state = {
 
 export function activeProfile() {
   return state.profiles.find((p) => p.id === state.activeId) || null;
+}
+
+export function activeMoodleProfile() {
+  return state.moodleProfiles.find((p) => p.id === state.activeMoodleId) || null;
 }
 
 export function loadSettings() {

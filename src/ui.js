@@ -84,6 +84,32 @@ export function renderProfiles() {
   sel.value = state.activeId || state.profiles[0].id;
 }
 
+export function renderMoodleProfiles() {
+  const sel = $('moodleProfileSelect');
+  sel.innerHTML = '';
+  const has = state.moodleProfiles.length > 0;
+  $('moodleEdit').disabled = !has;
+  $('moodleDelete').disabled = !has;
+  if (!has) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '— aucune connexion —';
+    o.disabled = true;
+    o.selected = true;
+    sel.appendChild(o);
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  for (const p of state.moodleProfiles) {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.hasMoodleToken ? '' : ' — jeton manquant');
+    sel.appendChild(o);
+  }
+  sel.value = state.activeMoodleId || state.moodleProfiles[0].id;
+}
+
 /* ---------- Bibliothèque RAG ---------- */
 export function renderCollections() {
   const sel = $('collectionSelect');
