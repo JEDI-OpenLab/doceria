@@ -328,7 +328,7 @@ async function uploadFileSmart(collectionId, path, profileId) {
     const file = new File([part], name);
     let text;
     try {
-      text = (await readDocument(file)).text;
+      text = (await readDocument(file, undefined, { noTruncate: true })).text; // RAG = texte complet
     } catch (e) {
       if (ext === 'pdf') {
         throw new Error('PDF scanné « ' + name + ' » : aucun texte extractible (OCR pas encore disponible).');
@@ -1304,33 +1304,46 @@ function mvProgress(done, total, label) {
   }
 }
 
-// Formats texte importables directement (décodés en UTF-8). PDF/DOCX passent par l'extraction
-// locale (readDocument) ; les autres formats sont ignorés (pas de parser côté app).
-const MOODLE_TEXT_EXT = ['txt', 'md', 'markdown', 'csv', 'json', 'html', 'htm', 'tex', 'rtf'];
+// Formats texte importables directement (décodés en UTF-8). Le HTML est détagué ; PDF/DOCX
+// passent par l'extraction locale (readDocument) ; les autres formats sont ignorés. (Le RTF est
+// exclu : c'est du balisage binaire non décodable en texte propre — revue Lot 4.)
+const MOODLE_TEXT_EXT = ['txt', 'md', 'markdown', 'csv', 'json', 'html', 'htm', 'tex'];
+const MOODLE_EXTRACT_MAX = 25 * 1024 * 1024; // plafond de l'extraction locale PDF/DOCX (readDocument)
+const MOODLE_TEXT_MAX = 40 * 1024 * 1024; // plafond du téléchargement (formats texte)
 
 // Ingest un fichier de cours Moodle dans la collection (Lot 4) : télécharge les octets
-// (jeton au trousseau, côté Rust), extrait le texte en LOCAL pour PDF/DOCX (contourne le 502
-// d'ILaaS), décode les formats texte ; ignore le reste. Renvoie { ok:true } ou { skipped:'…' }.
+// (jeton au trousseau, côté Rust), extrait le texte en LOCAL et COMPLET pour PDF/DOCX (contourne
+// le 502 d'ILaaS), décode/détague les formats texte ; ignore le reste. { ok } ou { skipped:'…' }.
 async function ingestMoodleFile(collectionId, file, mpId, dest) {
   const name = file.filename || 'fichier';
   const ext = (name.split('.').pop() || '').toLowerCase();
-  if (file.filesize && file.filesize > 40 * 1024 * 1024) return { skipped: name + ' (trop volumineux)' };
   const isPdfDocx = ext === 'pdf' || ext === 'docx';
   const isText = MOODLE_TEXT_EXT.includes(ext);
   if (!isPdfDocx && !isText) return { skipped: name + ' (format ' + (ext || '?') + ' non pris en charge)' };
+  // Plafonds cohérents : PDF/DOCX bornés par l'extraction locale (25 Mo), texte par le download (40 Mo).
+  const cap = isPdfDocx ? MOODLE_EXTRACT_MAX : MOODLE_TEXT_MAX;
+  if (file.filesize && file.filesize > cap) {
+    return { skipped: name + ' (trop volumineux, > ' + Math.round(cap / 1048576) + ' Mo)' };
+  }
   const raw = await moodleApi.downloadFile(mpId, file.fileurl); // octets (ArrayBuffer/Uint8Array)
   const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
   if (isPdfDocx) {
-    let text;
+    let doc;
     try {
-      text = (await readDocument(new File([part], name))).text;
-    } catch {
+      doc = await readDocument(new File([part], name), undefined, { noTruncate: true }); // RAG = texte complet
+    } catch (e) {
+      // Distingue « trop volumineux pour l'extraction » d'un vrai PDF scanné (taille sous-déclarée par Moodle).
+      if (/volumineux/i.test(describeError(e))) return { skipped: name + ' (trop volumineux pour extraction, > 25 Mo)' };
       return { skipped: name + (ext === 'pdf' ? ' (PDF scanné, pas d’OCR)' : ' (illisible)') };
     }
-    if (!text || !text.trim()) return { skipped: name + ' (aucun texte extractible)' };
-    await ragApi.uploadText(collectionId, name.replace(/\.(pdf|docx)$/i, '') + '.md', text, dest);
+    if (!doc.text || !doc.text.trim()) return { skipped: name + ' (aucun texte extractible)' };
+    await ragApi.uploadText(collectionId, name.replace(/\.(pdf|docx)$/i, '') + '.md', doc.text, dest);
   } else {
-    const text = new TextDecoder('utf-8').decode(part);
+    let text = new TextDecoder('utf-8').decode(part);
+    if (ext === 'html' || ext === 'htm') {
+      // Retire les balises : on n'ingère que le texte lisible, pas le HTML brut.
+      try { text = new DOMParser().parseFromString(text, 'text/html').body.textContent || ''; } catch { /* garde le brut */ }
+    }
     if (!text.trim()) return { skipped: name + ' (vide)' };
     await ragApi.uploadText(collectionId, name, text, dest);
   }

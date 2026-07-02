@@ -22,7 +22,9 @@ async function getPdfjs() {
 
 // Lit un fichier et renvoie { name, text, charCount, truncated }.
 // onProgress(page, total) est appelé pendant la lecture d'un PDF.
-export async function readDocument(file, onProgress) {
+// opts.noTruncate : renvoie le texte COMPLET (pour l'ingestion RAG, qui chunke côté serveur) —
+// sinon on tronque à MAX_DOC_CHARS (contexte de chat, où la fenêtre est limitée).
+export async function readDocument(file, onProgress, opts) {
   if (!file) throw new Error('Aucun fichier.');
   if (file.size > MAX_FILE_BYTES) {
     throw new Error(`Fichier trop volumineux (${(file.size / 1048576).toFixed(1)} Mo, max 25 Mo).`);
@@ -44,7 +46,7 @@ export async function readDocument(file, onProgress) {
   if (!text) throw new Error('Aucun texte extractible (document vide, image scannée ou format non pris en charge).');
 
   let truncated = false;
-  if (text.length > MAX_DOC_CHARS) {
+  if (!(opts && opts.noTruncate) && text.length > MAX_DOC_CHARS) {
     text = text.slice(0, MAX_DOC_CHARS);
     truncated = true;
   }

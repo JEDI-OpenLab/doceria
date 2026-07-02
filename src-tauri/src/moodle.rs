@@ -6,6 +6,7 @@
 // erreurs applicatives en HTTP 200 avec {exception, errorcode, message} : on parse
 // TOUJOURS le corps.
 
+use futures_util::StreamExt;
 use serde::Serialize;
 use serde_json::Value;
 use tauri::State;
@@ -741,12 +742,25 @@ pub async fn moodle_download_file(
     if !status.is_success() {
         return Err(http_error(status.as_u16()));
     }
-    let bytes = res.bytes().await.map_err(send_error)?;
-    const MAX: usize = 40 * 1024 * 1024; // garde-fou dur (40 Mo)
-    if bytes.len() > MAX {
-        return Err("Fichier trop volumineux (> 40 Mo).".to_string());
+    const MAX: usize = 40 * 1024 * 1024; // garde-fou DUR (40 Mo)
+    // Pré-contrôle si l'entête est présente (serveur honnête)…
+    if let Some(len) = res.content_length() {
+        if len > MAX as u64 {
+            return Err("Fichier trop volumineux (> 40 Mo).".to_string());
+        }
     }
-    Ok(tauri::ipc::Response::new(bytes.to_vec()))
+    // …et surtout : lecture en FLUX avec compteur, pour ne JAMAIS bufferiser plus que MAX
+    // (un hôte malveillant peut mentir sur la taille et streamer des Go → sinon OOM ; revue Lot 4).
+    let mut stream = res.bytes_stream();
+    let mut buf: Vec<u8> = Vec::with_capacity(64 * 1024);
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(send_error)?;
+        if buf.len() + chunk.len() > MAX {
+            return Err("Fichier trop volumineux (> 40 Mo).".to_string());
+        }
+        buf.extend_from_slice(&chunk);
+    }
+    Ok(tauri::ipc::Response::new(buf))
 }
 
 #[cfg(test)]

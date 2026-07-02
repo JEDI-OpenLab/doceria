@@ -344,7 +344,23 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     (`dest`) + `mp.id` capturé (acquis Lot 3). Build ✅.
   - **Réutilisation maximale** : aucun fichier temporaire (octets en IPC comme `read_file`), pipeline
     d'extraction locale existant, `rag_upload_text`. Zéro dépendance nouvelle.
-  - **Revue** : revue adversariale (sécurité download / ingestion / robustesse) lancée avant le test.
+  - **Revue adversariale (10 agents)** → 7 findings, **corrigés** (sauf le #4 = doublons, qui EST le
+    Lot 5) :
+    - *(sécurité, high #1/#5)* le plafond 40 Mo était vérifié **après** `res.bytes()` (tout bufferisé →
+      **OOM** si un Moodle malveillant stream des Go) → **lecture en flux** (`bytes_stream` + compteur,
+      abandon dès MAX) + pré-contrôle `content_length`. `moodle.rs`.
+    - *(ingestion, medium #3/#7)* plafonds **incohérents** (download 40 Mo / extraction 25 Mo) →
+      PDF/DOCX bornés à **25 Mo** (skip explicite), message d'erreur **distinguant** « trop volumineux »
+      d'un vrai PDF scanné. `main.js`.
+    - *(ingestion, medium #2)* texte PDF/DOCX **tronqué à 120k** silencieusement → option `noTruncate`
+      sur `readDocument` (le RAG chunke côté serveur) : **texte complet** ingéré, sur le chemin Moodle
+      **et** l'upload manuel RAG. `documents.js`, `main.js`.
+    - *(ingestion, low #6)* `.rtf` (balisage binaire) et HTML brut pollutaient le RAG → `.rtf` **retiré**,
+      HTML **détagué** (`DOMParser` → texte). `main.js`.
+    - *(#4, medium — doublons à la re-synchro)* **non corrigé ici, à dessein** : c'est le périmètre du
+      **Lot 5** (synchro incrémentale + dédup).
+    - 1er lancement de revue interrompu par l'utilisateur ; **relancé** pour rigueur.
+  - **Validé en réel** contre le Moodle de test (2 PDF, 1,2 + 4,1 Mo, origine vérifiée, PDF valides).
   - **Prérequis test** : Moodle de test **rallumé** + un profil ILaaS avec RAG. Sur le cours de test,
     « Synchroniser » ajoutera le texte **+ les 2 PDF** à « Moodle · Les fondateurs… ».
   - *Fait quand :* après « Synchroniser », les PDF d'un cours sont interrogeables (texte extrait, cité) ;
