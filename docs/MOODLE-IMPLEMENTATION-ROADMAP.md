@@ -164,6 +164,28 @@ la/les collection(s) Moodle à la requête RAG.
 - Résolution jeton côté Rust avant tout `await` ; **ne jamais logger** l'URL pluginfile avec le token.
 - Validation `Content-Type` sur les téléchargements.
 
+## 5.bis Gouvernance : opt-in par consentement
+
+Doceria adopte l'**opt-in par défaut**. À rebours du modèle « l'IA est partout, à vous de la
+désactiver » (opt-out), **aucun cours Moodle n'est indexé sans une action explicite de
+l'enseignant**. Valeurs portées : **transparence, choix, liberté** de l'enseignant.
+
+**Mécanisme.** Le compte technique de **lecture seule** (`doceria-rag-readonly`) n'est **inscrit**
+que dans les cours dont l'enseignant a donné son accord. **L'inscription du compte vaut
+consentement.** Doceria n'affiche et n'indexe **que** ces cours. Un rôle Moodle dédié
+« **Doceria — indexation IA (lecture seule)** » rend la présence du compte transparente pour
+l'enseignant.
+
+**Mode « tout indexer » (alternative, décision de la Direction).** Si l'établissement décide
+d'indexer tous les cours par défaut : soit donner au compte l'accès en lecture au niveau
+catégorie/système (capacité `moodle/course:view`), soit inscrire le compte massivement, **puis**
+désactiver le filtre opt-in dans Doceria. C'est un **choix de gouvernance**, pas un réglage
+technique par défaut.
+
+**Statut honnête.** Le principe et la configuration Moodle sont posés (cf. `MOODLE-TEST-PLAN.md`).
+Le **filtre applicatif** — Doceria n'affiche que les cours consentis — est le **prochain lot,
+en cours** ; il **ne faut pas** le présenter comme déjà livré. Voir Lot 7 ci-dessous.
+
 ## 6. Découpage en LOTS livrables
 
 - **Lot 0 — Fondations profils Moodle** : `MoodleProfileMeta`, CRUD, rôle trousseau `moodle`, section UI + éditeur, `wireEvents()`. *Fait quand :* on crée/édite/supprime un profil, jeton au trousseau, `hasMoodleToken` affiché, rien en clair dans `settings.json`.
@@ -173,6 +195,7 @@ la/les collection(s) Moodle à la requête RAG.
 - **Lot 4 — Fichiers** : `moodle_download_file` + `uploadFileSmart`. *Fait quand :* PDF/DOCX téléchargés, indexés, cités ; une erreur pluginfile ne crée pas de faux document.
 - **Lot 5 — Synchro incrémentale + suppressions** : index de diff, delete+re-upload, progression, verrou. *Fait quand :* 2ᵉ synchro ne recrée pas l'inchangé, supprime les disparus, affiche la progression.
 - **Lot 6 — Toggle « Inclure les cours Moodle »** : intégration composeur + `onSend()`. *Fait quand :* le toggle fait remonter les passages Moodle avec citations ; grisé si pas de collection.
+- **Lot 7 — Filtre « cours inscrits » (opt-in par consentement)** *(à venir)* : Doceria n'affiche que les cours où le **compte technique est inscrit**, via **`core_enrol_get_users_courses`** — **9ᵉ fonction** de la liste blanche du service, appelée **uniquement pour le compte technique** (donc **aucune donnée d'étudiant**). Un **interrupteur** permet de basculer en **mode « tout indexer »** (désactive le filtre — décision de gouvernance, cf. §5.bis). *Fait quand :* sans réglage, l'explorateur ne liste **que** les cours consentis (inscription = consentement) ; l'interrupteur « tout indexer » restitue la liste complète.
 
 ## 7. À NOTER pour l'échelle (pas maintenant)
 - **Synchro planifiée nocturne** : job périodique rejouant `onSyncMoodle()` (scheduler/cron), avec journal de synchro et fenêtre horaire. **Roadmap, pas ce chantier.**
@@ -402,4 +425,41 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
       dossier), un seul orphelin possible lors d'un changement ultérieur ; le hash évite tout churn.
   - *Fait quand :* re-synchro d'un cours inchangé = 0 doublon ; un ajout/retrait/modif côté Moodle se
     reflète proprement ; le badge marque les cours déjà synchronisés.
+- **2026-07-02 — Lot 5.1 (Badge « nouveautés ») ✅ — demandé par l'utilisateur.**
+  - Bouton **« Nouveautés »** dans l'explorateur : `checkMoodleUpdates()` va chercher le contenu des
+    cours **déjà synchronisés** (peu nombreux) et le compare à l'index (**lecture seule**, aucune
+    ré-ingestion) → badge **« ⟳ à mettre à jour »** (prioritaire sur « ✓ synchronisé »).
+    `courseHasUpdates` = hash du texte + `(timemodified, taille)` des fichiers pris en charge + retraits.
+    Coût = 1 appel par cours suivi, à la demande. Badge vidé après synchro / réinitialisé au Rafraîchir.
+  - **Bilan de synchro amélioré** : en cas d'échec d'un cours, la **raison** est affichée (ex. compte
+    technique non inscrit — `errorcoursecontextnotvalid`) et non plus seulement le nom.
+  - *Note terrain* : lire le contenu d'un cours exige que le **compte technique y soit inscrit**
+    (sinon « Not enrolled ») — c'est une config Moodle, pas un bug ; l'app le signale désormais clairement.
+- **2026-07-02 — Gouvernance : opt-in par consentement (principe posé, filtre à venir).**
+  - **Principe** : opt-in par défaut — **aucun cours indexé sans action explicite de l'enseignant**.
+    Le compte technique **lecture seule** (`doceria-rag-readonly`) n'est **inscrit** que dans les cours
+    consentis ; **l'inscription vaut consentement**. Doceria n'affiche/n'indexe **que** ces cours. Rôle
+    Moodle dédié « **Doceria — indexation IA (lecture seule)** » pour la transparence. Valeurs :
+    transparence, choix, liberté de l'enseignant. Cf. §5.bis et `MOODLE-TEST-PLAN.md`.
+  - **Mode « tout indexer »** (décision de la Direction) : accès catégorie/système
+    (`moodle/course:view`) **ou** inscription massive, **puis** désactivation du filtre opt-in dans
+    Doceria — **choix de gouvernance**, pas un défaut technique.
+  - **Statut honnête** : le principe et la config Moodle sont posés ; le **filtre applicatif est le
+    prochain lot, EN COURS** (**Lot 7**) — à **ne pas** présenter comme livré. Il s'appuiera sur
+    **`core_enrol_get_users_courses`** (**9ᵉ fonction** du service, appelée **uniquement pour le compte
+    technique** → **aucune donnée d'étudiant**), avec un **interrupteur « tout indexer »**.
+- **2026-07-02 — Lot 7 (Filtre « cours inscrits » = opt-in par consentement) ✅.**
+  - **Rust** : `list_moodle_courses(profile_id, enrolled_only)` ; si `enrolled_only` → `get_site_info`
+    (userid du **compte porteur du jeton**) → **`core_enrol_get_users_courses(userid)`** → on ne garde que
+    les cours dont l'id est inscrit. **Appelée UNIQUEMENT pour le compte technique → zéro donnée
+    d'étudiant.** Message actionnable si la fonction n'est pas whitelistée (« ajoute-la au service, ou
+    décoche »). `cargo check` ✅.
+  - **Front** : réglage `state.moodleEnrolledOnly` (**défaut ON**, persisté) ; **interrupteur
+    « Cours consentis uniquement »** dans l'en-tête de l'explorateur ; `onMvRefresh` passe le réglage ;
+    bascule → recharge la liste (filtrée / complète). Build ✅.
+  - **Validé en réel** contre le Moodle de test : `core_enrol_get_users_courses` renvoie les 6 cours
+    inscrits (ids 2‑7) ; **« Cinéma » (id 8, non inscrit) est bien exclu**. *(Note : « Algorithmique »
+    id 5 était inscrit — l'opt-in reflète l'état réel des inscriptions.)*
+  - **Revue** adversariale ciblée (confidentialité / filtre / fonction manquante / sélection) lancée.
+  - *Fait quand :* ON → l'explorateur ne liste que les cours consentis ; OFF → liste complète.
 - *(à suivre : Lot 6 — interrupteur « inclure les cours Moodle » dans le chat ; puis merge + release.)*

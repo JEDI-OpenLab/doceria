@@ -66,11 +66,15 @@
       <section class="moodle-view" id="moodleView" hidden aria-label="Explorateur de cours Moodle">
         <header class="mv-head">
           <div class="mv-title">Cours Moodle · <span id="mvConn">—</span></div>
+          <label class="mv-optin" title="Opt-in : n'afficher que les cours où le compte de lecture est inscrit — c'est le consentement de l'enseignant. Décoche pour tout indexer (nécessite un accès étendu côté Moodle).">
+            <input type="checkbox" id="moodleEnrolledOnly" checked> Cours consentis uniquement
+          </label>
           <button type="button" id="mvClose" class="filebtn">Fermer</button>
         </header>
         <div class="mv-toolbar">
           <input type="search" id="mvSearch" placeholder="Rechercher un cours…" aria-label="Rechercher un cours" spellcheck="false" autocomplete="off">
           <select id="mvCategory" aria-label="Filtrer par catégorie"><option value="">Toutes les catégories</option></select>
+          <button type="button" id="mvCheck" class="filebtn" title="Vérifier si les cours déjà synchronisés ont du nouveau côté Moodle">Nouveautés</button>
           <button type="button" id="mvRefresh" class="filebtn">Rafraîchir</button>
         </div>
         <div class="mv-list" id="mvList" role="group" aria-label="Cours à indexer"></div>

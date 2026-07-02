@@ -259,12 +259,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 .course-row span{flex:1;min-width:0;line-height:1.35}
 .course-row em{color:var(--faint);font-style:normal}
 .course-sync{flex:none;margin-left:auto;font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.course-update{flex:none;margin-left:auto;font-size:11px;font-weight:700;color:#8a5a00;background:#fdeecf;border-radius:999px;padding:1px 8px;white-space:nowrap}
+:root[data-theme="dark"] .course-update{color:#f0c675;background:#3a2e12}
 
 /* Explorateur de cours Moodle (vue centrale, couvre le chat) */
 .moodle-view{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;min-height:0}
 .moodle-view[hidden]{display:none}
 .mv-head{display:flex;align-items:center;gap:12px;padding:16px 28px;border-bottom:1px solid var(--line)}
 .mv-title{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv-optin{flex:none;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;cursor:pointer}
+.mv-optin input{width:auto;flex:none;margin:0}
 .mv-title span{color:var(--accent-ink)}
 .mv-toolbar{display:flex;gap:8px;align-items:center;padding:12px 28px;border-bottom:1px solid var(--line)}
 .mv-toolbar #mvSearch{flex:1;min-width:0}

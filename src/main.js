@@ -740,6 +740,9 @@ async function switchProfile(id) {
     const payload = await profilesApi.setActive(id);
     state.profiles = payload.profiles;
     state.activeId = payload.activeId;
+    // Destination RAG changée → l'état « à mettre à jour » (spécifique au profil) est périmé.
+    mvUpdatableSet = new Set();
+    if (!$('moodleView').hidden) renderMoodleView();
     state.model = '';
     state.models = [];
     ui.fillModels([], '');
@@ -1061,6 +1064,7 @@ let mvCollapsed = new Set(); // catégories repliées
 let mvLoadedFor = null;      // id de la connexion dont mvCourses contient les cours
 let mvOpenFor = null;        // id de la connexion actuellement affichée (null si fermé)
 let mvSyncedSet = new Set(); // ids des cours déjà synchronisés (badge « synchronisé »)
+let mvUpdatableSet = new Set(); // ids des cours ayant du nouveau à synchroniser (badge « à mettre à jour »)
 let moodleSyncing = false;   // synchro en cours → verrou global (bloque tout changement de profil)
 
 // Ouvre l'explorateur sur la connexion active : la sélection est initialisée depuis le
@@ -1073,6 +1077,7 @@ async function openMoodleExplorer() {
   mvSelected = new Set((p.courseIds || []).map(Number));
   $('mvSearch').value = '';
   $('mvCategory').value = '';
+  $('moodleEnrolledOnly').checked = state.moodleEnrolledOnly; // reflète le réglage opt-in
   $('moodleView').hidden = false;
   if (mvLoadedFor !== p.id) {
     mvCourses = [];
@@ -1087,12 +1092,14 @@ async function openMoodleExplorer() {
 function closeMoodleView() {
   $('moodleView').hidden = true;
   mvOpenFor = null;
+  mvUpdatableSet = new Set(); // état « à mettre à jour » non conservé d'une ouverture à l'autre
 }
 
 // (Re)charge la liste des cours de la connexion active et reconstruit le filtre catégories.
 async function onMvRefresh() {
   const p = activeMoodleProfile();
   if (!p) return;
+  mvUpdatableSet = new Set(); // la liste change → l'état « à mettre à jour » précédent est périmé
   const reqId = p.id; // connexion capturée à l'entrée (cf. garde anti-course ci-dessous)
   const list = $('mvList');
   list.textContent = '';
@@ -1101,7 +1108,7 @@ async function onMvRefresh() {
   status.textContent = 'chargement des cours…';
   list.appendChild(status);
   try {
-    const courses = await moodleApi.listCourses(reqId);
+    const courses = await moodleApi.listCourses(reqId, state.moodleEnrolledOnly);
     // GARDE ANTI-COURSE (revue Lot 2.5, bloquant) : si la connexion active a changé ou si
     // l'explorateur a été fermé pendant l'await réseau, on IGNORE cette réponse tardive —
     // sinon on écrirait la sélection de la connexion A dans le profil de la connexion B.
@@ -1116,6 +1123,14 @@ async function onMvRefresh() {
     populateCategoryFilter(courses);
     renderMoodleView();
     updateMvCount();
+    const dropped = before - mvSelected.size;
+    if (dropped > 0) {
+      // Ne pas retirer un cours coché en silence (revue Lot 7) : ex. activer le filtre opt-in sur
+      // un cours non consenti, ou un cours supprimé côté Moodle.
+      $('mvStatus').textContent =
+        dropped + ' cours retiré' + (dropped > 1 ? 's' : '') + ' de la sélection (non listé' +
+        (dropped > 1 ? 's' : '') + ' — supprimé côté Moodle ou non consenti).';
+    }
     if (mvSelected.size !== before) await persistMoodleSelection();
   } catch (err) {
     // N'affiche l'erreur que si l'explorateur est toujours sur cette connexion.
@@ -1249,7 +1264,12 @@ function courseRow(c) {
   }
   row.appendChild(cb);
   row.appendChild(span);
-  if (mvSyncedSet.has(Number(c.id))) {
+  if (mvUpdatableSet.has(Number(c.id))) {
+    const tag = document.createElement('span');
+    tag.className = 'course-update';
+    tag.textContent = '⟳ à mettre à jour';
+    row.appendChild(tag);
+  } else if (mvSyncedSet.has(Number(c.id))) {
     const tag = document.createElement('span');
     tag.className = 'course-sync';
     tag.textContent = '✓ synchronisé';
@@ -1311,7 +1331,7 @@ function setMvSyncing(on) {
   // Gèle les contrôles de l'explorateur ET tout ce qui peut changer de profil pendant la
   // synchro (sélecteurs + boutons du rail) : sinon la destination RAG pourrait bouger.
   for (const id of [
-    'mvSync', 'mvRefresh', 'mvSelectAll', 'mvClose', 'mvSearch', 'mvCategory',
+    'mvSync', 'mvRefresh', 'mvCheck', 'mvSelectAll', 'mvClose', 'mvSearch', 'mvCategory',
     'profileSelect', 'profileNew', 'profileEdit', 'profileDelete',
     'moodleProfileSelect', 'moodleNew', 'moodleEdit', 'moodleDelete',
   ]) {
@@ -1557,7 +1577,8 @@ async function onMoodleSync() {
   const okc = results.filter((r) => r.ok).length;
   const failed = results.filter((r) => !r.ok);
   let msg = failed.length
-    ? '⚠ ' + okc + '/' + results.length + ' cours — échec : ' + failed.map((r) => r.label).join(', ')
+    ? '⚠ ' + okc + '/' + results.length + ' cours — échec : ' +
+        failed.map((r) => r.label + (r.error ? ' (' + r.error + ')' : '')).join(' ; ')
     : '✓ ' + okc + ' cours synchronisé' + (okc > 1 ? 's' : '');
   const parts = [];
   if (tot.added) parts.push(tot.added + ' ajouté' + (tot.added > 1 ? 's' : ''));
@@ -1567,9 +1588,71 @@ async function onMoodleSync() {
   if (parts.length) msg += ' · ' + parts.join(' · ');
   if (tot.filesSkipped) msg += ' (' + tot.filesSkipped + ' ignoré' + (tot.filesSkipped > 1 ? 's' : '') + ')';
   $('mvStatus').textContent = msg;
-  renderMoodleView(); // rafraîchit les badges « synchronisé »
+  for (const id of ids) mvUpdatableSet.delete(Number(id)); // les cours synchronisés ne sont plus « à mettre à jour »
+  renderMoodleView(); // rafraîchit les badges
   // Rafraîchit la liste des collections RAG pour que les nouvelles apparaissent dans le rail.
   try { await loadCollections(); } catch { /* non bloquant */ }
+}
+
+// Lot 5.1 — un cours synchronisé a-t-il du NOUVEAU vs l'index (sans rien ré-ingérer) ? Compare le
+// hash du texte et, pour les fichiers PRIS EN CHARGE, (timemodified, taille) + les retraits.
+function courseHasUpdates(rec, doc) {
+  const hasText = doc.markdown && doc.markdown.trim();
+  if (hasText && hashString(doc.markdown) !== rec.textHash) return true;
+  if (!hasText && rec.textDocId != null) return true;
+  const cur = new Map();
+  (doc.files || []).forEach((f, i) => {
+    const ext = (String(f.filename).split('.').pop() || '').toLowerCase();
+    // Même clé que la synchro (fileurl, ou filename::index en repli) → pas de désalignement.
+    if (ext === 'pdf' || ext === 'docx' || MOODLE_TEXT_EXT.includes(ext)) cur.set(f.fileurl || (f.filename + '::' + i), f);
+  });
+  for (const [url, f] of cur) {
+    const st = rec.files[url];
+    if (!st) return true; // nouveau fichier pris en charge
+    if (st.timemodified !== f.timemodified || st.filesize !== f.filesize) return true; // modifié
+  }
+  // un fichier réellement ingéré a disparu côté Moodle → il y a du changement (retrait)
+  for (const url of Object.keys(rec.files)) {
+    if (rec.files[url].documentId != null && !cur.has(url)) return true;
+  }
+  return false;
+}
+
+// Lot 5.1 — « Vérifier les nouveautés » : pour chaque cours DÉJÀ synchronisé (peu nombreux), va
+// chercher son contenu Moodle et le compare à l'index. Marque « ⟳ à mettre à jour ». À la demande
+// (coûte un appel par cours suivi) — n'ingère RIEN.
+async function checkMoodleUpdates() {
+  const mp = activeMoodleProfile();
+  const ip = activeProfile();
+  if (!mp || !ip) return;
+  const dest = ip.id;
+  const smap = loadMoodleSyncMap();
+  const isReal = (rec) => rec && (rec.textDocId != null || Object.values(rec.files || {}).some((x) => x.documentId != null));
+  const synced = mvCourses.filter((c) => isReal(smap[moodleSyncKey(dest, mp.id, c.id)]));
+  if (!synced.length) { $('mvStatus').textContent = 'Aucun cours synchronisé à vérifier.'; return; }
+  setMvSyncing(true); // réutilise le verrou/gel des contrôles (aucune écriture, juste des lectures)
+  mvUpdatableSet = new Set();
+  const unreadable = [];
+  try {
+    for (let i = 0; i < synced.length; i++) {
+      const c = synced[i];
+      mvProgress(i, synced.length, 'vérification : ' + c.fullname);
+      try {
+        const doc = await moodleApi.courseMarkdown(mp.id, c.id);
+        if (courseHasUpdates(smap[moodleSyncKey(dest, mp.id, c.id)], doc)) mvUpdatableSet.add(Number(c.id));
+      } catch (e) {
+        unreadable.push(c.fullname);
+      }
+    }
+    mvProgress(synced.length, synced.length, '');
+  } finally {
+    setMvSyncing(false);
+  }
+  renderMoodleView();
+  const n = mvUpdatableSet.size;
+  let msg = n ? '⟳ ' + n + ' cours à mettre à jour.' : '✓ Tout est à jour.';
+  if (unreadable.length) msg += ' (' + unreadable.length + ' non lisible' + (unreadable.length > 1 ? 's' : '') + ')';
+  $('mvStatus').textContent = msg;
 }
 
 /* ---------- Construction de la requête ---------- */
@@ -2393,6 +2476,12 @@ function wireEvents() {
   $('moodleOpenExplorer').addEventListener('click', openMoodleExplorer);
   $('mvClose').addEventListener('click', closeMoodleView);
   $('mvRefresh').addEventListener('click', onMvRefresh);
+  $('mvCheck').addEventListener('click', checkMoodleUpdates);
+  $('moodleEnrolledOnly').addEventListener('change', (e) => {
+    state.moodleEnrolledOnly = e.target.checked; // opt-in : recharge la liste filtrée/complète
+    saveSettings();
+    onMvRefresh();
+  });
   $('mvSearch').addEventListener('input', renderMoodleView);
   $('mvCategory').addEventListener('change', renderMoodleView);
   $('mvSelectAll').addEventListener('click', mvSelectAllFiltered);

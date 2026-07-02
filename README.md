@@ -45,6 +45,13 @@ En bref :
   participants). Le test de connexion s'appuie sur une **liste blanche de 8 fonctions de contenu**
   plus `downloadfiles`, via un **client HTTP dédié sans redirections** (le jeton voyageant dans le
   corps du POST, suivre une 3xx pourrait l'exfiltrer).
+- **Indexation opt-in par consentement de l'enseignant** : aucun cours n'est indexé sans une action
+  explicite de l'enseignant — le compte technique de lecture seule (`doceria-rag-readonly`) n'est
+  **inscrit** que dans les cours où l'enseignant a accepté, et Doceria n'indexe **que** ces cours ;
+  l'inscription du compte vaut consentement. Un mode « tout indexer » reste possible sur décision de
+  l'établissement (accès en lecture au niveau catégorie/système). Le **filtre applicatif** qui n'affiche
+  que les cours consentis (via `core_enrol_get_users_courses` appelée pour le seul compte technique —
+  donc aucune donnée d'étudiant) est le **prochain lot, en cours** ; procédure : `docs/MOODLE-TEST-PLAN.md`.
 - **Profils de connexion Moodle** (nom + URL + jeton) **indépendants** des profils ILaaS,
   plusieurs connexions possibles ; le **jeton va au trousseau** (rôle « moodle »).
 - **Explorateur de cours** central : recherche, filtre par catégorie, cases à cocher, **sélection

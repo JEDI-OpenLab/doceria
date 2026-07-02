@@ -16,6 +16,7 @@ export const state = {
   // Connexions Moodle (miroir du backend — jeton au trousseau, jamais ici)
   moodleProfiles: [], // [{ id, name, moodleBaseUrl, courseIds, hasMoodleToken }]
   activeMoodleId: null,
+  moodleEnrolledOnly: true, // opt-in : n'afficher que les cours où le compte est inscrit (consentement)
   // Bibliothèque RAG (collections gérées ILaaS du profil actif ; brut du backend)
   collections: [],
   activeCollectionId: null,
@@ -74,6 +75,7 @@ export function loadSettings() {
       if (typeof d.ragRerank === 'boolean') state.ragRerank = d.ragRerank;
       if (typeof d.ragRefusal === 'string' && d.ragRefusal.trim()) state.ragRefusal = d.ragRefusal;
       if (typeof d.ragAutoSync === 'boolean') state.ragAutoSync = d.ragAutoSync;
+      if (typeof d.moodleEnrolledOnly === 'boolean') state.moodleEnrolledOnly = d.moodleEnrolledOnly;
       if (typeof d.memoryTurns === 'number') state.memoryTurns = d.memoryTurns;
     }
   } catch { /* stockage illisible : on ignore */ }
@@ -96,6 +98,7 @@ export function saveSettings() {
         ragRerank: state.ragRerank,
         ragRefusal: state.ragRefusal,
         ragAutoSync: state.ragAutoSync,
+        moodleEnrolledOnly: state.moodleEnrolledOnly,
         memoryTurns: state.memoryTurns,
       })
     );

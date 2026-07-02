@@ -260,6 +260,73 @@ Dans **chaque cours à indexer** → *Participants* → **Inscrire des utilisate
 
 ---
 
+## Consentement / opt-in (inscription du compte) — 🔜 filtre applicatif EN COURS
+
+> **Principe : opt-in par consentement.** Doceria retient l'**opt-in par défaut**. Contrairement au
+> modèle « l'IA est partout, à vous de la désactiver » (opt-out), **aucun cours n'est indexé sans une
+> action explicite de l'enseignant**. Le mécanisme est simple : le compte technique de lecture seule
+> `doceria-rag-readonly` n'est **inscrit que dans les cours dont l'enseignant a donné son accord** ;
+> Doceria n'affiche et n'indexe **que** ces cours. **L'inscription du compte = le consentement.**
+> Valeurs : transparence, choix et liberté de l'enseignant. Un rôle dédié rend la présence du compte
+> **visible** pour l'enseignant dans la liste des participants.
+>
+> **Statut honnête.** Le principe et la configuration Moodle sont **posés** (étapes ci-dessous). Le
+> **filtre applicatif** — Doceria n'affiche que les cours consentis, via
+> `core_enrol_get_users_courses` appelée **uniquement pour le compte technique** (donc **aucune donnée
+> d'étudiant**) — est le **prochain lot, EN COURS**. À ne pas présenter comme déjà livré.
+
+### C.1 — Créer un rôle dédié « Doceria — indexation IA (lecture seule) »
+Administration du site → Utilisateurs → Permissions → **Définir les rôles** → *Gérer les rôles* →
+**Ajouter un nouveau rôle** :
+- Page 1 (« Utiliser un rôle ou un archétype ») : **Aucun** → *Continuer*.
+- **Nom court** : `doceriaindex` · **Nom personnalisé** : `Doceria — indexation IA (lecture seule)`
+- **Types de contextes où ce rôle peut être attribué** : cocher **« Cours »**.
+- Capacités : en **lecture** uniquement (voir et récupérer le contenu du cours, sans aucune édition).
+- → **Créer ce rôle**.
+
+> **Pourquoi un rôle dédié plutôt que « Étudiant » ?** Il rend la présence du compte **transparente**
+> pour l'enseignant : dans *Participants*, la ligne `doceria-rag-readonly` porte le libellé explicite
+> « Doceria — indexation IA (lecture seule) », qui dit clairement ce que fait le compte. (La Phase 0.10
+> a validé l'inscription avec le rôle *Étudiant* ; le rôle dédié est l'évolution recommandée.)
+
+### C.2 — L'enseignant (ou l'admin) inscrit le compte, cours par cours = consentement
+Dans **chaque cours à indexer** → *Participants* → **Inscrire des utilisateurs** →
+`doceria-rag-readonly` → rôle **« Doceria — indexation IA (lecture seule) »** → *Inscrire*.
+**Cette inscription vaut consentement** : elle est l'action explicite qui autorise Doceria à indexer
+ce cours, et rien d'autre. La retirer (désinscrire le compte) révoque le consentement.
+
+### C.3 — Ajouter `core_enrol_get_users_courses` au service (→ 9 fonctions)
+Administration du site → Serveur → Web services → **Services externes** → service
+**`Doceria RAG (lecture seule)`** → section **Fonctions** → **Ajouter des fonctions** →
+`core_enrol_get_users_courses`. Le service passe ainsi de **8 à 9 fonctions**.
+
+| Fonction | Rôle |
+|---|---|
+| `core_enrol_get_users_courses` | Lister les cours où **le compte technique** est inscrit → base du **filtre opt-in** |
+
+> **Confidentialité.** Doceria n'appelle cette fonction **que pour l'`userid` du compte technique**
+> `doceria-rag-readonly` (récupéré via `get_site_info`) — **jamais** pour un étudiant. Elle sert
+> uniquement à savoir « sur quels cours ce compte est-il inscrit ? », donc **aucune donnée
+> personnelle d'étudiant** n'est lue. C'est le pivot du filtre : Doceria n'affichera et n'indexera
+> que les cours retournés par cet appel.
+
+### C.4 — MODE « TOUT INDEXER » (alternative — décision de gouvernance)
+Si l'établissement décide, **par choix de la Direction**, d'indexer **tous** les cours par défaut
+(et non plus au consentement cours par cours), deux voies — puis **désactiver le filtre opt-in dans
+Doceria** :
+1. **Accès au niveau catégorie/système** : attribuer le rôle « Doceria — indexation IA (lecture
+   seule) » (avec la capacité `moodle/course:view`) au **niveau catégorie ou système** → le compte
+   voit les cours **sans inscription cours par cours** ;
+2. **ou inscription massive** : inscrire le compte `doceria-rag-readonly` en masse sur les cours
+   visés ;
+3. puis **désactiver le filtre opt-in dans Doceria** (le connecteur cesse de restreindre l'affichage
+   aux seuls cours consentis).
+
+> C'est un **choix de gouvernance**, assumé par l'établissement — **pas** un réglage technique par
+> défaut. Le comportement par défaut de Doceria reste l'**opt-in par consentement**.
+
+---
+
 ## Phase 1 — Validation manuelle via curl (aucun code Doceria) — ✅ faite (2026-07-01)
 
 Placeholders exportés pour éviter les erreurs (commandes conservées comme référence) :

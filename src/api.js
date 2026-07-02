@@ -45,8 +45,9 @@ export const moodleApi = {
   // baseUrl (optionnel) prime sur l'URL persistée → on teste l'URL affichée à l'écran.
   test: (profileId, baseUrl) => invoke('test_moodle_connection', { profileId, baseUrl }),
   testEphemeral: (baseUrl, token) => invoke('test_moodle_connection_ephemeral', { baseUrl, token }),
-  // Liste des cours accessibles (hors cours « site ») pour cocher ceux à indexer.
-  listCourses: (profileId) => invoke('list_moodle_courses', { profileId }),
+  // Liste des cours (hors cours « site »). enrolledOnly = opt-in : seulement les cours où le compte
+  // est inscrit (consentement de l'enseignant).
+  listCourses: (profileId, enrolledOnly) => invoke('list_moodle_courses', { profileId, enrolledOnly: !!enrolledOnly }),
   // Texte d'un cours (résumés de section + descriptions) + liste des fichiers joints.
   courseMarkdown: (profileId, courseId) => invoke('moodle_course_markdown', { profileId, courseId }),
   // Octets d'un fichier de cours (pluginfile) — extraction locale ensuite. Jeton au trousseau.

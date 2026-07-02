@@ -1,10 +1,11 @@
 // Client web services Moodle (REST) — EN LECTURE SEULE.
 //
-// Liste blanche stricte de fonctions de CONTENU uniquement : aucune donnée
-// personnelle (ni notes, ni inscriptions, ni participants). Le jeton est résolu
-// au trousseau côté Rust (jamais exposé à la webview). Moodle renvoie souvent ses
-// erreurs applicatives en HTTP 200 avec {exception, errorcode, message} : on parse
-// TOUJOURS le corps.
+// Liste blanche stricte de fonctions de CONTENU uniquement (WHITELIST) : aucune donnée
+// personnelle (ni notes, ni participants). Le mode opt-in (Lot 7) ajoute au service, EN OPTION,
+// core_enrol_get_users_courses — appelée UNIQUEMENT pour le COMPTE TECHNIQUE lui-même (ses propres
+// cours = son consentement), jamais pour un étudiant → toujours aucune donnée d'étudiant. Le jeton
+// est résolu au trousseau côté Rust (jamais exposé à la webview). Moodle renvoie souvent ses
+// erreurs applicatives en HTTP 200 avec {exception, errorcode, message} : on parse TOUJOURS le corps.
 
 use futures_util::StreamExt;
 use serde::Serialize;
@@ -222,15 +223,42 @@ fn parse_courses(v: &Value) -> Vec<CourseBrief> {
         .unwrap_or_default()
 }
 
-/// Liste les cours accessibles à la connexion (hors cours « site »). Lecture seule.
+/// Liste les cours de la connexion (hors cours « site »). Lecture seule. Si `enrolled_only`
+/// (opt-in, Lot 7), ne garde que les cours où le COMPTE TECHNIQUE est inscrit = le consentement
+/// de l'enseignant (`core_enrol_get_users_courses`, appelée UNIQUEMENT pour ce compte).
 #[tauri::command]
 pub async fn list_moodle_courses(
     settings: State<'_, SettingsState>,
     profile_id: String,
+    enrolled_only: bool,
 ) -> Result<Vec<CourseBrief>, String> {
     let (base, token) = settings::resolve_moodle(&settings, &profile_id)?;
     let v = ws_call(&base, &token, "core_course_get_courses_by_field", &[]).await?;
-    Ok(parse_courses(&v))
+    let mut courses = parse_courses(&v);
+    if enrolled_only {
+        // userid du compte porteur du jeton, puis ses cours inscrits (= cours consentis).
+        let info = ws_call(&base, &token, "core_webservice_get_site_info", &[]).await?;
+        let userid = info
+            .get("userid")
+            .and_then(|u| u.as_i64())
+            .ok_or_else(|| "Identifiant du compte Moodle introuvable.".to_string())?;
+        let enrolled = ws_call(
+            &base,
+            &token,
+            "core_enrol_get_users_courses",
+            &[("userid".into(), userid.to_string())],
+        )
+        .await
+        .map_err(|e| {
+            format!("Filtre « cours inscrits » indisponible : {e} Ajoute la fonction core_enrol_get_users_courses au service Moodle (ou décoche l'option).")
+        })?;
+        let ids: std::collections::HashSet<i64> = enrolled
+            .as_array()
+            .map(|a| a.iter().filter_map(|c| c.get("id").and_then(|x| x.as_i64())).collect())
+            .unwrap_or_default();
+        courses.retain(|c| ids.contains(&c.id));
+    }
+    Ok(courses)
 }
 
 /* ───────────── Conversion HTML → Markdown (maison, sans dépendance) ─────────────

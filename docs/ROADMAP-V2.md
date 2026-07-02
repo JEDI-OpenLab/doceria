@@ -99,7 +99,7 @@ l'utilisateur.)*
    régénérer/modifier/copier + menu Aide + message de refus). **Livré** en `20260626.8.0`.
 2. ✅ **Chantier Moodle** — le différenciateur, voir §4. **Livré (Lots 0-3 + 2.5) sur la branche
    `moodle`, pas encore publié en `.dmg`** (destiné à la prochaine version). Reste les Lots 4/5/6
-   (§4.5). *(Choix acté : Moodle **avant** Linux.)*
+   (§4.6). *(Choix acté : Moodle **avant** Linux.)*
 3. **Build Linux** — voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
@@ -218,7 +218,34 @@ d'erreur explicites** (capability manquante, jeton invalide, WS désactivés…)
 *(Le **mode Requête + citations** de Doceria couvrent déjà l'exigence « RAG strict » de Learnix ;
 le correctif §4.3 le renforce.)*
 
-### 4.5 Suite du chantier Moodle (à venir)
+### 4.5 Décision de gouvernance — Indexation Moodle : opt-in par consentement
+
+**Principe.** Doceria adopte l'**opt-in par défaut**. À rebours du modèle « l'IA est partout, à
+vous de la désactiver » (**opt-out**), **aucun cours Moodle n'est indexé sans une action explicite
+de l'enseignant·e**. Valeurs portées : **transparence**, **choix** et **liberté** de
+l'enseignant·e sur ses propres contenus.
+
+**Mécanisme — l'inscription du compte vaut consentement.** Le compte technique de **lecture seule**
+(`doceria-rag-readonly`) n'est **inscrit que dans les cours** dont l'enseignant·e a donné son
+accord ; Doceria n'affiche et n'indexe **que ces cours**. Un rôle dédié
+**« Doceria — indexation IA (lecture seule) »** rend la présence du compte **transparente** pour
+l'enseignant·e. Techniquement, le filtre s'appuiera sur `core_enrol_get_users_courses` appelée
+**uniquement pour le compte technique** — donc **aucune donnée d'étudiant·e** n'est lue.
+
+**Deux modes de gouvernance :**
+- **Opt-in par défaut** (recommandé) — inscription cours par cours = consentement explicite ;
+  Doceria filtre pour n'exposer que les cours consentis.
+- **« Tout indexer »** (alternative, **décision de la Direction**) — si l'établissement choisit
+  d'indexer tous les cours par défaut : soit donner au compte l'accès en lecture au niveau
+  catégorie/système (capacité `moodle/course:view`), soit inscrire le compte massivement, **puis**
+  désactiver le filtre opt-in dans Doceria. C'est un **choix de gouvernance**, pas un réglage
+  technique par défaut.
+
+> **Statut honnête.** Le **principe** et la **configuration Moodle** sont posés ; le **filtre
+> applicatif** (Doceria n'affiche que les cours consentis) est le **prochain lot, en cours** — ne
+> pas le présenter comme déjà livré. Procédure reproductible : `docs/MOODLE-TEST-PLAN.md`.
+
+### 4.6 Suite du chantier Moodle (à venir)
 - **Lot 4 — Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
   `Content-Type` pour ne pas créer de faux document) → `uploadFileSmart` / `rag_upload_document`.
 - **Lot 5 — Synchro incrémentale + dédup** : index de diff (delete + re-upload), suppressions,
