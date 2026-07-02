@@ -117,6 +117,8 @@ code{background:var(--gold-soft);color:var(--petrol-ink);padding:.1rem .4rem;bor
 .site-footer a:hover{color:#fff}
 .footer-links a{margin-left:18px;font-weight:500}
 .footer-fine{font-family:var(--serif);font-style:italic;color:#8FB3AD;margin:22px 0 0;font-size:.95rem;border-top:1px solid #244540;padding-top:18px}
+.footer-ver{color:#6E8F89;margin:8px 0 0;font-size:.8rem;letter-spacing:.02em}
+.footer-ver span{font-variant-numeric:tabular-nums;font-weight:600;color:#8FB3AD}
 
 @media (max-width:991px){
   section{padding:62px 0}

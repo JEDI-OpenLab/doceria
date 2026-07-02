@@ -47,8 +47,10 @@ export const moodleApi = {
   testEphemeral: (baseUrl, token) => invoke('test_moodle_connection_ephemeral', { baseUrl, token }),
   // Liste des cours accessibles (hors cours « site ») pour cocher ceux à indexer.
   listCourses: (profileId) => invoke('list_moodle_courses', { profileId }),
-  // Texte d'un cours (résumés de section + descriptions) assemblé en Markdown (pas les fichiers).
+  // Texte d'un cours (résumés de section + descriptions) + liste des fichiers joints.
   courseMarkdown: (profileId, courseId) => invoke('moodle_course_markdown', { profileId, courseId }),
+  // Octets d'un fichier de cours (pluginfile) — extraction locale ensuite. Jeton au trousseau.
+  downloadFile: (profileId, fileUrl) => invoke('moodle_download_file', { profileId, fileUrl }),
 };
 
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */

@@ -48,6 +48,7 @@ pub fn run() {
       moodle::test_moodle_connection_ephemeral,
       moodle::list_moodle_courses,
       moodle::moodle_course_markdown,
+      moodle::moodle_download_file,
       rag::rag_me,
       rag::rag_list_collections,
       rag::rag_create_collection,

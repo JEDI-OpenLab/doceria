@@ -326,4 +326,27 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     - Vérification ciblée supplémentaire du blocker inter-profils par un agent adversarial dédié.
   - *Fait quand :* on coche des cours, on clique **Synchroniser**, la barre progresse cours par cours,
     et les collections « Moodle · … » apparaissent dans la Bibliothèque, interrogeables (avec citations).
-- *(à suivre : Lot 4 — fichiers/PDF des cours via `pluginfile.php?token=` → `rag_upload_document`.)*
+- **2026-07-02 — Lot 4 (Fichiers/PDF des cours) ✅.**
+  - **Rust (`moodle.rs`)** : `CourseFile { filename, fileurl, mimetype, filesize }` ajouté à
+    `CourseMarkdown.files`. Collecte des fichiers dans la boucle des modules **AVANT** le `continue`
+    sur description vide → fichiers récupérés pour **toutes** les sections, même sans texte (ex. une
+    section « Généralités » qui ne contient qu'un PDF). Commande **`moodle_download_file(profileId,
+    fileUrl)`** → octets (`tauri::ipc::Response`, comme `read_file`) : jeton au trousseau, **contrôle
+    même-origine** `origin_of(fileUrl) == origin_of(base)` (**anti-exfiltration** : le jeton, ajouté en
+    query, ne part que vers l'hôte Moodle configuré), **client sans redirection**, 3xx/non-2xx refusés,
+    **plafond dur 40 Mo**. `cargo check` + `cargo test` ✅.
+  - **Front** : `moodleApi.downloadFile` (api.js) ; **`ingestMoodleFile`** (main.js) — PDF/DOCX
+    **extraits en local** (`readDocument` pdf.js/mammoth → `rag_upload_text`, contourne le 502 d'ILaaS) ;
+    formats texte (txt/md/csv/json/html…) décodés UTF-8 ; autres formats **ignorés** ; PDF scanné →
+    skip « pas d'OCR ». `onMoodleSync` crée la collection s'il y a **texte OU fichiers**, ingère le
+    texte puis chaque fichier avec **progression « fichier k/M »**, poursuit malgré un échec par
+    fichier, **bilan enrichi** (« N cours · M fichiers importés (K ignorés) »). Destination RAG figée
+    (`dest`) + `mp.id` capturé (acquis Lot 3). Build ✅.
+  - **Réutilisation maximale** : aucun fichier temporaire (octets en IPC comme `read_file`), pipeline
+    d'extraction locale existant, `rag_upload_text`. Zéro dépendance nouvelle.
+  - **Revue** : revue adversariale (sécurité download / ingestion / robustesse) lancée avant le test.
+  - **Prérequis test** : Moodle de test **rallumé** + un profil ILaaS avec RAG. Sur le cours de test,
+    « Synchroniser » ajoutera le texte **+ les 2 PDF** à « Moodle · Les fondateurs… ».
+  - *Fait quand :* après « Synchroniser », les PDF d'un cours sont interrogeables (texte extrait, cité) ;
+    un PDF scanné ou un format non géré est ignoré proprement avec mention au bilan.
+- *(à suivre : Lot 5 — synchro incrémentale + déduplication ; Lot 6 — interrupteur « inclure les cours Moodle ».)*

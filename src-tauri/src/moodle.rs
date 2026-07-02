@@ -575,7 +575,17 @@ fn decode_one(ent: &str) -> Option<String> {
     Some(mapped.to_string())
 }
 
-/// Markdown assemblé pour un cours (texte seul — pas les fichiers, cf. Lot 4).
+/// Fichier joint à un cours (métadonnées ; le contenu se télécharge via `moodle_download_file`).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CourseFile {
+    pub filename: String,
+    pub fileurl: String,
+    pub mimetype: String,
+    pub filesize: i64,
+}
+
+/// Markdown assemblé pour un cours + la liste de ses fichiers joints (Lot 4).
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CourseMarkdown {
@@ -584,6 +594,7 @@ pub struct CourseMarkdown {
     pub markdown: String,
     pub sections: usize, // nombre de sections retenues (avec du texte)
     pub chars: usize,
+    pub files: Vec<CourseFile>, // fichiers joints (PDF…) — ingérés au Lot 4
 }
 
 /// Récupère le texte d'un cours (résumé du cours + titre/résumé de chaque section +
@@ -633,6 +644,7 @@ pub async fn moodle_course_markdown(
         md.push_str("\n\n");
     }
     let mut sections = 0usize;
+    let mut files: Vec<CourseFile> = Vec::new();
     if let Some(list) = contents.as_array() {
         for s in list {
             let name = s.get("name").and_then(|x| x.as_str()).unwrap_or("").trim().to_string();
@@ -641,6 +653,23 @@ pub async fn moodle_course_markdown(
             let mut mods_md = String::new();
             if let Some(mods) = s.get("modules").and_then(|m| m.as_array()) {
                 for m in mods {
+                    // Fichiers joints : collectés pour TOUTES les sections, même sans texte
+                    // (ex. une section « Généralités » qui ne contient qu'un PDF).
+                    if let Some(conts) = m.get("contents").and_then(|c| c.as_array()) {
+                        for c in conts {
+                            if c.get("type").and_then(|t| t.as_str()) != Some("file") {
+                                continue;
+                            }
+                            if let Some(url) = c.get("fileurl").and_then(|u| u.as_str()) {
+                                files.push(CourseFile {
+                                    filename: c.get("filename").and_then(|x| x.as_str()).unwrap_or("fichier").to_string(),
+                                    fileurl: url.to_string(),
+                                    mimetype: c.get("mimetype").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                                    filesize: c.get("filesize").and_then(|x| x.as_i64()).unwrap_or(0),
+                                });
+                            }
+                        }
+                    }
                     let desc =
                         html_to_markdown(m.get("description").and_then(|x| x.as_str()).unwrap_or(""));
                     if desc.is_empty() {
@@ -670,7 +699,54 @@ pub async fn moodle_course_markdown(
 
     let markdown = md.trim().to_string();
     let chars = markdown.chars().count();
-    Ok(CourseMarkdown { course_id, fullname, markdown, sections, chars })
+    Ok(CourseMarkdown { course_id, fullname, markdown, sections, chars, files })
+}
+
+/// Origine (scheme://authority) d'une URL — pour comparer deux URLs sans dépendance.
+fn origin_of(url: &str) -> Option<String> {
+    let scheme_end = url.find("://")?;
+    let after = &url[scheme_end + 3..];
+    let auth_len = after.find('/').unwrap_or(after.len());
+    Some(url[..scheme_end + 3 + auth_len].to_string())
+}
+
+/// Télécharge un fichier d'un cours (pluginfile) et renvoie ses OCTETS au front (extraction
+/// locale ensuite, cf. rag_upload_text). LECTURE SEULE. Le jeton (résolu au trousseau) est
+/// ajouté en query — donc on VÉRIFIE d'abord que l'URL est bien sur l'hôte Moodle configuré
+/// (anti-exfiltration), et on refuse toute redirection (cf. revue sécurité).
+#[tauri::command]
+pub async fn moodle_download_file(
+    settings: State<'_, SettingsState>,
+    profile_id: String,
+    file_url: String,
+) -> Result<tauri::ipc::Response, String> {
+    let (base, token) = settings::resolve_moodle(&settings, &profile_id)?;
+    let base_origin = origin_of(&base).ok_or_else(|| "URL Moodle invalide.".to_string())?;
+    let file_origin =
+        origin_of(&file_url).ok_or_else(|| "URL de fichier invalide.".to_string())?;
+    if base_origin != file_origin {
+        return Err("Fichier hors du domaine Moodle configuré — téléchargement refusé.".to_string());
+    }
+    let sep = if file_url.contains('?') { '&' } else { '?' };
+    let url = format!("{file_url}{sep}token={token}");
+
+    let res = moodle_client()?.get(url).send().await.map_err(send_error)?;
+    let status = res.status();
+    if status.is_redirection() {
+        return Err(format!(
+            "Redirection inattendue (HTTP {}) au téléchargement — vérifie l'URL/le jeton.",
+            status.as_u16()
+        ));
+    }
+    if !status.is_success() {
+        return Err(http_error(status.as_u16()));
+    }
+    let bytes = res.bytes().await.map_err(send_error)?;
+    const MAX: usize = 40 * 1024 * 1024; // garde-fou dur (40 Mo)
+    if bytes.len() > MAX {
+        return Err("Fichier trop volumineux (> 40 Mo).".to_string());
+    }
+    Ok(tauri::ipc::Response::new(bytes.to_vec()))
 }
 
 #[cfg(test)]

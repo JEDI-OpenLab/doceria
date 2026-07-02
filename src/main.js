@@ -1304,9 +1304,42 @@ function mvProgress(done, total, label) {
   }
 }
 
-// Synchronisation (Lot 3) : pour chaque cours coché, récupère son texte (Markdown) et le
-// pousse dans une collection RAG « Moodle · <cours> » du PROFIL ILAAS ACTIF. Barre de
-// progression par cours ; poursuit malgré un échec ponctuel et fait un bilan.
+// Formats texte importables directement (décodés en UTF-8). PDF/DOCX passent par l'extraction
+// locale (readDocument) ; les autres formats sont ignorés (pas de parser côté app).
+const MOODLE_TEXT_EXT = ['txt', 'md', 'markdown', 'csv', 'json', 'html', 'htm', 'tex', 'rtf'];
+
+// Ingest un fichier de cours Moodle dans la collection (Lot 4) : télécharge les octets
+// (jeton au trousseau, côté Rust), extrait le texte en LOCAL pour PDF/DOCX (contourne le 502
+// d'ILaaS), décode les formats texte ; ignore le reste. Renvoie { ok:true } ou { skipped:'…' }.
+async function ingestMoodleFile(collectionId, file, mpId, dest) {
+  const name = file.filename || 'fichier';
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (file.filesize && file.filesize > 40 * 1024 * 1024) return { skipped: name + ' (trop volumineux)' };
+  const isPdfDocx = ext === 'pdf' || ext === 'docx';
+  const isText = MOODLE_TEXT_EXT.includes(ext);
+  if (!isPdfDocx && !isText) return { skipped: name + ' (format ' + (ext || '?') + ' non pris en charge)' };
+  const raw = await moodleApi.downloadFile(mpId, file.fileurl); // octets (ArrayBuffer/Uint8Array)
+  const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
+  if (isPdfDocx) {
+    let text;
+    try {
+      text = (await readDocument(new File([part], name))).text;
+    } catch {
+      return { skipped: name + (ext === 'pdf' ? ' (PDF scanné, pas d’OCR)' : ' (illisible)') };
+    }
+    if (!text || !text.trim()) return { skipped: name + ' (aucun texte extractible)' };
+    await ragApi.uploadText(collectionId, name.replace(/\.(pdf|docx)$/i, '') + '.md', text, dest);
+  } else {
+    const text = new TextDecoder('utf-8').decode(part);
+    if (!text.trim()) return { skipped: name + ' (vide)' };
+    await ragApi.uploadText(collectionId, name, text, dest);
+  }
+  return { ok: true };
+}
+
+// Synchronisation (Lots 3-4) : pour chaque cours coché, ingère son TEXTE (Markdown) puis ses
+// FICHIERS joints dans une collection RAG « Moodle · <cours> » du PROFIL ILAAS ACTIF. Barre de
+// progression par cours et par fichier ; poursuit malgré un échec ponctuel et fait un bilan.
 async function onMoodleSync() {
   if (mvSelected.size === 0) return;
   const mp = activeMoodleProfile();
@@ -1338,10 +1371,13 @@ async function onMoodleSync() {
       mvProgress(i, ids.length, label);
       try {
         const doc = await moodleApi.courseMarkdown(mp.id, courseId);
-        if (!doc.markdown || !doc.markdown.trim()) {
-          results.push({ ok: false, label, error: 'aucun texte (fichiers seuls → Lot 4)' });
+        const hasText = doc.markdown && doc.markdown.trim();
+        const files = doc.files || [];
+        if (!hasText && !files.length) {
+          results.push({ ok: false, label, error: 'aucun contenu' });
           continue;
         }
+        // Collection cible (créée s'il y a du texte OU des fichiers).
         const collName = 'Moodle · ' + doc.fullname;
         let coll = existing.find((c) => c.name === collName);
         if (!coll) {
@@ -1351,8 +1387,22 @@ async function onMoodleSync() {
           coll = { id: cid, name: collName, visibility: 'private' };
           existing.push(coll);
         }
-        await ragApi.uploadText(coll.id, doc.fullname + '.md', doc.markdown, dest);
-        results.push({ ok: true, label });
+        // Texte du cours.
+        if (hasText) await ragApi.uploadText(coll.id, doc.fullname + '.md', doc.markdown, dest);
+        // Fichiers joints (PDF…) : téléchargement + extraction locale + upload (Lot 4).
+        let filesOk = 0;
+        const skipped = [];
+        for (let k = 0; k < files.length; k++) {
+          mvProgress(i, ids.length, label + ' — fichier ' + (k + 1) + '/' + files.length);
+          try {
+            const r = await ingestMoodleFile(coll.id, files[k], mp.id, dest);
+            if (r.ok) filesOk++;
+            else if (r.skipped) skipped.push(r.skipped);
+          } catch (e) {
+            skipped.push((files[k].filename || 'fichier') + ' (' + describeError(e) + ')');
+          }
+        }
+        results.push({ ok: true, label, filesOk, filesTotal: files.length, skipped });
       } catch (err) {
         results.push({ ok: false, label, error: describeError(err) });
       }
@@ -1363,9 +1413,16 @@ async function onMoodleSync() {
   }
   const ok = results.filter((r) => r.ok).length;
   const failed = results.filter((r) => !r.ok);
-  $('mvStatus').textContent = failed.length
-    ? '⚠ ' + ok + '/' + results.length + ' synchronisés — échec : ' + failed.map((r) => r.label).join(', ')
-    : '✓ ' + ok + ' cours synchronisé' + (ok > 1 ? 's' : '') + ' → bibliothèque (collections « Moodle · … »)';
+  const filesImported = results.reduce((n, r) => n + (r.filesOk || 0), 0);
+  const filesSkipped = results.reduce((n, r) => n + ((r.skipped && r.skipped.length) || 0), 0);
+  let msg = failed.length
+    ? '⚠ ' + ok + '/' + results.length + ' cours — échec : ' + failed.map((r) => r.label).join(', ')
+    : '✓ ' + ok + ' cours synchronisé' + (ok > 1 ? 's' : '');
+  if (filesImported || filesSkipped) {
+    msg += ' · ' + filesImported + ' fichier' + (filesImported > 1 ? 's' : '') + ' importé' + (filesImported > 1 ? 's' : '');
+    if (filesSkipped) msg += ' (' + filesSkipped + ' ignoré' + (filesSkipped > 1 ? 's' : '') + ')';
+  }
+  $('mvStatus').textContent = msg;
   // Rafraîchit la liste des collections RAG pour que les nouvelles apparaissent dans le rail.
   try { await loadCollections(); } catch { /* non bloquant */ }
 }
