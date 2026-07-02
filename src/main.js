@@ -984,6 +984,35 @@ async function onDeleteMoodleProfile() {
   }
 }
 
+// Test de connexion Moodle : appelle core_webservice_get_site_info et affiche un
+// diagnostic (site, compte, version, téléchargement fichiers, fonctions manquantes).
+async function onTestMoodle() {
+  const hint = $('moTokenHint');
+  const url = $('moUrl').value.trim();
+  const token = $('moToken').value.trim();
+  if (!url) { hint.textContent = '✗ URL manquante.'; return; }
+  hint.textContent = 'test en cours…';
+  try {
+    let info;
+    if (token) {
+      info = await moodleApi.testEphemeral(url, token); // rien n'est écrit
+    } else if (moodleEditingId) {
+      info = await moodleApi.test(moodleEditingId); // jeton au trousseau
+    } else {
+      hint.textContent = '✗ Colle le jeton pour tester.';
+      return;
+    }
+    const dl = info.downloadFiles ? 'téléchargement fichiers OK' : '⚠ télécharg. fichiers désactivé';
+    const fx = (info.missingFunctions && info.missingFunctions.length)
+      ? '⚠ fonctions manquantes : ' + info.missingFunctions.join(', ')
+      : '8 fonctions OK';
+    hint.textContent = '✓ ' + (info.sitename || 'Moodle') + ' — ' + info.username
+      + ' · Moodle ' + info.release + ' · ' + dl + ' · ' + fx;
+  } catch (err) {
+    hint.textContent = '✗ ' + describeError(err);
+  }
+}
+
 /* ---------- Construction de la requête ---------- */
 function readGenerationFromInputs() {
   state.model = $('modelSelect').value || state.model;
@@ -1786,6 +1815,7 @@ function wireEvents() {
   $('moodleDelete').addEventListener('click', onDeleteMoodleProfile);
   $('moSave').addEventListener('click', onSaveMoodleProfile);
   $('moCancel').addEventListener('click', closeMoodleEditor);
+  $('moTest').addEventListener('click', onTestMoodle);
   // Coller la clé LLM puis quitter le champ récupère automatiquement les modèles.
   $('pfLlmKey').addEventListener('change', () => {
     if ($('pfLlmKey').value.trim()) onTestProfile('llm');

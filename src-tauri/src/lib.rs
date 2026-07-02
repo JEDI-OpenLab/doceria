@@ -4,6 +4,7 @@
 
 mod ilaas;
 mod keychain;
+mod moodle;
 mod rag;
 mod settings;
 mod update;
@@ -43,6 +44,8 @@ pub fn run() {
       settings::upsert_moodle_profile,
       settings::delete_moodle_profile,
       settings::set_active_moodle_profile,
+      moodle::test_moodle_connection,
+      moodle::test_moodle_connection_ephemeral,
       rag::rag_me,
       rag::rag_list_collections,
       rag::rag_create_collection,

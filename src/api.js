@@ -41,6 +41,9 @@ export const moodleApi = {
   setActive: (profileId) => invoke('set_active_moodle_profile', { profileId }),
   // Write-only : jeton au trousseau sous le rôle « moodle » (efface si secret vide).
   setKey: (profileId, secret) => invoke('set_profile_key', { profileId, role: 'moodle', secret }),
+  // Test de connexion : profil enregistré (jeton au trousseau) ou URL+jeton saisis.
+  test: (profileId) => invoke('test_moodle_connection', { profileId }),
+  testEphemeral: (baseUrl, token) => invoke('test_moodle_connection_ephemeral', { baseUrl, token }),
 };
 
 /* ---------- RAG géré ILaaS (collections + documents + recherche) ---------- */

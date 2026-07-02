@@ -209,4 +209,23 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     zéro dépendance exotique, poids de l'app maîtrisé). À réévaluer si un cas HTML complexe le justifie.
   - *Fait quand :* la section Moodle apparaît, on crée/édite/supprime une connexion, le jeton part
     au trousseau (rôle `moodle`), `hasMoodleToken` s'affiche, rien en clair dans `settings.json`.
-- *(à suivre : Lot 1 — test de connexion `test_moodle_connection`.)*
+- **2026-07-02 — Lot 1 (Test de connexion) ✅.**
+  - **Nouveau module `src-tauri/src/moodle.rs`** — le **client REST**, socle de tous les lots
+    suivants : `ws_call(base, token, function, params)` (POST `form-urlencoded` vers
+    `/webservice/rest/server.php`, `moodlewsrestformat=json`) ; parsing **systématique** du corps car
+    Moodle renvoie ses erreurs applicatives en HTTP 200 (`{errorcode, message}`) → `moodle_error()`
+    traduit les codes courants (`invalidtoken`, `accessexception`, `errorcoursecontextnotvalid`,
+    `webservicefilesdownloadingdisabled`…) en français ; **liste blanche `WHITELIST`** de 8 fonctions
+    de contenu (audit). Réutilise `client/normalize_base/send_error/http_error` d'`ilaas.rs` (aucune
+    dépendance nouvelle).
+  - Commandes `test_moodle_connection` (profil enregistré → jeton au trousseau via
+    `settings::resolve_moodle`) et `test_moodle_connection_ephemeral` (URL+jeton saisis, **rien
+    persisté**) → `core_webservice_get_site_info` → `SiteInfo { sitename, username, release,
+    downloadFiles, missingFunctions }`. `resolve_moodle` ajouté à `settings.rs` ; 2 commandes
+    enregistrées dans `lib.rs`. `cargo check` ✅.
+  - **Front** : `moodleApi.test/testEphemeral` (api.js) ; bouton **Tester** dans l'éditeur
+    (`key-row`, patron ILaaS) ; `onTestMoodle()` (main.js) → affiche « ✓ *site* — *compte* · Moodle
+    *version* · téléchargement fichiers OK · 8 fonctions OK », ou le diagnostic d'erreur. Build ✅.
+  - *Fait quand :* le bouton **Tester** confirme `downloadFiles=true` et **0 fonction manquante**
+    sur le Moodle de test ; un mauvais jeton/URL affiche un message clair.
+- *(à suivre : Lot 2 — liste des cours `core_course_get_courses_by_field` + cases à cocher.)*

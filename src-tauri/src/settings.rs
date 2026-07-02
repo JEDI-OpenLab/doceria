@@ -173,6 +173,26 @@ pub fn resolve(
     Ok((base, key))
 }
 
+/// Résout `(base_url, jeton)` d'un profil Moodle (jeton au trousseau, rôle « moodle »).
+/// Usage INTERNE (test de connexion, ingestion). Verrou relâché avant tout `await`.
+pub fn resolve_moodle(
+    settings: &SettingsState,
+    profile_id: &str,
+) -> Result<(String, String), String> {
+    let base = {
+        let guard = settings.0.lock().unwrap();
+        guard
+            .moodle_profiles
+            .iter()
+            .find(|p| p.id == profile_id)
+            .map(|p| p.moodle_base_url.clone())
+            .ok_or_else(|| "Connexion Moodle introuvable.".to_string())?
+    };
+    let token = keychain::get_secret(profile_id, "moodle")?
+        .ok_or_else(|| "Aucun jeton pour cette connexion Moodle.".to_string())?;
+    Ok((base, token))
+}
+
 // ─────────────────────────────── Commandes ───────────────────────────────
 
 #[tauri::command]
