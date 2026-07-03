@@ -1,4 +1,4 @@
-# Doceria — Architecture technique (Tauri)
+# Doceria : Architecture technique (Tauri)
 
 > Document de passation. Décrit l'architecture réelle de l'application de bureau (coquille Rust
 > Tauri + frontend Vite) telle qu'elle est livrée, et résume la feuille de route.
@@ -66,7 +66,7 @@ doceria/
 - **Streaming** : la commande `chat` lit le flux SSE `POST /chat/completions` (avec
   `stream_options.include_usage`) et **émet** `chat://delta`. **Stop** = annuler la requête côté Rust.
 - `list_models` : `GET /models`.
-- **Conso/coût** : commande `fetch_usage` — agrège `GET /me/usage` (paginé, fenêtre serveur ~30 jours)
+- **Conso/coût** : commande `fetch_usage`, agrège `GET /me/usage` (paginé, fenêtre serveur ~30 jours)
   par rôle (`llm` ou `rag`) : nombre de requêtes, tokens (entrée/sortie/total), **coût** et **CO₂**
   best-effort (`impacts.gwp`). Le champ `usage` des réponses chat sert d'affichage immédiat.
 
@@ -78,7 +78,7 @@ doceria/
   clés (`hasLlmKey`, `hasRagKey`), jamais leur valeur.
 - **URLs LLM/RAG en `https://` uniquement** (refus du clair, `upsert_profile`).
 
-## 6. RAG — géré par l'infrastructure ESR (livré)
+## 6. RAG : géré par l'infrastructure ESR (livré)
 > **Le RAG livré est le RAG GÉRÉ** (passerelle **OpenGateLLM**, `rag-api.ilaas.fr`), implémenté dans
 > `src-tauri/src/rag.rs`. Documents, embeddings, index et OCR **vivent côté infra ESR souveraine**, en
 > collections **« private »** (visibles/recherchables par le seul propriétaire). Contrat d'API vérifié :
@@ -91,7 +91,7 @@ Commandes Rust (`rag.rs`), toutes authentifiées par la clé RAG du profil actif
 - **Collections** : `rag_list_collections`, `rag_create_collection` (visibility `private`),
   `rag_delete_collection`, `rag_me` (identité `GET /me/info`, pour ne lister que ses collections).
 - **Documents** : `rag_upload_document` (multipart, MIME deviné par extension), `rag_upload_text`
-  (contenu texte/markdown — sert pour le texte extrait localement et pour Moodle), `rag_list_documents`,
+  (contenu texte/markdown, sert pour le texte extrait localement et pour Moodle), `rag_list_documents`,
   `rag_get_document` (résolution du nom pour les citations), `rag_delete_document`, `read_file` (IPC
   binaire pour extraire le texte des PDF/DOCX côté front, ce qui **contourne le parser PDF instable**
   du serveur).
@@ -117,25 +117,25 @@ cachés et liens symboliques, renvoie taille + mtime pour détecter ajouts/modif
 > passerelle gérée. Elle ne subsiste **pas** dans le code livré ; seule demeure la synchro
 > « dossier → collection gérée » ci-dessus.
 
-### Correctif — mode Requête (blocage sans appel facturé)
+### Correctif : mode Requête (blocage sans appel facturé)
 Deux modes de bibliothèque (interrupteur « Utiliser la bibliothèque ») :
 - **Chat** (`ragMode = 'chat'`) : s'appuie sur les extraits **en priorité**, complète avec les
   connaissances générales si utile. Si la recherche **échoue**, l'app **prévient** et **répond quand
   même** (repli assumé, avec avertissement).
 - **Requête** (`ragMode = 'requete'`) : répond **exclusivement** à partir des extraits. **Correctif
   clé** (`runGeneration` dans `main.js`) : si la recherche RAG **échoue** ou aboutit **sans aucun
-  extrait**, le modèle **n'est pas interrogé** (aucun appel facturé) — l'app affiche un message explicite
+  extrait**, le modèle **n'est pas interrogé** (aucun appel facturé) ; l'app affiche un message explicite
   (recherche indisponible, ou phrase de refus configurable `ragRefusal`) au lieu de laisser le modèle
   répondre sur ses connaissances générales.
 
 ## 7. Connecteur Moodle (livré, branche `moodle`)
-Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée personnelle**.
+Module `src-tauri/src/moodle.rs` : **lecture seule stricte**, **aucune donnée personnelle**.
 
 - **Client REST bas niveau `ws_call`** : `POST /webservice/rest/server.php` en form-urlencoded
   (`wstoken`, `wsfunction`, `moodlewsrestformat=json`). Moodle renvoyant souvent ses erreurs en HTTP 200
   (`{exception, errorcode, message}`), on **parse toujours le corps** et on traduit les codes courants en
   messages lisibles.
-- **Client HTTP dédié `moodle_client` — redirections DÉSACTIVÉES.** Le jeton voyage dans le **corps** du
+- **Client HTTP dédié `moodle_client` : redirections DÉSACTIVÉES.** Le jeton voyage dans le **corps** du
   POST ; suivre une 3xx le réémettrait vers l'hôte cible (exfiltration possible sur `http://` LAN ou
   Moodle compromis). Toute redirection est refusée et diagnostiquée.
 - **Liste blanche stricte de 8 fonctions de CONTENU** (constante `WHITELIST`, pour audit) :
@@ -159,7 +159,7 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
 - **Téléchargement de fichiers** (`moodle_download_file`, Lot 4) : télécharge un fichier `pluginfile`
   d'un cours (jeton dans le **corps** du POST, côté Rust) et renvoie ses **octets** au front, sous
   **garde-fou dur (40 Mo)**. L'**extraction du texte** (PDF/DOCX via `pdf.js`/`mammoth`) se fait **en
-  local dans la webview**, puis l'envoi part en `.md` — ce qui **contourne le parser PDF d'ILaaS (502)**.
+  local dans la webview**, puis l'envoi part en `.md`, ce qui **contourne le parser PDF d'ILaaS (502)**.
   Un PDF **scanné** (sans couche texte) est signalé et ignoré, pas d'OCR.
 - **Profils de connexion Moodle** (`settings.rs`) : nom + URL (`http://` LAN ou `https://` prod), **jeton
   au trousseau sous le rôle `moodle`**, **indépendants des profils ILaaS**, **plusieurs connexions**
@@ -178,7 +178,7 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
   local et pose un badge **`⟳ à mettre à jour`** sur les cours modifiés côté Moodle depuis la dernière
   synchro (état non conservé d'une ouverture à l'autre).
 - **Filtre opt-in « cours inscrits »** (Lot 7, interrupteur `moodleEnrolledOnly`, **défaut ON**) :
-  restreint l'explorateur aux **cours où le compte technique est inscrit** — l'inscription de ce compte
+  restreint l'explorateur aux **cours où le compte technique est inscrit**, l'inscription de ce compte
   valant **consentement de l'enseignant**. `core_enrol_get_users_courses` n'est appelée que **pour ce
   compte technique** (ses propres cours), **jamais pour un étudiant** → aucune donnée d'étudiant. Le
   mode « tout indexer » (filtre désactivé) relève d'une **décision de la Direction**. Un cours coché
@@ -205,19 +205,19 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
 - **Documents, embeddings, index RAG** : **côté infra ESR** (collections « private »), pas sur la machine.
 
 ## 10. Feuille de route (résumé)
-- **Lots 4, 5, 5.1, 7** — **livrés** (voir §7) : fichiers/PDF, synchro incrémentale + déduplication,
+- **Lots 4, 5, 5.1, 7** ; **livrés** (voir §7) : fichiers/PDF, synchro incrémentale + déduplication,
   badge « à mettre à jour », filtre opt-in « cours inscrits ».
-- **Lot 6** — interrupteur « Inclure les cours Moodle » dans le chat — **livré (2026-07-03)** :
+- **Lot 6**, interrupteur « Inclure les cours Moodle » dans le chat, **livré (2026-07-03)** :
   recherche RAG multi-collections (collection active + toutes les collections « Moodle · … »).
   **Reste : test en réel puis merge/release dans le `.dmg`.**
-- **Portage Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode**.
-- **Version serveur / web** — deux formats (app de bureau vs serveur central sans installation).
+- **Portage Windows** : Tauri multiplateforme + WebView2 + **signature Authenticode**.
+- **Version serveur / web** : deux formats (app de bureau vs serveur central sans installation).
 - **Linux** (après Moodle).
-- **Signature / notarisation** — quarantaine macOS + SmartScreen Windows.
+- **Signature / notarisation** : quarantaine macOS + SmartScreen Windows.
 
 ## 11. Prérequis & build
 Voir `SETUP.md`. En bref : chaîne Rust + dépendances système, `npm run tauri dev` (dev),
-`npm run tauri build` (produit `.app`/`.dmg` **non signés** — macOS arm64).
+`npm run tauri build` (produit `.app`/`.dmg` **non signés**, macOS arm64).
 
 ## 12. Points de vigilance
 - **Non signé** : quarantaine macOS à lever manuellement au premier lancement (voir mode d'emploi).

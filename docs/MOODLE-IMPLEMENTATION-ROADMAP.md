@@ -1,4 +1,4 @@
-# Feuille de route — Connecteur Moodle pour Doceria (implémentation)
+# Feuille de route : Connecteur Moodle pour Doceria (implémentation)
 
 > Plan d'implémentation **dans l'app**, complément de `MOODLE-TEST-PLAN.md` (qui valide le flux
 > hors app). Établi à partir d'une **cartographie du code réel** de Doceria (noms de fichiers,
@@ -19,7 +19,7 @@ JSON→Markdown) + **une section UI** + **une orchestration JS de synchro** calq
 
 ## 1. Modèle de données & état
 
-### 1.1 Backend — `src-tauri/src/settings.rs`
+### 1.1 Backend : `src-tauri/src/settings.rs`
 Structure sœur de `ProfileMeta`, persistée dans `settings.json` (champ `moodle_profiles`, +
 `active_moodle_id` sur le patron `active_id`) :
 ```rust
@@ -35,12 +35,12 @@ pub struct MoodleProfileMeta {
 ```
 Vue sécurisée (jamais le jeton) : `MoodleProfileView { #[serde(flatten)] meta, has_moodle_token: bool }`.
 
-### 1.2 Trousseau — `src-tauri/src/keychain.rs`
+### 1.2 Trousseau : `src-tauri/src/keychain.rs`
 Réutiliser avec un nouveau rôle `"moodle"` : `set_secret(id,"moodle",token)`, `get_secret`,
 `has_secret`. Ajouter `"moodle"` à la liste blanche de `set_profile_key` (ou `set_moodle_profile_key`).
 `delete_all(id)` doit purger la clé `moodle`.
 
-### 1.3 État frontend — `src/state.js`
+### 1.3 État frontend : `src/state.js`
 ```javascript
 moodleProfiles: [],       // [{ id, name, moodleBaseUrl, courseIds, hasMoodleToken }]
 activeMoodleId: null,
@@ -51,7 +51,7 @@ Persister **uniquement** `useMoodle`, `activeMoodleId`, `moodleCollections` (jam
 métadonnées de profil = backend Rust). L'index de synchro réutilise le format `SYNC_KEY`
 (`doceria_sync_v1`), clé composite `profileId::collectionId` (= `syncMapKey()`).
 
-## 2. Backend Rust — `src-tauri/src/moodle.rs` (nouveau)
+## 2. Backend Rust : `src-tauri/src/moodle.rs` (nouveau)
 
 ### 2.1 Client REST bas niveau
 ```rust
@@ -65,7 +65,7 @@ async fn ws_call(base_url:&str, token:&str, function:&str, params:&[(String,Stri
 - Client `reqwest` partagé (comme `rag.rs`).
 
 ### 2.2 Commandes Tauri
-Jeton **résolu côté Rust** au trousseau à partir du `profile_id` (patron `resolve()`) — jamais
+Jeton **résolu côté Rust** au trousseau à partir du `profile_id` (patron `resolve()`), jamais
 transmis par la webview, sauf en test éphémère.
 
 | Commande | Signature | Fonction WS |
@@ -79,7 +79,7 @@ transmis par la webview, sauf en test éphémère.
 
 `SiteInfo` expose `download_files: bool`, `release`, `missing_functions: Vec<String>`.
 
-### 2.3 `moodle_course_markdown` — mapping JSON→Markdown
+### 2.3 `moodle_course_markdown` : mapping JSON→Markdown
 ```rust
 #[derive(Serialize)]
 pub struct CourseIngest {
@@ -99,12 +99,12 @@ pub struct CourseIngest {
 
 **Un document Markdown par section** (pas un seul énorme) → meilleur chunking + diff plus fin.
 
-### 2.4 Téléchargement fichiers — `moodle_download_file`
+### 2.4 Téléchargement fichiers : `moodle_download_file`
 - URL : `{base}/webservice/pluginfile.php/{fileid}?token={token}&forcedownload=1`.
 - **Valider `Content-Type`** : si `application/json` → erreur déguisée → `Err`.
 - Écrire en dossier temporaire (scratch), retourner le chemin → `uploadFileSmart()` côté JS.
 
-### 2.5 API JS — `src/api.js`
+### 2.5 API JS : `src/api.js`
 ```javascript
 export const moodleApi = {
   list: () => invoke('list_moodle_profiles'),
@@ -129,16 +129,16 @@ export const moodleApi = {
 3. **Textes** : `ragApi.uploadText(collectionId, name, content, …)`. Clé de diff = nom + **hash du contenu**.
 4. **Fichiers** : `moodleApi.downloadFile()` → chemin local → `uploadFileSmart(collectionId, path, profileId)`.
    Clé de diff = `file_url`.
-5. **Diff / suppressions** : index local (`SYNC_KEY`) `{ [key]: { documentId, hash } }` — comme
+5. **Diff / suppressions** : index local (`SYNC_KEY`) `{ [key]: { documentId, hash } }`, comme
    `syncCollection()` : supprimer les disparus (`ragApi.deleteDocument`), réuploader si hash changé, persister après chaque op.
 6. **Progression** : `#moodleStatus` (« Section 3/8… »), verrou `moodleSyncing`.
 7. Fin : activer `#useMoodle`, enregistrer le mapping cours→collection.
 
-## 4. UI (rail) — `index.html` + `src/main.js`
+## 4. UI (rail) : `index.html` + `src/main.js`
 
 ### 4.1 Section « Moodle »
 Insérée **après** `<h2 data-section="modele">` et **avant** `<h2 data-section="rag">`. Pliage auto
-via `data-section="moodle"` (`setupSections()` — rien à coder). Réutiliser `.field`, `.profile-bar`,
+via `data-section="moodle"` (`setupSections()`, rien à coder). Réutiliser `.field`, `.profile-bar`,
 `.filebtn`, `.btnfull`, `.key-row`, `.hint`, `.help`.
 Contenu : `#moodleProfileSelect` ; barre `+ Nouveau / Modifier / Supprimer` ; éditeur `#moodleEditor`
 (hidden) `#moName`, `#moUrl`, `#moToken` (password) + `#moTest` ; **liste de cours à cocher**
@@ -158,11 +158,11 @@ la/les collection(s) Moodle à la requête RAG.
 (RAG) » ; « cours » rappelle que la source = le contenu synchronisé, pas Moodle en direct)*.
 
 > **✅ Livré (Lot 6, 2026-07-03).** Voir le journal en fin de document. **Écart assumé** : le toggle
-> **requiert** « Utiliser la bibliothèque » (il l'étend) plutôt que d'en être indépendant — sans RAG
+> **requiert** « Utiliser la bibliothèque » (il l'étend) plutôt que d'en être indépendant ; sans RAG
 > actif la recherche ne fait rien, un toggle indépendant serait inerte.
 
 ## 5. Sécurité & souveraineté
-- **Jeton au trousseau OS** (`fr.jedi-openlab.doceria`, compte `id:moodle`) ; jamais en JSON/localStorage/webview — seul `hasMoodleToken` (bool) exposé.
+- **Jeton au trousseau OS** (`fr.jedi-openlab.doceria`, compte `id:moodle`) ; jamais en JSON/localStorage/webview ; seul `hasMoodleToken` (bool) exposé.
 - **Lecture seule** : 8 fonctions WS whitelistées (compte technique, rôle étudiant) ; `moodle.rs` n'appelle QUE ces fonctions (constantes pour audit).
 - **Zéro donnée personnelle** : jamais de fonction utilisateurs/notes/participants.
 - Résolution jeton côté Rust avant tout `await` ; **ne jamais logger** l'URL pluginfile avec le token.
@@ -187,19 +187,19 @@ désactiver le filtre opt-in dans Doceria. C'est un **choix de gouvernance**, pa
 technique par défaut.
 
 **Statut honnête.** Le principe et la configuration Moodle sont posés (cf. `MOODLE-TEST-PLAN.md`).
-Le **filtre applicatif** — Doceria n'affiche que les cours consentis — est le **prochain lot,
+Le **filtre applicatif** (Doceria n'affiche que les cours consentis) est le **prochain lot,
 en cours** ; il **ne faut pas** le présenter comme déjà livré. Voir Lot 7 ci-dessous.
 
 ## 6. Découpage en LOTS livrables
 
-- **Lot 0 — Fondations profils Moodle** : `MoodleProfileMeta`, CRUD, rôle trousseau `moodle`, section UI + éditeur, `wireEvents()`. *Fait quand :* on crée/édite/supprime un profil, jeton au trousseau, `hasMoodleToken` affiché, rien en clair dans `settings.json`.
-- **Lot 1 — Test de connexion** : `test_moodle_connection(_ephemeral)` + `SiteInfo`, bouton Tester. *Fait quand :* « ✓ connexion OK — downloadfiles=1, 8 fonctions » ou erreur FR explicite.
-- **Lot 2 — Liste des cours** : `moodle_list_courses` + liste à cocher persistée (`courseIds`). *Fait quand :* les cours accessibles s'affichent, cases mémorisées.
-- **Lot 3 — Ingestion texte d'un cours** : `moodle_course_markdown` (sections+pages+labels+books, sans fichiers) → `rag_upload_text` dans « Moodle · <cours> ». *Fait quand :* un cours → collection RAG interrogeable, Markdown tracé, citations correctes.
-- **Lot 4 — Fichiers** : `moodle_download_file` + `uploadFileSmart`. *Fait quand :* PDF/DOCX téléchargés, indexés, cités ; une erreur pluginfile ne crée pas de faux document.
-- **Lot 5 — Synchro incrémentale + suppressions** : index de diff, delete+re-upload, progression, verrou. *Fait quand :* 2ᵉ synchro ne recrée pas l'inchangé, supprime les disparus, affiche la progression.
-- **Lot 6 — Toggle « Inclure les cours Moodle »** ✅ **(2026-07-03)** : intégration composeur, recherche multi-collections. *Fait quand :* le toggle fait remonter les passages Moodle avec citations ; masqué si pas de collection Moodle. **FAIT** (journal en fin de document).
-- **Lot 7 — Filtre « cours inscrits » (opt-in par consentement)** ✅ **(2026-07-02)** : Doceria n'affiche que les cours où le **compte technique est inscrit**, via **`core_enrol_get_users_courses`** — **9ᵉ fonction** de la liste blanche du service, appelée **uniquement pour le compte technique** (donc **aucune donnée d'étudiant**). Un **interrupteur** permet de basculer en **mode « tout indexer »** (désactive le filtre — décision de gouvernance, cf. §5.bis). *Fait quand :* sans réglage, l'explorateur ne liste **que** les cours consentis (inscription = consentement) ; l'interrupteur « tout indexer » restitue la liste complète.
+- **Lot 0, Fondations profils Moodle** : `MoodleProfileMeta`, CRUD, rôle trousseau `moodle`, section UI + éditeur, `wireEvents()`. *Fait quand :* on crée/édite/supprime un profil, jeton au trousseau, `hasMoodleToken` affiché, rien en clair dans `settings.json`.
+- **Lot 1, Test de connexion** : `test_moodle_connection(_ephemeral)` + `SiteInfo`, bouton Tester. *Fait quand :* « ✓ connexion OK : downloadfiles=1, 8 fonctions » ou erreur FR explicite.
+- **Lot 2, Liste des cours** : `moodle_list_courses` + liste à cocher persistée (`courseIds`). *Fait quand :* les cours accessibles s'affichent, cases mémorisées.
+- **Lot 3, Ingestion texte d'un cours** : `moodle_course_markdown` (sections+pages+labels+books, sans fichiers) → `rag_upload_text` dans « Moodle · <cours> ». *Fait quand :* un cours → collection RAG interrogeable, Markdown tracé, citations correctes.
+- **Lot 4, Fichiers** : `moodle_download_file` + `uploadFileSmart`. *Fait quand :* PDF/DOCX téléchargés, indexés, cités ; une erreur pluginfile ne crée pas de faux document.
+- **Lot 5, Synchro incrémentale + suppressions** : index de diff, delete+re-upload, progression, verrou. *Fait quand :* 2ᵉ synchro ne recrée pas l'inchangé, supprime les disparus, affiche la progression.
+- **Lot 6, Toggle « Inclure les cours Moodle »** ✅ **(2026-07-03)** : intégration composeur, recherche multi-collections. *Fait quand :* le toggle fait remonter les passages Moodle avec citations ; masqué si pas de collection Moodle. **FAIT** (journal en fin de document).
+- **Lot 7, Filtre « cours inscrits » (opt-in par consentement)** ✅ **(2026-07-02)** : Doceria n'affiche que les cours où le **compte technique est inscrit**, via **`core_enrol_get_users_courses`**, **9ᵉ fonction** de la liste blanche du service, appelée **uniquement pour le compte technique** (donc **aucune donnée d'étudiant**). Un **interrupteur** permet de basculer en **mode « tout indexer »** (désactive le filtre ; décision de gouvernance, cf. §5.bis). *Fait quand :* sans réglage, l'explorateur ne liste **que** les cours consentis (inscription = consentement) ; l'interrupteur « tout indexer » restitue la liste complète.
 
 ## 7. À NOTER pour l'échelle (pas maintenant)
 - **Synchro planifiée nocturne** : job périodique rejouant `onSyncMoodle()` (scheduler/cron), avec journal de synchro et fenêtre horaire. **Roadmap, pas ce chantier.**
@@ -217,7 +217,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
 
 ## Journal d'implémentation
 
-- **2026-07-02 — Lot 0 (Fondations profils Moodle) ✅.**
+- **2026-07-02, Lot 0 (Fondations profils Moodle) ✅.**
   - **Rust** : `MoodleProfileMeta` + champs `moodle_profiles`/`active_moodle_id` dans `settings.rs` ;
     vue `MoodleProfileView` (`has_moodle_token`, jamais le jeton) ; commandes
     `list/upsert/delete/set_active_moodle_profile` ; **URL http:// OU https://** acceptée (Moodle
@@ -231,13 +231,13 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     logique `refreshMoodleProfiles / switchMoodleProfile / openMoodleEditor /
     saveMoodleProfileFromEditor / onSaveMoodleProfile / onDeleteMoodleProfile` + câblage
     `wireEvents()` + chargement à l'`init()`. Le jeton est vidé du DOM en `finally`. Build Vite ✅.
-  - **Décision (point 3 — conversion HTML→Markdown)** : **pas** de crate `html2md`. On écrira un
+  - **Décision (point 3 : conversion HTML→Markdown)** : **pas** de crate `html2md`. On écrira un
     **convertisseur maison léger** au Lot 3 (cohérent avec le rendu Markdown maison déjà présent,
     zéro dépendance exotique, poids de l'app maîtrisé). À réévaluer si un cas HTML complexe le justifie.
   - *Fait quand :* la section Moodle apparaît, on crée/édite/supprime une connexion, le jeton part
     au trousseau (rôle `moodle`), `hasMoodleToken` s'affiche, rien en clair dans `settings.json`.
-- **2026-07-02 — Lot 1 (Test de connexion) ✅.**
-  - **Nouveau module `src-tauri/src/moodle.rs`** — le **client REST**, socle de tous les lots
+- **2026-07-02, Lot 1 (Test de connexion) ✅.**
+  - **Nouveau module `src-tauri/src/moodle.rs`** : le **client REST**, socle de tous les lots
     suivants : `ws_call(base, token, function, params)` (POST `form-urlencoded` vers
     `/webservice/rest/server.php`, `moodlewsrestformat=json`) ; parsing **systématique** du corps car
     Moodle renvoie ses erreurs applicatives en HTTP 200 (`{errorcode, message}`) → `moodle_error()`
@@ -251,11 +251,11 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     downloadFiles, missingFunctions }`. `resolve_moodle` ajouté à `settings.rs` ; 2 commandes
     enregistrées dans `lib.rs`. `cargo check` ✅.
   - **Front** : `moodleApi.test/testEphemeral` (api.js) ; bouton **Tester** dans l'éditeur
-    (`key-row`, patron ILaaS) ; `onTestMoodle()` (main.js) → affiche « ✓ *site* — *compte* · Moodle
+    (`key-row`, patron ILaaS) ; `onTestMoodle()` (main.js) → affiche « ✓ *site*, *compte* · Moodle
     *version* · téléchargement fichiers OK · 8 fonctions OK », ou le diagnostic d'erreur. Build ✅.
   - *Fait quand :* le bouton **Tester** confirme `downloadFiles=true` et **0 fonction manquante**
     sur le Moodle de test ; un mauvais jeton/URL affiche un message clair.
-- **2026-07-02 — Lot 2 (Liste des cours + cases à cocher) ✅.**
+- **2026-07-02, Lot 2 (Liste des cours + cases à cocher) ✅.**
   - **Empirique d'abord** : `curl core_course_get_courses_by_field` (sans `field`) sur le Moodle de
     test → `{courses:[…], warnings:[]}`, 7 cours dont **id=1 = cours « site »** (page d'accueil, à ne
     jamais indexer). Champs utiles : `id, shortname, fullname, categoryname, visible`. Le `summary` du
@@ -268,7 +268,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     l'éditeur) avec bouton **Rafraîchir** ; `main.js` : `renderMoodleAll` (= liste connexions +
     zone cours), `refreshMoodleCoursesUI` (affiche la zone si jeton présent, **charge à la demande**),
     `onRefreshMoodleCourses`, `renderCourseCheckboxes` (**DOM sûr : `createElement`/`textContent`,
-    jamais `innerHTML`** — noms de cours non fiables), `persistSelectedCourses` (coche → `upsert`
+    jamais `innerHTML`** ; noms de cours non fiables), `persistSelectedCourses` (coche → `upsert`
     métadonnées seules, jeton intact, `courseIds` persistés). CSS `.moodle-courses/.course-row`. Build ✅.
   - **Revue adversariale (11 agents, 3 dimensions + vérification)** → 4 findings confirmés, **tous
     corrigés** avant le test utilisateur :
@@ -287,41 +287,41 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
       fidèle du patron ILaaS validé).
   - *Fait quand :* les cours accessibles s'affichent, on coche/décoche, la sélection est mémorisée
     (persiste après fermeture/réouverture), le cours « site » n'apparaît pas.
-- **2026-07-02 — Lot 2.5 (Explorateur de cours, vue centrale) ✅ — décision UX de l'utilisateur.**
+- **2026-07-02, Lot 2.5 (Explorateur de cours, vue centrale) ✅, décision UX de l'utilisateur.**
   - **Pourquoi** : la liste à cocher dans le rail étroit ne passe pas l'échelle (centaines de cours).
     Choix retenu (question posée) : **explorateur dans la fenêtre du milieu** (recherche + filtre par
     catégorie + liste groupée + bouton Synchroniser). Le rail garde connexion + résumé « N cours
     sélectionnés » + bouton **« Gérer les cours… »**.
-  - **Front (100 % — pas de Rust)** : `#moodleView` (index.html) couvre `.main` (`position:absolute`,
+  - **Front (100 %, pas de Rust)** : `#moodleView` (index.html) couvre `.main` (`position:absolute`,
     z-index ; rail + conversations restent visibles). Machine à états (main.js) : `mvCourses`,
-    **`mvSelected` = `Set` source de vérité** (survit à la recherche/au filtre — on ne lit jamais
+    **`mvSelected` = `Set` source de vérité** (survit à la recherche/au filtre ; on ne lit jamais
     « coché » depuis le DOM), `mvCollapsed`, `mvLoadedFor` (cache par connexion), `mvOpenFor` (ferme
     l'explorateur si la connexion active change). Recherche (nom/code/catégorie), filtre catégorie,
     groupes repliables, « Tout cocher (filtré) », compteur, réconciliation des cours disparus, rendu
     **anti-XSS** (`createElement`/`textContent`). CSS `.moodle-view/.mv-*`. Le bouton **Synchroniser**
     est en place mais son action (ingestion) est le **Lot 3** (stub honnête pour l'instant). Build ✅.
   - **Revue adversariale (8 agents)** → 3 findings, **tous corrigés** :
-    1. *(BLOQUANT — course async)* si on **change de connexion pendant** le `await listCourses(A)`, la
+    1. *(BLOQUANT, course async)* si on **change de connexion pendant** le `await listCourses(A)`, la
        réponse tardive réconciliait puis **écrivait la sélection de A dans le profil de B** (corruption
        inter-connexions). → **Garde anti-course** : `reqId` capturé à l'entrée ; après l'`await`, on
        ignore la réponse si `mvOpenFor !== reqId` ou si la connexion active a changé. `main.js`.
     2. *(idem, vu par la dimension UX)* → couvert par la même garde.
     3. *(UX, low)* le stub Synchroniser écrasait le **compteur** `#mvCount`. → message dans un élément
        **dédié `#mvStatus`**, effacé au prochain changement de sélection. `index.html`, `styles.css`, `main.js`.
-    - Faux positif **réfuté** : « un refresh tardif écrase le précédent » — non reproductible (pas de
+    - Faux positif **réfuté** : « un refresh tardif écrase le précédent », non reproductible (pas de
       garde manquante pour ce cas précis).
   - *Fait quand :* on ouvre l'explorateur au centre, on cherche/filtre par catégorie, on coche sur
     plusieurs pages de recherche sans rien perdre, le résumé du rail suit, et changer de connexion
     ferme proprement la vue.
-- **2026-07-02 — Lot 3 (Synchroniser : ingestion du texte) ✅.**
+- **2026-07-02, Lot 3 (Synchroniser : ingestion du texte) ✅.**
   - **Empirique** : `core_course_get_contents(courseid=4)` → 5 sections ; le **texte pédagogique est
     dans les `summary` de section** (McLuhan 8 k, Serres 12 k…), les PDF sont des modules `resource`.
     Balises réelles des résumés : `<br>` (417), `<strong>` (358), `<p>` (8), `<span>` (6, `data-*` à
     ignorer), beaucoup d'accents/entités.
-  - **Convertisseur HTML→Markdown MAISON (`moodle.rs`, zéro dépendance — décision Lot 0)** :
+  - **Convertisseur HTML→Markdown MAISON (`moodle.rs`, zéro dépendance, décision Lot 0)** :
     `html_to_markdown` (tokenise → sérialise → normalise). Gère titres, `p/div`, `br`, `ul/ol/li`,
     `strong/em`, `a[href]`, `blockquote`, `code` ; strip le reste ; **décode les entités** nommées +
-    numériques ; découpes **char-safe** (aucun panic sur l'UTF-8 accentué — `decode_entities` borne le
+    numériques ; découpes **char-safe** (aucun panic sur l'UTF-8 accentué ; `decode_entities` borne le
     `;` via `char_indices().take(12)`). **4 tests unitaires** (`cargo test`). Validé sur le contenu réel.
   - **Commande `moodle_course_markdown(profileId, courseId)`** → `{ fullname, markdown, sections,
     chars }` : 2 appels WS (méta cours + contenus), assemble **H1 cours · H2 section · H3 module**,
@@ -330,7 +330,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     cours coché → Markdown → collection **« Moodle · <cours> »** dans le **RAG du profil ILaaS actif**
     (`ragApi`, dédup par nom) → `uploadText`. **Barre de progression** par cours (`mvProgress` +
     `#mvProgress`), **verrouillage des contrôles et des sélecteurs de profil** pendant la synchro
-    (`setMvSyncing` — anti-corruption inter-profils), poursuite malgré échec + bilan, refus clair si
+    (`setMvSyncing`, anti-corruption inter-profils), poursuite malgré échec + bilan, refus clair si
     RAG non configuré. `loadCollections()` rafraîchit le rail. Build ✅.
   - **Prérequis** : un **profil ILaaS actif avec RAG configuré** (URL + clé) = destination. Re-synchro
     peut créer un doublon de document (**dédup/incrémental = Lot 5**).
@@ -353,7 +353,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     - Vérification ciblée supplémentaire du blocker inter-profils par un agent adversarial dédié.
   - *Fait quand :* on coche des cours, on clique **Synchroniser**, la barre progresse cours par cours,
     et les collections « Moodle · … » apparaissent dans la Bibliothèque, interrogeables (avec citations).
-- **2026-07-02 — Lot 4 (Fichiers/PDF des cours) ✅.**
+- **2026-07-02, Lot 4 (Fichiers/PDF des cours) ✅.**
   - **Rust (`moodle.rs`)** : `CourseFile { filename, fileurl, mimetype, filesize }` ajouté à
     `CourseMarkdown.files`. Collecte des fichiers dans la boucle des modules **AVANT** le `continue`
     sur description vide → fichiers récupérés pour **toutes** les sections, même sans texte (ex. une
@@ -362,7 +362,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     même-origine** `origin_of(fileUrl) == origin_of(base)` (**anti-exfiltration** : le jeton, ajouté en
     query, ne part que vers l'hôte Moodle configuré), **client sans redirection**, 3xx/non-2xx refusés,
     **plafond dur 40 Mo**. `cargo check` + `cargo test` ✅.
-  - **Front** : `moodleApi.downloadFile` (api.js) ; **`ingestMoodleFile`** (main.js) — PDF/DOCX
+  - **Front** : `moodleApi.downloadFile` (api.js) ; **`ingestMoodleFile`** (main.js) : PDF/DOCX
     **extraits en local** (`readDocument` pdf.js/mammoth → `rag_upload_text`, contourne le 502 d'ILaaS) ;
     formats texte (txt/md/csv/json/html…) décodés UTF-8 ; autres formats **ignorés** ; PDF scanné →
     skip « pas d'OCR ». `onMoodleSync` crée la collection s'il y a **texte OU fichiers**, ingère le
@@ -384,7 +384,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
       **et** l'upload manuel RAG. `documents.js`, `main.js`.
     - *(ingestion, low #6)* `.rtf` (balisage binaire) et HTML brut pollutaient le RAG → `.rtf` **retiré**,
       HTML **détagué** (`DOMParser` → texte). `main.js`.
-    - *(#4, medium — doublons à la re-synchro)* **non corrigé ici, à dessein** : c'est le périmètre du
+    - *(#4, medium, doublons à la re-synchro)* **non corrigé ici, à dessein** : c'est le périmètre du
       **Lot 5** (synchro incrémentale + dédup).
     - 1er lancement de revue interrompu par l'utilisateur ; **relancé** pour rigueur.
   - **Validé en réel** contre le Moodle de test (2 PDF, 1,2 + 4,1 Mo, origine vérifiée, PDF valides).
@@ -392,7 +392,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     « Synchroniser » ajoutera le texte **+ les 2 PDF** à « Moodle · Les fondateurs… ».
   - *Fait quand :* après « Synchroniser », les PDF d'un cours sont interrogeables (texte extrait, cité) ;
     un PDF scanné ou un format non géré est ignoré proprement avec mention au bilan.
-- **2026-07-02 — Lot 5 (Synchro incrémentale + déduplication) ✅.** Règle le #4 du Lot 4 : re-synchro
+- **2026-07-02, Lot 5 (Synchro incrémentale + déduplication) ✅.** Règle le #4 du Lot 4 : re-synchro
   = **plus de doublons**, et bilan de ce qui a changé.
   - **Index local** `doceria_moodle_sync_v1` (localStorage), clé `dest::mpId::courseId` →
     `{ collectionId, textHash, textDocId, files:{ nom:{documentId, timemodified, filesize} } }`. Sur le
@@ -400,7 +400,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
   - **Rust** : `CourseFile.timemodified` ajouté (signal de changement d'un fichier **sans le télécharger**).
   - **`onMoodleSync` incrémental** : **abandonne** si `listCollections` échoue (sinon risque de doublonner
     une collection) ; par cours → **TEXTE** comparé par **hash** (inchangé/maj/ajout, ou retrait) ;
-    **FICHIERS** diff par nom sur **(timemodified, taille)** — *aucun téléchargement si inchangé* ; une MàJ =
+    **FICHIERS** diff par nom sur **(timemodified, taille)**, *aucun téléchargement si inchangé* ; une MàJ =
     **upload du nouveau PUIS suppression de l'ancien** (pas de perte, pas d'orphelin) ; **retraits** des
     fichiers disparus côté Moodle. Persistance après chaque opération. Si la collection mémorisée a été
     supprimée → repart de zéro. **Bilan détaillé** : « N cours · X ajoutés · Y mis à jour · Z inchangés ·
@@ -408,7 +408,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
   - **Badge « ✓ synchronisé »** dans l'explorateur (cours présents dans l'index, lecture locale, sans appel
     réseau) ; **purge** de l'index dans `onDeleteCollection`.
   - **Réponse à la question utilisateur** (« que se passe-t-il si on re-synchronise ? ») : **plus d'écrasement
-    ni de doublon** — seuls les changements sont appliqués, et le bilan dit précisément quoi.
+    ni de doublon** ; seuls les changements sont appliqués, et le bilan dit précisément quoi.
   - **Revue adversariale (14 agents) → 11 findings, consolidés en 6 correctifs** :
     - *(high)* **collision de noms de fichiers** (2 fichiers de même nom dans un cours → 1 clé d'index →
       perte de contenu + churn) → clé = **`fileurl`** (unique par fichier).
@@ -425,34 +425,34 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
       transitions « ignoré ↔ réel ») : le comptage add/màj/retrait se base désormais sur l'existence
       d'un **vrai document** (plus de « retiré » fantôme, ni de « màj » pour un premier ajout). **Zéro
       défaut fonctionnel** (pas de doublon, perte ni orphelin) sur les 2 passes. *Édge accepté* : si
-      `extractDocId` renvoie `null` sur une màj de texte (ILaaS renvoie toujours un id — cf. synchro
+      `extractDocId` renvoie `null` sur une màj de texte (ILaaS renvoie toujours un id, cf. synchro
       dossier), un seul orphelin possible lors d'un changement ultérieur ; le hash évite tout churn.
   - *Fait quand :* re-synchro d'un cours inchangé = 0 doublon ; un ajout/retrait/modif côté Moodle se
     reflète proprement ; le badge marque les cours déjà synchronisés.
-- **2026-07-02 — Lot 5.1 (Badge « nouveautés ») ✅ — demandé par l'utilisateur.**
+- **2026-07-02, Lot 5.1 (Badge « nouveautés ») ✅, demandé par l'utilisateur.**
   - Bouton **« Nouveautés »** dans l'explorateur : `checkMoodleUpdates()` va chercher le contenu des
     cours **déjà synchronisés** (peu nombreux) et le compare à l'index (**lecture seule**, aucune
     ré-ingestion) → badge **« ⟳ à mettre à jour »** (prioritaire sur « ✓ synchronisé »).
     `courseHasUpdates` = hash du texte + `(timemodified, taille)` des fichiers pris en charge + retraits.
     Coût = 1 appel par cours suivi, à la demande. Badge vidé après synchro / réinitialisé au Rafraîchir.
   - **Bilan de synchro amélioré** : en cas d'échec d'un cours, la **raison** est affichée (ex. compte
-    technique non inscrit — `errorcoursecontextnotvalid`) et non plus seulement le nom.
+    technique non inscrit, `errorcoursecontextnotvalid`) et non plus seulement le nom.
   - *Note terrain* : lire le contenu d'un cours exige que le **compte technique y soit inscrit**
-    (sinon « Not enrolled ») — c'est une config Moodle, pas un bug ; l'app le signale désormais clairement.
-- **2026-07-02 — Gouvernance : opt-in par consentement (principe posé, filtre à venir).**
-  - **Principe** : opt-in par défaut — **aucun cours indexé sans action explicite de l'enseignant**.
+    (sinon « Not enrolled »), c'est une config Moodle, pas un bug ; l'app le signale désormais clairement.
+- **2026-07-02, Gouvernance : opt-in par consentement (principe posé, filtre à venir).**
+  - **Principe** : opt-in par défaut, **aucun cours indexé sans action explicite de l'enseignant**.
     Le compte technique **lecture seule** (`doceria-rag-readonly`) n'est **inscrit** que dans les cours
     consentis ; **l'inscription vaut consentement**. Doceria n'affiche/n'indexe **que** ces cours. Rôle
     Moodle dédié « **Doceria — indexation IA (lecture seule)** » pour la transparence. Valeurs :
     transparence, choix, liberté de l'enseignant. Cf. §5.bis et `MOODLE-TEST-PLAN.md`.
   - **Mode « tout indexer »** (décision de la Direction) : accès catégorie/système
     (`moodle/course:view`) **ou** inscription massive, **puis** désactivation du filtre opt-in dans
-    Doceria — **choix de gouvernance**, pas un défaut technique.
+    Doceria ; **choix de gouvernance**, pas un défaut technique.
   - **Statut honnête** : le principe et la config Moodle sont posés ; le **filtre applicatif est le
-    prochain lot, EN COURS** (**Lot 7**) — à **ne pas** présenter comme livré. Il s'appuiera sur
+    prochain lot, EN COURS** (**Lot 7**) ; à **ne pas** présenter comme livré. Il s'appuiera sur
     **`core_enrol_get_users_courses`** (**9ᵉ fonction** du service, appelée **uniquement pour le compte
     technique** → **aucune donnée d'étudiant**), avec un **interrupteur « tout indexer »**.
-- **2026-07-02 — Lot 7 (Filtre « cours inscrits » = opt-in par consentement) ✅.**
+- **2026-07-02, Lot 7 (Filtre « cours inscrits » = opt-in par consentement) ✅.**
   - **Rust** : `list_moodle_courses(profile_id, enrolled_only)` ; si `enrolled_only` → `get_site_info`
     (userid du **compte porteur du jeton**) → **`core_enrol_get_users_courses(userid)`** → on ne garde que
     les cours dont l'id est inscrit. **Appelée UNIQUEMENT pour le compte technique → zéro donnée
@@ -463,11 +463,11 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     bascule → recharge la liste (filtrée / complète). Build ✅.
   - **Validé en réel** contre le Moodle de test : `core_enrol_get_users_courses` renvoie les 6 cours
     inscrits (ids 2‑7) ; **« Cinéma » (id 8, non inscrit) est bien exclu**. *(Note : « Algorithmique »
-    id 5 était inscrit — l'opt-in reflète l'état réel des inscriptions.)*
+    id 5 était inscrit ; l'opt-in reflète l'état réel des inscriptions.)*
   - **Revue** adversariale ciblée (confidentialité / filtre / fonction manquante / sélection) lancée.
   - *Fait quand :* ON → l'explorateur ne liste que les cours consentis ; OFF → liste complète.
-- **2026-07-03 — Lot 6 (Toggle « Inclure les cours Moodle » dans le chat) ✅ — dernier lot.**
-  - **Constat clé** : le backend RAG supporte **déjà** la recherche multi-collections — `rag_search`
+- **2026-07-03, Lot 6 (Toggle « Inclure les cours Moodle » dans le chat) ✅, dernier lot.**
+  - **Constat clé** : le backend RAG supporte **déjà** la recherche multi-collections ; `rag_search`
     prend `collection_ids: Vec<i64>`. Lot 6 est donc **purement frontend** (aucun changement Rust).
   - **Front** (`src/main.js`) : `retrieveFromLibrary()` construit un **Set dédupliqué** = collection
     active + (toggle ? toutes les collections « Moodle · … » : ∅) → **un seul** appel `ragApi.search`.
@@ -487,7 +487,7 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     un toggle « indépendant » serait inerte et trompeur. « Inclure les cours Moodle » est donc une
     **extension** de « Utiliser la bibliothèque ».
   - **Revue** adversariale (logique + régression/confidentialité → vérification indépendante) : **1
-    constat confirmé** — identification par préfixe de nom → faux positif si l'utilisateur nomme une
+    constat confirmé** : identification par préfixe de nom → faux positif si l'utilisateur nomme une
     collection « Moodle · … » à la main → **corrigé** par le renfort description ci-dessus.
     Confidentialité OK (les ids proviennent de `state.collections`, déjà filtré aux collections
     **propres** de l'utilisateur).

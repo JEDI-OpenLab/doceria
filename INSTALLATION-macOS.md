@@ -46,10 +46,10 @@ non signée téléchargée. Pour la lever, une seule fois :
 
 3. Relancez Doceria (double-clic).
 
-*(Sur macOS récent — Sequoia/Tahoe —, le parcours le plus fiable reste de toute façon
+*(Sur macOS récent (Sequoia/Tahoe), le parcours le plus fiable reste de toute façon
 Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ».)*
 
-## 3. Au premier accès au trousseau — « Toujours autoriser »
+## 3. Au premier accès au trousseau, « Toujours autoriser »
 
 Quand vous enregistrez votre première clé, macOS affiche
 « *Doceria souhaite utiliser vos informations confidentielles… du trousseau* ».
@@ -74,4 +74,4 @@ revienne à chaque démarrage.
 3. *(Optionnel)* Pour la **bibliothèque RAG** : dans le profil, ajoutez l'**URL + la clé RAG**,
    puis créez une collection et ajoutez-y des documents (section **Bibliothèque (RAG)**).
 
-Bonne utilisation — et merci d'**enseigner avec l'IA** ✨
+Bonne utilisation, et merci d'**enseigner avec l'IA** ✨

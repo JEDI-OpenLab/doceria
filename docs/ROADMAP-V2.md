@@ -1,4 +1,4 @@
-# Doceria — Feuille de route
+# Doceria, feuille de route
 
 > **Méthode.** Cette feuille de route est issue d'un tour d'horizon **vérifié sur le web**
 > (juin 2026) : AnythingLLM, agents de code (Aider, OpenCode, Continue, Cline), apps de bureau
@@ -14,12 +14,12 @@
 
 ---
 
-## 1. v-next — ✅ LIVRÉ (version `20260626.8.0`)
+## 1. v-next, ✅ LIVRÉ (version `20260626.8.0`)
 
 Ces chantiers, choisis pour leur **rapport valeur/effort** et leur alignement enseignant, sont
 **désormais en service**. *(Les « presets de prompts pédagogiques » initialement prévus ont été
-**écartés** : bien faits, ils demandent un vrai cadre pédagogique — taxonomie de Bloom, rédaction
-d'objectifs — à poser en amont ; voir §1.3.)*
+**écartés** : bien faits, ils demandent un vrai cadre pédagogique (taxonomie de Bloom, rédaction
+d'objectifs) à poser en amont ; voir §1.3.)*
 
 ### 1.1 Entrée de menu « Aide » → site officiel  · `must` · `S`
 **Ce que c'est.** Un sous-menu **« Aide »** dans la barre de menus macOS (à côté de
@@ -67,11 +67,11 @@ curseurs.
 **Pourquoi.** **Débloque massivement l'ESR scientifique** (maths, physique, info théorique) :
 corrigés, démonstrations, énoncés avec formules deviennent lisibles. Fort impact disciplinaire
 pour un effort modéré, 100 % local.
-**Comment.** Intégrer KaTeX (bundle local, pas de CDN — cohérent avec la CSP stricte) dans le
+**Comment.** Intégrer KaTeX (bundle local, pas de CDN, cohérent avec la CSP stricte) dans le
 rendu Markdown des bulles. Attention à l'échappement (le rendu Markdown actuel échappe le HTML
 d'abord ; insérer KaTeX après, sur les délimiteurs math).
 
-### 1.6 Multi-modèles en parallèle — comparaison côte à côte  · `should` · `M`–`L`
+### 1.6 Multi-modèles en parallèle, comparaison côte à côte  · `should` · `M`–`L`
 **Ce que c'est.** Envoyer **une seule requête à plusieurs modèles en même temps** et afficher
 leurs réponses **côte à côte** : la zone de conversation se **divise en deux** (ou N) colonnes,
 chacune diffusant en streaming la réponse de son modèle.
@@ -95,22 +95,22 @@ l'utilisateur.)*
 
 ## 2. Séquencement
 
-1. ✅ **v-next « confort prof »** — les chantiers du §1 (LaTeX + comparaison multi-modèles +
+1. ✅ **v-next « confort prof »**, les chantiers du §1 (LaTeX + comparaison multi-modèles +
    régénérer/modifier/copier + menu Aide + message de refus). **Livré** en `20260626.8.0`.
-2. ✅ **Chantier Moodle** — le différenciateur, voir §4. **Quasi terminé (Lots 0-5 + 5.1 + 7)
+2. ✅ **Chantier Moodle**, le différenciateur, voir §4. **Quasi terminé (Lots 0-5 + 5.1 + 7)
    fusionnés dans `main`, pas encore publiés en `.dmg`** (destinés à la prochaine version). Reste
    le Lot 6 (interrupteur composeur) puis le merge/release (§4.6). *(Choix acté : Moodle **avant**
    Linux.)*
-3. **Build Linux** — voir §3.
+3. **Build Linux**, voir §3.
 4. **Backlog** (§5) selon les retours terrain.
 
-### v.9 — petits correctifs & polish (rapides, avant/pendant Moodle)
-- ✅ **FAIT — Première ouverture macOS : commande Terminal en évidence.** Sur macOS récent,
+### v.9, petits correctifs & polish (rapides, avant/pendant Moodle)
+- ✅ **FAIT, Première ouverture macOS : commande Terminal en évidence.** Sur macOS récent,
   « Ouvrir quand même » n'apparaît **pas** pour le message « endommagé » (quarantaine posée sur
   une app non signée téléchargée). La commande
   `xattr -dr com.apple.quarantine /Applications/Doceria.app` est **déjà remontée sur le site web
   (rubrique « Installer », `docs/index.html`) ET dans le LISEZ-MOI** du `.dmg`. *(Le vrai
-  correctif — la **notarisation Apple** — reste « plus tard », §5.4.)*
+  correctif, la **notarisation Apple**, reste « plus tard », §5.4.)*
 - **Menu natif : entrée « Vérifier les mises à jour… ».** Ajouter une entrée dans le menu
   **Doceria**, **sous « À propos »**, qui déclenche manuellement `check_update` (déjà appelée au
   démarrage). Effort S.
@@ -120,8 +120,8 @@ l'utilisateur.)*
   `quit(&h, Some("Quitter Doceria"))`, etc. (ou déclarer la localisation `fr` du bundle). Effort S.
 - **Site web : alléger le menu de navigation.** La barre de nav est chargée (Présentation,
   Fonctionnalités, Mode d'emploi, Souveraineté, Feuille de route, Installer, GitHub, JEDI-OpenLab).
-  → **Regrouper** des entrées sous un menu déroulant — p. ex. **Présentation / Fonctionnalités /
-  Mode d'emploi** sous un « Découvrir » (ou « Le produit ») — pour clarifier la lecture. Effort S.
+  → **Regrouper** des entrées sous un menu déroulant, p. ex. **Présentation / Fonctionnalités /
+  Mode d'emploi** sous un « Découvrir » (ou « Le produit »), pour clarifier la lecture. Effort S.
 
 ---
 
@@ -139,7 +139,7 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
 
 ---
 
-## 4. Chantier Moodle — le différenciateur
+## 4. Chantier Moodle, le différenciateur
 
 > Inspiré du POC **[Learnix](https://jedi-openlab.github.io/Learnix/)** (extraction via WS REST,
 > compte technique à jeton révocable limité aux fonctions de contenu, **lecture seule stricte**,
@@ -147,7 +147,7 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
 > descriptions de modules + fichiers/PDF** (Lot 4, livré) ; sortie **Markdown** avec hiérarchie ;
 > RAG strict « uniquement depuis les documents »).
 
-**Verdict : TERMINÉ (Lots 0-7, tous les lots) — pas encore publié en `.dmg`.** Le connecteur est
+**Verdict : TERMINÉ (Lots 0-7, tous les lots) ; pas encore publié en `.dmg`.** Le connecteur est
 **implémenté, relu (revues multi-agents adversariales) et validé** sur un Moodle 5.1.4 de test, mais
 il **n'est pas encore dans le `.dmg` publié `20260626.8.0`** : il est destiné à la **prochaine
 version**. **Le Lot 6** (interrupteur composeur « Inclure les cours Moodle ») est **livré (2026-07-03)** ;
@@ -162,37 +162,37 @@ en restant dans le périmètre ESR.
 ### 4.1 Sous-étapes
 | État | Effort | Item |
 |---|---|---|
-| ✅ FAIT | L | **Connecteur Moodle WS REST en lecture seule** (profils Moodle indépendants ; jeton au trousseau, rôle « moodle » ; test de connexion : liste blanche de 8 fonctions de contenu + `downloadfiles`) — Lots 0-1 |
-| ✅ FAIT | M | **Configuration + sélection des cours** (explorateur central : recherche + filtre catégorie + cases à cocher, sélection persistée) — Lots 2 + 2.5 |
-| ✅ FAIT | M | **Mapping HTML Moodle → Markdown hiérarchisé** (convertisseur **maison en Rust**, zéro dépendance) → ingestion du texte dans « Moodle · <cours> », synchro one-shot avec barre de progression — Lot 3. *(Pas de revue humaine / prévisualisation implémentée : ingestion directe.)* |
-| ✅ FAIT | M | **Fichiers / PDF des cours** (téléchargement sécurisé via `pluginfile.php?token=` + extraction locale → `rag_upload_document`, contourne le 502 ILaaS) — Lot 4 |
-| ✅ FAIT | M | **Synchro incrémentale + déduplication** (index local de diff : une re-synchro ne duplique plus ; suppressions ; bilan détaillé) — Lot 5 |
-| ✅ FAIT | S | **Bouton « Nouveautés »** → badge « ⟳ à mettre à jour » sur les cours modifiés côté Moodle — Lot 5.1 |
-| ✅ FAIT | M | **Filtre opt-in « cours inscrits » = consentement de l'enseignant·e** (inscription du compte technique = accord ; `core_enrol_get_users_courses` appelée **uniquement** pour le compte technique → zéro donnée d'étudiant·e ; interrupteur, **défaut ON**) — Lot 7 |
-| ✅ FAIT | S | **Interrupteur composeur « Inclure les cours Moodle »** dans le chat (recherche RAG multi-collections : collection active + tous les cours Moodle indexés, avec citations) — **Lot 6** (2026-07-03) ; reste : test réel puis merge/release |
+| ✅ FAIT | L | **Connecteur Moodle WS REST en lecture seule** (profils Moodle indépendants ; jeton au trousseau, rôle « moodle » ; test de connexion : liste blanche de 8 fonctions de contenu + `downloadfiles`), Lots 0-1 |
+| ✅ FAIT | M | **Configuration + sélection des cours** (explorateur central : recherche + filtre catégorie + cases à cocher, sélection persistée), Lots 2 + 2.5 |
+| ✅ FAIT | M | **Mapping HTML Moodle → Markdown hiérarchisé** (convertisseur **maison en Rust**, zéro dépendance) → ingestion du texte dans « Moodle · <cours> », synchro one-shot avec barre de progression, Lot 3. *(Pas de revue humaine / prévisualisation implémentée : ingestion directe.)* |
+| ✅ FAIT | M | **Fichiers / PDF des cours** (téléchargement sécurisé via `pluginfile.php?token=` + extraction locale → `rag_upload_document`, contourne le 502 ILaaS), Lot 4 |
+| ✅ FAIT | M | **Synchro incrémentale + déduplication** (index local de diff : une re-synchro ne duplique plus ; suppressions ; bilan détaillé), Lot 5 |
+| ✅ FAIT | S | **Bouton « Nouveautés »** → badge « ⟳ à mettre à jour » sur les cours modifiés côté Moodle, Lot 5.1 |
+| ✅ FAIT | M | **Filtre opt-in « cours inscrits » = consentement de l'enseignant·e** (inscription du compte technique = accord ; `core_enrol_get_users_courses` appelée **uniquement** pour le compte technique → zéro donnée d'étudiant·e ; interrupteur, **défaut ON**), Lot 7 |
+| ✅ FAIT | S | **Interrupteur composeur « Inclure les cours Moodle »** dans le chat (recherche RAG multi-collections : collection active + tous les cours Moodle indexés, avec citations), **Lot 6** (2026-07-03) ; reste : test réel puis merge/release |
 
-### 4.2 Plan technique (livré — Lots 0-5 + 5.1 + 7)
+### 4.2 Plan technique (livré, Lots 0-5 + 5.1 + 7)
 - **Module `src-tauri/src/moodle.rs`** : un seul endpoint `POST /webservice/rest/server.php`
   via `reqwest` (déjà compilé : json / stream / rustls). Jeton **résolu côté Rust au
   trousseau** (modèle `settings::resolve_moodle`, rôle « moodle »), **jamais** exposé à la
   webview ni journalisé. **Client HTTP Moodle dédié `redirect(Policy::none())`** : le jeton
   voyageant dans le **corps** du POST, une 3xx d'un Moodle malveillant/compromis (ou MITM sur
   `http://` LAN) pourrait l'exfiltrer → toute redirection est **refusée** (revue sécurité Lot 2).
-- **Liste blanche STRICTE (`WHITELIST` — fonctions de contenu uniquement, constante pour audit)** :
+- **Liste blanche STRICTE (`WHITELIST`, fonctions de contenu uniquement, constante pour audit)** :
   - `core_webservice_get_site_info` (test de connexion / diagnostic),
   - `core_course_get_categories`, `core_course_get_courses_by_field`, `core_course_get_contents`,
   - `mod_page_get_pages_by_courses`, `mod_label_get_labels_by_courses`,
     `mod_resource_get_resources_by_courses`, `mod_book_get_books_by_courses`,
   - téléchargement des fichiers via `pluginfile.php?token=…` (Lot 4, **livré**),
   - `core_enrol_get_users_courses` **uniquement pour le compte technique** (filtre opt-in
-    « cours inscrits » — Lot 7, **livré** ; aucune donnée d'étudiant·e).
+    « cours inscrits », Lot 7, **livré** ; aucune donnée d'étudiant·e).
 - **EXCLURE impérativement** : `core_user_*`, `core_enrol_*`, `gradereport_*`,
   `mod_assign_get_submissions`, etc. → garantit **« sans données personnelles »**.
 - **Robustesse Moodle** : **toujours parser le corps JSON même en HTTP 200** (Moodle renvoie ses
   erreurs `{exception, errorcode, message}` avec un statut 200 ; `moodle_error()` les traduit en
   français). Parsing **tolérant aux millésimes** 3.x / 4.x / 5.x. Le cours « site » (`id==1`) est
   **filtré**.
-- **Convertisseur HTML → Markdown MAISON en Rust (`html_to_markdown`, zéro dépendance —
+- **Convertisseur HTML → Markdown MAISON en Rust (`html_to_markdown`, zéro dépendance,
   PAS html2md/turndown)** : tokenise → sérialise → normalise ; gère titres, `p/div`, `br`,
   `ul/ol/li`, `strong/em`, `a[href]`, `blockquote`, `code` ; décode les entités nommées +
   numériques ; découpes char-safe (aucun panic sur l'UTF-8 accentué) ; **7 tests unitaires**
@@ -231,24 +231,24 @@ d'erreur explicites** (capability manquante, jeton invalide, WS désactivés…)
 *(Le **mode Requête + citations** de Doceria couvrent déjà l'exigence « RAG strict » de Learnix ;
 le correctif §4.3 le renforce.)*
 
-### 4.5 Décision de gouvernance — Indexation Moodle : opt-in par consentement
+### 4.5 Décision de gouvernance, Indexation Moodle : opt-in par consentement
 
 **Principe.** Doceria adopte l'**opt-in par défaut**. À rebours du modèle « l'IA est partout, à
 vous de la désactiver » (**opt-out**), **aucun cours Moodle n'est indexé sans une action explicite
 de l'enseignant·e**. Valeurs portées : **transparence**, **choix** et **liberté** de
 l'enseignant·e sur ses propres contenus.
 
-**Mécanisme — l'inscription du compte vaut consentement.** Le compte technique de **lecture seule**
+**Mécanisme : l'inscription du compte vaut consentement.** Le compte technique de **lecture seule**
 (`doceria-rag-readonly`) n'est **inscrit que dans les cours** dont l'enseignant·e a donné son
 accord ; Doceria n'affiche et n'indexe **que ces cours**. Un rôle dédié
 **« Doceria — indexation IA (lecture seule) »** rend la présence du compte **transparente** pour
 l'enseignant·e. Techniquement, le filtre s'appuie sur `core_enrol_get_users_courses` appelée
-**uniquement pour le compte technique** — donc **aucune donnée d'étudiant·e** n'est lue.
+**uniquement pour le compte technique** ; donc **aucune donnée d'étudiant·e** n'est lue.
 
 **Deux modes de gouvernance :**
-- **Opt-in par défaut** (recommandé) — inscription cours par cours = consentement explicite ;
+- **Opt-in par défaut** (recommandé) : inscription cours par cours = consentement explicite ;
   Doceria filtre pour n'exposer que les cours consentis.
-- **« Tout indexer »** (alternative, **décision de la Direction**) — si l'établissement choisit
+- **« Tout indexer »** (alternative, **décision de la Direction**), si l'établissement choisit
   d'indexer tous les cours par défaut : soit donner au compte l'accès en lecture au niveau
   catégorie/système (capacité `moodle/course:view`), soit inscrire le compte massivement, **puis**
   désactiver le filtre opt-in dans Doceria. C'est un **choix de gouvernance**, pas un réglage
@@ -262,22 +262,22 @@ l'enseignant·e. Techniquement, le filtre s'appuie sur `core_enrol_get_users_cou
 
 ### 4.6 État du chantier Moodle
 **Livrés et relus (fusionnés dans `main`, pas encore publiés en `.dmg`) :**
-- ✅ **Lot 4 — Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
+- ✅ **Lot 4, Fichiers / PDF** : `moodle_download_file` (`pluginfile.php?token=…`, validation
   `Content-Type` pour ne pas créer de faux document) + **extraction locale** (contourne le 502
   ILaaS) → `rag_upload_document`.
-- ✅ **Lot 5 — Synchro incrémentale + dédup** : index local de diff (delete + re-upload),
+- ✅ **Lot 5, Synchro incrémentale + dédup** : index local de diff (delete + re-upload),
   suppressions, bilan détaillé ; une re-synchro ne duplique plus.
-- ✅ **Lot 5.1 — Bouton « Nouveautés »** : badge « ⟳ à mettre à jour » sur les cours modifiés côté
+- ✅ **Lot 5.1, Bouton « Nouveautés »** : badge « ⟳ à mettre à jour » sur les cours modifiés côté
   Moodle.
-- ✅ **Lot 7 — Filtre opt-in « cours inscrits »** (consentement de l'enseignant·e ; interrupteur,
+- ✅ **Lot 7, Filtre opt-in « cours inscrits »** (consentement de l'enseignant·e ; interrupteur,
   défaut ON ; `core_enrol_get_users_courses` **uniquement** pour le compte technique).
 
 **Reste à faire (avant merge/release) :**
-- **Lot 6 — Interrupteur composeur « Inclure les cours Moodle » ✅ (2026-07-03)** : fait remonter les
+- **Lot 6, Interrupteur composeur « Inclure les cours Moodle » ✅ (2026-07-03)** : fait remonter les
   passages Moodle avec citations dans le chat (recherche RAG multi-collections) ; masqué tant qu'aucune
   collection Moodle n'est synchronisée, actif seulement quand « Utiliser la bibliothèque » l'est.
 - **Merge / release** *(reste)* : embarquer le connecteur dans le prochain `.dmg`.
-- *(Portage **Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode** —, version
+- *(Portage **Windows**, Tauri multiplateforme + WebView2 + **signature Authenticode**, version
   **serveur/web**, **Linux** et **notarisation** : voir §3 et §5.4.)*
 
 ---
@@ -313,9 +313,9 @@ l'enseignant·e. Techniquement, le filtre s'appuie sur `core_enrol_get_users_cou
 ### 5.4 Distribution
 | Pri | Effort | Item |
 |---|---|---|
-| later | L | **LLM 100 % local optionnel** (Ollama / LM Studio) comme **repli hors-ligne** — l'attache ILaaS/OpenGateLLM restant le défaut et un atout. |
-| later | L | **Updater signé complet** (auto-install) — nécessite une paire de clés de signature Tauri + `latest.json`. |
-| later | L | **Notarisation Apple** — si un compte développeur Apple est pris (supprime les avertissements « app non signée »). |
+| later | L | **LLM 100 % local optionnel** (Ollama / LM Studio) comme **repli hors-ligne**, l'attache ILaaS/OpenGateLLM restant le défaut et un atout. |
+| later | L | **Updater signé complet** (auto-install), nécessite une paire de clés de signature Tauri + `latest.json`. |
+| later | L | **Notarisation Apple**, si un compte développeur Apple est pris (supprime les avertissements « app non signée »). |
 
 ---
 
@@ -346,5 +346,5 @@ Volontairement écarté, parce que **hors-scope pour un·e prof ESR souverain·e
 
 > **Note sur la comparaison multi-modèles.** L'affichage côte à côte **par défaut** est à
 > éviter (double la conso/coût). Mais en **mode opt-in explicite** (avec indicateur de coût),
-> c'est une fonctionnalité **retenue pour la v-next** (§1.6) — utile pour choisir le meilleur
+> c'est une fonctionnalité **retenue pour la v-next** (§1.6), utile pour choisir le meilleur
 > modèle souverain.

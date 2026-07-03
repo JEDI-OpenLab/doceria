@@ -68,6 +68,9 @@ img{max-width:100%}
 .band-paper{background:var(--paper)}
 .band-surface{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .band-deep{background:var(--petrol-deep);color:#E7EDEA}
+/* Liens sur fond sombre : lisibles (or clair souligné) — évite le vert-sur-vert. Exclut les boutons. */
+.band-deep a:not(.btn){color:#D8B66A;text-decoration:underline;text-underline-offset:2px}
+.band-deep a:not(.btn):hover{color:#E3C77E}
 .kicker{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:.6rem}
 .kicker.light{color:#D8B66A}
 .section-serif{font-size:clamp(1.8rem,3.6vw,2.6rem);font-weight:600;line-height:1.15;margin:0 0 1rem}

@@ -2,11 +2,11 @@
 
 > **Enseigner avec l'IA.**
 
-Application de bureau **native** pour interroger l'**API ILaaS** — la
+Application de bureau **native** pour interroger l'**API ILaaS**, la
 fédération d'inférence souveraine de l'enseignement supérieur et de la recherche français
 (API compatible OpenAI ; modèle de chat `mistral-medium-latest`). Doceria fait aussi du
 **RAG** sur une bibliothèque de documents via le **service RAG géré ILaaS** (collections
-privées OpenGateLLM ; documents, embeddings et index vivent côté infrastructure ESR — l'ancien
+privées OpenGateLLM ; documents, embeddings et index vivent côté infrastructure ESR ; l'ancien
 projet de RAG 100 % local est une piste abandonnée). **Seul macOS (Apple Silicon) est livré à ce
 jour** ; Windows et Linux relèvent de la feuille de route.
 
@@ -24,18 +24,18 @@ Chat ⇄ Requête** et **réglages de récupération** (méthode `hybrid`/`seman
 d'extraits, seuil de similarité), chargement de documents de contexte ponctuels
 (txt, md, csv, json, pdf, docx). En **mode Requête**, la réponse est strictement fondée sur les
 documents : si la recherche RAG échoue ou ne renvoie **aucun extrait**, le modèle **n'est pas
-interrogé** (aucun appel facturé) et un message l'explique — pas de repli sur ses connaissances
+interrogé** (aucun appel facturé) et un message l'explique ; pas de repli sur ses connaissances
 générales. En **mode Chat**, un tel repli reste possible mais s'accompagne d'un avertissement.
 Interface soignée : **thème clair/sombre/auto**, **vibrance macOS**, **colonnes et sections
 pliables**, aides contextuelles.
 
 La **bibliothèque** peut aussi être **liée à un dossier local** : un bouton « Synchroniser »
 (ou une synchro automatique à l'ouverture du profil, `ragAutoSync`) ajoute les nouveaux fichiers,
-met à jour les modifiés et **retire** de la collection ceux supprimés du dossier — indexation
+met à jour les modifiés et **retire** de la collection ceux supprimés du dossier, indexation
 incrémentale, sans tout re-téléverser. Les **PDF/DOCX sont extraits en texte localement**
 (pdf.js/mammoth) avant l'envoi, ce qui contourne les limites du parseur serveur.
 
-### Connecteur Moodle (jalon phare — quasi complet, fusionné dans `main`, pour la prochaine version)
+### Connecteur Moodle (jalon phare, quasi complet, fusionné dans `main`, pour la prochaine version)
 
 Le connecteur **Moodle** (lecture seule) est **quasi complet** : texte des cours, fichiers/PDF,
 synchro incrémentale et indexation opt-in par consentement sont **livrés et fusionnés dans `main`**,
@@ -47,23 +47,23 @@ après des revues multi-agents adversariales. Il ne fait **pas encore partie du 
   plus `downloadfiles`, via un **client HTTP dédié sans redirections** (le jeton voyageant dans le
   corps du POST, suivre une 3xx pourrait l'exfiltrer).
 - **Indexation opt-in par consentement de l'enseignant** : aucun cours n'est indexé sans une action
-  explicite de l'enseignant — le compte technique de lecture seule (`doceria-rag-readonly`) n'est
+  explicite de l'enseignant ; le compte technique de lecture seule (`doceria-rag-readonly`) n'est
   **inscrit** que dans les cours où l'enseignant a accepté, et Doceria n'indexe **que** ces cours ;
   l'inscription du compte vaut consentement. Un **filtre opt-in « cours inscrits »** (interrupteur,
   **défaut activé**) n'affiche que les cours consentis via `core_enrol_get_users_courses` appelée
-  **pour le seul compte technique** — donc **aucune donnée d'étudiant**. Un mode « tout indexer »
+  **pour le seul compte technique** ; donc **aucune donnée d'étudiant**. Un mode « tout indexer »
   reste possible sur décision de l'établissement (accès en lecture au niveau catégorie/système).
 - **Profils de connexion Moodle** (nom + URL + jeton) **indépendants** des profils ILaaS,
   plusieurs connexions possibles ; le **jeton va au trousseau** (rôle « moodle »).
 - **Explorateur de cours** central : recherche, filtre par catégorie, cases à cocher, **sélection
   persistée** dans les métadonnées du profil.
 - Bouton **Synchroniser** = ingestion du **texte** (résumés de section + descriptions de modules)
-  via un **convertisseur HTML → Markdown maison en Rust** (zéro dépendance, tests unitaires — ni
+  via un **convertisseur HTML → Markdown maison en Rust** (zéro dépendance, tests unitaires ; ni
   html2md, ni turndown, ni html2text) vers une collection RAG « **Moodle · &lt;cours&gt;** » du
   profil ILaaS actif, ensuite interrogeable avec citations. **Barre de progression** par cours et
   garde-fou anti-corruption inter-profils (verrou pendant la synchro).
 - **Fichiers/PDF** joints aux cours : **téléchargement sécurisé** (`pluginfile.php` avec `token=`
-  dans le corps du POST) puis **extraction en texte localement** — ce qui contourne le 502 du
+  dans le corps du POST) puis **extraction en texte localement**, ce qui contourne le 502 du
   parseur serveur ILaaS.
 - **Synchro incrémentale + déduplication** : un **index local** évite de re-téléverser ; une
   nouvelle synchro **ne duplique plus** et produit un **bilan détaillé** (ajoutés / mis à jour /
@@ -88,18 +88,18 @@ et **vérification de mise à jour** au démarrage (GitHub Releases). Direction 
 Doceria s'inspire des outils de RAG de bureau (comme **AnythingLLM**) mais assume des choix
 différents, pensés pour l'**enseignement supérieur souverain** et la simplicité côté enseignant :
 
-- **Souverain par conception** — bâti pour **ILaaS / OpenGateLLM** (fédération ESR, tutelle MESR) :
+- **Souverain par conception**, bâti pour **ILaaS / OpenGateLLM** (fédération ESR, tutelle MESR) :
   données et vecteurs restent dans le périmètre ESR. Les outils agnostiques laissent, eux, la
   souveraineté dépendre de votre configuration.
-- **Dossier ↔ collection** — liez une collection à un dossier local et synchronisez (ajout, mise à
+- **Dossier ↔ collection**, liez une collection à un dossier local et synchronisez (ajout, mise à
   jour, **retrait**) à la demande ou à l'ouverture du profil. La synchro de documents d'AnythingLLM
   est, à ce jour, limitée à **un seul fichier** à la fois (« *you currently cannot watch an entire
   directory* »).
-- **Léger & natif** — **Tauri** (webview système + cœur Rust, ~15 Mo, vibrance macOS) plutôt
+- **Léger & natif**, **Tauri** (webview système + cœur Rust, ~15 Mo, vibrance macOS) plutôt
   qu'**Electron**.
-- **Clés au trousseau du système** — jamais dans un fichier de l'app ni dans la page ; réseau en
+- **Clés au trousseau du système**, jamais dans un fichier de l'app ni dans la page ; réseau en
   Rust (pas de CORS). AnythingLLM chiffre les clés au repos dans sa base SQLite applicative.
-- **Zéro télémétrie** — rien ne sort vers un tiers, par défaut. (AnythingLLM collecte une télémétrie
+- **Zéro télémétrie**, rien ne sort vers un tiers, par défaut. (AnythingLLM collecte une télémétrie
   *anonyme* activée par défaut, désactivable.)
 
 En toute honnêteté, AnythingLLM reste **plus riche** sur d'autres terrains (agents, connecteurs
@@ -123,8 +123,8 @@ Voir `docs/ARCHITECTURE.md` pour le détail, `docs/ROADMAP.md` pour le phasage.
 ## Prérequis
 
 Chaîne Rust + dépendances système (et Node 18+). Procédure complète : **`docs/SETUP.md`**.
-En bref : `rustup` (cargo/rustc), Xcode (macOS), Node. (Les dépendances Linux —
-`libwebkit2gtk-4.1-dev` & co — ne concernent que le portage Linux, qui n'est pas encore livré.)
+En bref : `rustup` (cargo/rustc), Xcode (macOS), Node. (Les dépendances Linux,
+`libwebkit2gtk-4.1-dev` & co, ne concernent que le portage Linux, qui n'est pas encore livré.)
 
 ## Développement
 
@@ -136,7 +136,7 @@ npm run tauri dev      # ouvre la fenêtre native, rechargement à chaud du fron
 Dans l'app : crée un **profil** (rail « Connexion » → **+ Nouveau**), colle ta **clé d'inférence**
 (URL `https://llm.ilaas.fr/v1` par défaut), **Tester** récupère les modèles ; ajoute si besoin
 l'**URL + clé RAG** (`https://rag-api.ilaas.fr/v1`) pour activer la bibliothèque. Les clés vont
-au trousseau du système — aucune variable d'environnement requise (cf. `.env.example`).
+au trousseau du système, aucune variable d'environnement requise (cf. `.env.example`).
 
 ## Build (application distribuable, non signée)
 
@@ -144,15 +144,15 @@ au trousseau du système — aucune variable d'environnement requise (cf. `.env.
 npm run tauri build
 ```
 
-Le numéro de version suit le schéma **`AAAAMMJJ.ii.0`** (date · itération du jour · 0), valide semver — voir `src-tauri/Cargo.toml`. Pour une release, taguer `vAAAAMMJJ.ii.0` (le bouton « Télécharger » du site et la vérification de mise à jour s'appuient dessus).
+Le numéro de version suit le schéma **`AAAAMMJJ.ii.0`** (date · itération du jour · 0), valide semver ; voir `src-tauri/Cargo.toml`. Pour une release, taguer `vAAAAMMJJ.ii.0` (le bouton « Télécharger » du site et la vérification de mise à jour s'appuient dessus).
 
-- **macOS — Apple Silicon (arm64), seule plateforme livrée** : `Doceria.app` +
+- **macOS, Apple Silicon (arm64), seule plateforme livrée** : `Doceria.app` +
   `Doceria_<version>_aarch64.dmg` (`src-tauri/target/release/bundle/`). Le build se fait sur un Mac
-  Apple Silicon → app **arm64** native (pas d'Intel — cible arm64 conforme au matériel Apple Silicon
+  Apple Silicon → app **arm64** native (pas d'Intel, cible arm64 conforme au matériel Apple Silicon
   visé). Build **non signé** → au 1ᵉʳ lancement : clic droit → **Ouvrir**, ou Réglages Système →
   Confidentialité et sécurité → « Ouvrir quand même ». Guide utilisateur pas-à-pas :
   [`INSTALLATION-macOS.md`](INSTALLATION-macOS.md).
-- **Linux** (`.AppImage`, `.deb`, `.rpm`) : **non livré** — cibles prévues dans la feuille de route
+- **Linux** (`.AppImage`, `.deb`, `.rpm`) : **non livré**, cibles prévues dans la feuille de route
   (le portage Linux est planifié **après** le connecteur Moodle). Windows relève également de la
   feuille de route.
 
@@ -184,7 +184,7 @@ doceria/
 
 ## Feuille de route à venir
 
-- **Moodle — Lot 6** : interrupteur « inclure les cours Moodle » directement dans le chat
+- **Moodle, Lot 6** : interrupteur « inclure les cours Moodle » directement dans le chat
   (**dernier lot** avant merge/release ; les fichiers/PDF, la synchro incrémentale et le filtre
   opt-in « cours inscrits » sont **déjà livrés** dans `main`).
 - **Portage Windows** : Tauri multiplateforme + WebView2 + **signature Authenticode**.
@@ -202,7 +202,7 @@ elles ne transitent jamais par le webview ni par un fichier (la résolution clé
 fait dans le cœur Rust). Ne placez jamais de clé en clair dans un fichier versionné.
 
 > ⚠️ **macOS, app non signée** : au premier accès au trousseau, macOS peut afficher
-> « Doceria souhaite utiliser le trousseau » — c'est attendu. L'app n'étant pas signée
+> « Doceria souhaite utiliser le trousseau » ; c'est attendu. L'app n'étant pas signée
 > (signature ad-hoc), l'autorisation peut être redemandée après une reconstruction ; une
 > signature/notarisation (hors V1) la rendrait stable.
 
