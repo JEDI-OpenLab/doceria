@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="660" viewBox="0 0 1280 660" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dms-title dms-desc">
   <title id="dms-title">Configuration de Moodle pour Doceria</title>
-  <desc id="dms-desc">L'enseignant inscrit le compte de lecture doceria-rag-readonly dans son cours : c'est le consentement (opt-in). Côté Moodle, un compte technique en lecture seule porte un jeton et un rôle dédié ; un service web dédié n'expose qu'une liste blanche de fonctions de contenu. Doceria lit, via le jeton, uniquement les cours consentis et les indexe dans une collection privée interrogeable avec citations. Lecture seule stricte, aucune donnée d'étudiant.</desc>
+  <desc id="dms-desc">L'enseignant·e inscrit le compte de lecture doceria-rag-readonly dans son cours : c'est le consentement (opt-in). Côté Moodle, un compte technique en lecture seule porte un jeton et un rôle dédié ; un service web dédié n'expose qu'une liste blanche de fonctions de contenu. Doceria lit, via le jeton, uniquement les cours consentis et les indexe dans une collection privée interrogeable avec citations. Lecture seule stricte, aucune donnée d'étudiant.</desc>
   <defs>
     <marker id="dms-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1A5A55"/></marker>
     <filter id="dms-sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#11302E" flood-opacity=".14"/></filter>
@@ -18,7 +18,7 @@
 
   <rect x="0" y="0" width="1280" height="660" rx="28" fill="#F7F2E7"/>
   <text x="640" y="52" text-anchor="middle" class="t">Comment Moodle est paramétré pour Doceria</text>
-  <text x="640" y="82" text-anchor="middle" class="sub">Lecture seule · l'inscription du compte = le consentement de l'enseignant</text>
+  <text x="640" y="82" text-anchor="middle" class="sub">Lecture seule · l'inscription du compte = le consentement de l'enseignant·e</text>
 
   <!-- Connecteurs -->
   <line x1="392" y1="330" x2="452" y2="330" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#dms-ar)"/>
@@ -26,9 +26,9 @@
   <line x1="828" y1="330" x2="888" y2="330" stroke="#1A5A55" stroke-width="3.5" stroke-linecap="round" marker-end="url(#dms-ar)"/>
   <text x="858" y="315" text-anchor="middle" class="lbl">jeton</text>
 
-  <!-- 1. Enseignant (consentement) -->
+  <!-- 1. Enseignant·e (consentement) -->
   <rect x="56" y="150" width="336" height="360" rx="14" fill="#F2E7CC" stroke="#B68F46" stroke-width="3" filter="url(#dms-sh)"/>
-  <text x="224" y="196" text-anchor="middle" class="bt">L'enseignant</text>
+  <text x="224" y="196" text-anchor="middle" class="bt">L'enseignant·e</text>
   <line x1="86" y1="214" x2="362" y2="214" stroke="#DCCba0" stroke-width="1.5"/>
   <text x="224" y="250" text-anchor="middle" class="bxs">Opt-in par défaut</text>
   <text x="224" y="286" text-anchor="middle" class="bx">Il inscrit le compte de lecture</text>

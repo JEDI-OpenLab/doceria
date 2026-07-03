@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="772" viewBox="0 0 1280 772" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dca-title dca-desc">
   <title id="dca-title">Comment fonctionne Doceria</title>
-  <desc id="dca-desc">Schéma de principe : l'enseignant pose une question dans Doceria, application native macOS dont les clés restent au trousseau ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse. En option, les documents déposés par l'enseignant sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité. Rien ne part vers un cloud tiers.</desc>
+  <desc id="dca-desc">Schéma de principe : l'enseignant·e pose une question dans Doceria, application native macOS dont les clés restent au trousseau ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse. En option, les documents déposés par l'enseignant·e sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité. Rien ne part vers un cloud tiers.</desc>
   <defs>
     <marker id="dca-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
     <marker id="dca-gold" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#B68F46"/></marker>
@@ -48,7 +48,7 @@
   <g class="dca-ic" stroke="#B68F46"><ellipse cx="680" cy="476" rx="15" ry="5"/><path d="M665 476 v12 a15 5 0 0 0 30 0 v-12"/><path d="M665 482 a15 5 0 0 0 30 0"/></g>
 
   <!-- Textes -->
-  <text x="164" y="240" text-anchor="middle" class="dca-bt">Enseignant</text>
+  <text x="164" y="240" text-anchor="middle" class="dca-bt">Enseignant·e</text>
   <text x="164" y="266" text-anchor="middle" class="dca-bx">pose sa question</text>
 
   <text x="404" y="240" text-anchor="middle" class="dca-bt">Doceria</text>

@@ -67,7 +67,7 @@
           <p class="lead-intro">
             Une application de bureau <strong>native et souveraine</strong> pour interroger l'<strong>API ILaaS</strong>
             (la fédération d'inférence de l'enseignement supérieur et de la recherche) et dialoguer avec
-            <strong>vos propres documents</strong>. Pensée pour les enseignants, conçue avec soin.
+            <strong>vos propres documents</strong>, y compris <strong>vos cours Moodle</strong>. Pensée pour les enseignant·e·s, conçue avec soin.
           </p>
           <div class="d-flex flex-wrap gap-3 mt-4">
             <a class="btn btn-accent btn-lg" href="https://github.com/JEDI-OpenLab/doceria/releases/latest" target="_blank" rel="noopener">
@@ -161,14 +161,14 @@
             spécifier les besoins techniques et fonctionnels</strong>&nbsp;: RAG strictement fondé sur un
             corpus maîtrisé, périmètre 100&nbsp;% ESR, <strong>aucune donnée personnelle</strong>, et
             l'alimentation depuis Moodle. Doceria en fait un <strong>outil de bureau abouti</strong>,
-            simple et soigné, pour les enseignants.
+            simple et soigné, pour les enseignant·e·s.
           </p>
         </div>
       </div>
 
       <figure class="diagram">
         <img class="diagram-img" src="assets/doceria-architecture.svg"
-             alt="Schéma : l'enseignant pose une question dans Doceria (app native macOS, clés au trousseau) ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse ; en option, les documents déposés sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité ; la réponse revient avec ses citations, sans passer par un cloud tiers.">
+             alt="Schéma : l'enseignant·e pose une question dans Doceria (app native macOS, clés au trousseau) ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse ; en option, les documents déposés sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité ; la réponse revient avec ses citations, sans passer par un cloud tiers.">
         <figcaption>De votre question à la réponse, en restant dans le périmètre souverain de l'ESR.</figcaption>
       </figure>
 
@@ -176,7 +176,7 @@
         <div class="col-md-4">
           <div class="feature">
             <div class="plain-ic"><i class="fa-solid fa-chalkboard-user"></i></div>
-            <h3>Pensée pour les enseignants</h3>
+            <h3>Pensée pour les enseignant·e·s</h3>
             <p>Préparer un cours, un TD, un QCM, reformuler, corriger, vulgariser… Sans Docker, sans terminal&nbsp;: un double-clic, et c'est en français.</p>
           </div>
         </div>
@@ -198,7 +198,7 @@
 
       <p class="section-lead text-center" style="font-size:1.02rem;margin:2.4rem auto 0;max-width:44rem">
         Vos cours vivent dans <strong>Moodle</strong>&nbsp;? Doceria les indexe (<strong>en lecture seule,
-        sur consentement de l'enseignant</strong>) pour les interroger avec citations, sans copier-coller&nbsp;:
+        sur consentement de l'enseignant·e</strong>) pour les interroger avec citations, sans copier-coller&nbsp;:
         <a href="#moodle">découvrir le connecteur Moodle</a>.
       </p>
     </div>
@@ -317,7 +317,7 @@
       <div class="text-center mb-5">
         <span class="kicker">Pourquoi Doceria</span>
         <h2 class="section-serif">Ce qui distingue Doceria.</h2>
-        <p class="section-lead">Doceria s'inspire des bons outils de RAG de bureau (comme AnythingLLM), mais assume des choix différents, pensés pour l'enseignement supérieur souverain et la simplicité côté enseignant.</p>
+        <p class="section-lead">Doceria s'inspire des bons outils de RAG de bureau (comme AnythingLLM), mais assume des choix différents, pensés pour l'enseignement supérieur souverain et la simplicité côté enseignant·e.</p>
       </div>
       <div class="row g-4">
         <div class="col-md-6 col-lg-3">
@@ -372,7 +372,7 @@
         <div class="col-lg-5">
           <h3>Indexation sur <em>consentement</em></h3>
           <p class="deep-lead" style="margin:0 0 1.1rem">
-            <strong>Opt-in par défaut</strong> : un cours n'est indexé <strong>que si l'enseignant a
+            <strong>Opt-in par défaut</strong> : un cours n'est indexé <strong>que si l'enseignant·e a
             inscrit le compte de lecture</strong> de Doceria. L'inscription <strong>vaut accord</strong>,
             jamais à son insu. À rebours du «&nbsp;l'IA est partout, à vous de la désactiver&nbsp;», on part de
             l'inverse&nbsp;: <strong>transparence, choix, liberté</strong>.
@@ -387,7 +387,7 @@
         <div class="col-lg-7">
           <figure class="diagram">
             <img class="diagram-img" src="assets/doceria-moodle-setup.svg"
-                 alt="Schéma de configuration Moodle : un compte technique doceria-rag-readonly reçoit un rôle en lecture seule et un jeton web-service ; un service dédié n'expose qu'une liste blanche de fonctions de contenu ; le compte n'est inscrit que dans les cours dont l'enseignant a donné son accord (consentement) ; Doceria lit ces cours via le jeton et les indexe dans une collection privée, sans aucune donnée d'étudiant.">
+                 alt="Schéma de configuration Moodle : un compte technique doceria-rag-readonly reçoit un rôle en lecture seule et un jeton web-service ; un service dédié n'expose qu'une liste blanche de fonctions de contenu ; le compte n'est inscrit que dans les cours dont l'enseignant·e a donné son accord (consentement) ; Doceria lit ces cours via le jeton et les indexe dans une collection privée, sans aucune donnée d'étudiant.">
             <figcaption>Comment on paramètre Moodle&nbsp;: compte de lecture, rôle dédié, liste blanche de fonctions, et inscription&nbsp;=&nbsp;consentement.</figcaption>
           </figure>
         </div>
@@ -395,10 +395,9 @@
 
       <div class="text-center mt-5">
         <p class="deep-lead" style="margin:0 auto;max-width:44rem">
-          <em>Le connecteur est <strong>développé, relu et validé de bout en bout</strong> ; il arrive dans la
-          <strong>prochaine version</strong>&nbsp;; la version téléchargeable ne l'inclut pas encore. Doceria est en
+          <em>Le connecteur est <strong>développé, relu et validé de bout en bout</strong> ; il sera <strong>disponible la semaine du 6 juillet</strong>&nbsp;; la version téléchargeable actuelle ne l'inclut pas encore. Doceria est en
           phase de <strong>développement actif</strong>&nbsp;; l'étape suivante&nbsp;: l'expérimentation à
-          l'échelle avec plusieurs enseignants.</em>
+          l'échelle avec plusieurs enseignant·e·s.</em>
         </p>
         <p class="deep-lead" style="margin:1rem auto 0;max-width:44rem;font-size:.95rem">
           <strong>Pour les administrateurs</strong>&nbsp;: le paramétrage Moodle pas à pas est documenté dans le
@@ -415,6 +414,7 @@
       <div class="text-center mb-5">
         <span class="kicker">Aperçu</span>
         <h2 class="section-serif">L'application en images.</h2>
+        <p class="section-lead">Ces captures montrent l'app d'aujourd'hui. Une <strong>interface entièrement repensée</strong> arrive en juillet 2026&nbsp;: <a href="nouvelle-interface.html">découvrir la nouvelle Doceria</a>.</p>
       </div>
       <div class="row g-4 g-lg-5 justify-content-center">
         <figure class="col-md-6 shot m-0">
@@ -427,11 +427,11 @@
         </figure>
         <figure class="col-md-6 shot m-0">
           <img class="shot-img" src="assets/screen-3-synchro-moodle.png" alt="Explorateur de cours Moodle : recherche, cours groupés par catégorie et cases à cocher pour choisir ce qu'on synchronise vers la bibliothèque." loading="lazy" onerror="this.closest('.shot').remove()">
-          <figcaption class="shot-cap">Connecteur Moodle&nbsp;: on choisit les cours (recherche + catégories) et on synchronise. <span class="shot-soon">prochaine version</span></figcaption>
+          <figcaption class="shot-cap">Connecteur Moodle&nbsp;: on choisit les cours (recherche + catégories) et on synchronise. <span class="shot-soon">sem. du 6 juillet</span></figcaption>
         </figure>
         <figure class="col-md-6 shot m-0">
           <img class="shot-img" src="assets/screen-4-rag-moodle.png" alt="Réponse sur un cours Moodle : question posée en mode Requête, réponse structurée à partir du cours indexé, avec citations et bloc Sources." loading="lazy" onerror="this.closest('.shot').remove()">
-          <figcaption class="shot-cap">Une question sur un cours Moodle synchronisé&nbsp;: réponse sourcée, avec citations. <span class="shot-soon">prochaine version</span></figcaption>
+          <figcaption class="shot-cap">Une question sur un cours Moodle synchronisé&nbsp;: réponse sourcée, avec citations. <span class="shot-soon">sem. du 6 juillet</span></figcaption>
         </figure>
       </div>
     </div>
@@ -506,14 +506,14 @@
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-graduation-cap"></i> Connecteur Moodle&nbsp;: paramétrage &amp; usage</summary>
-          <p><i class="fa-solid fa-circle-info"></i> Le connecteur arrive dans la <strong>prochaine version</strong>. La configuration <strong>côté Moodle</strong> est un réglage <strong>unique</strong>, fait par un administrateur ; l'usage <strong>côté Doceria</strong> est ensuite à la main de l'enseignant. Tout est en <strong>lecture seule</strong> et sur <strong>consentement</strong>.</p>
+          <p><i class="fa-solid fa-circle-info"></i> Le connecteur est <strong>disponible à partir de la semaine du 6 juillet</strong>. La configuration <strong>côté Moodle</strong> est un réglage <strong>unique</strong>, fait par un administrateur ; l'usage <strong>côté Doceria</strong> est ensuite à la main de l'enseignant·e. Tout est en <strong>lecture seule</strong> et sur <strong>consentement</strong>.</p>
           <dl>
             <dt>Côté Moodle&nbsp;: activer les web services</dt><dd>Dans <em>Administration du site → Serveur → Web services</em> : activer les <strong>services web</strong>, puis le <strong>protocole REST</strong> uniquement (laisser les autres désactivés).</dd>
             <dt>Compte de lecture dédié</dt><dd>Créer un compte technique <code>doceria-rag-readonly</code> (authentification manuelle). C'est <strong>ce compte</strong>, jamais l'administrateur, qui portera le jeton, d'où sa portée strictement limitée.</dd>
             <dt>Rôle minimal</dt><dd>Créer un rôle <em>Web services REST (lecture seule)</em> avec une <strong>seule</strong> capacité, <code>webservice/rest:use</code>, au contexte <strong>Système</strong>, puis l'attribuer au compte. Le strict nécessaire pour parler REST.</dd>
             <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>«&nbsp;peut télécharger des fichiers&nbsp;»</strong> coché (pour lire les PDF), <strong>«&nbsp;autoriser le dépôt de fichiers&nbsp;» décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>«&nbsp;cours consentis&nbsp;»</strong>, actif par défaut (voir plus bas), ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong>&nbsp;: surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>.</dd>
             <dt>Jeton</dt><dd>Générer un jeton pour ce compte et ce service (<em>Gérer les jetons</em>). Il est <strong>révocable</strong> à tout moment et se colle dans Doceria, où il est rangé dans le <strong>trousseau du système</strong>, jamais en clair.</dd>
-            <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant y <strong>inscrit le compte de lecture</strong> (comme un participant). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant.</dd>
+            <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant·e y <strong>inscrit le compte de lecture</strong> (comme un participant). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant·e.</dd>
             <dt>Côté Doceria&nbsp;: profil Moodle</dt><dd>Dans l'application&nbsp;: créer un <strong>profil Moodle</strong> (indépendant des profils ILaaS), renseigner l'<strong>URL</strong> de Moodle et coller le <strong>jeton</strong>. Le bouton <strong>Tester</strong> vérifie l'accès.</dd>
             <dt>Explorateur de cours</dt><dd>Le panneau central qui liste vos cours Moodle, groupés par catégorie repliable. <strong>«&nbsp;Rechercher un cours…&nbsp;»</strong> filtre la liste en direct ; le menu <strong>«&nbsp;Toutes les catégories&nbsp;»</strong> la restreint à une catégorie (les deux se combinent). <strong>«&nbsp;Tout cocher (filtré)&nbsp;»</strong> sélectionne d'un clic tous les cours visibles ; le pied de page compte les cours cochés et la sélection est <strong>mémorisée</strong>.</dd>
             <dt>Cours consentis uniquement (option)</dt><dd><strong>Cochée par défaut</strong>, cette bascule ne montre que les cours où le compte de lecture est inscrit, via la 9ᵉ fonction <code>core_enrol_get_users_courses</code> ci-dessus. Si cette fonction n'a pas été ajoutée au service, Doceria l'<strong>indique clairement</strong> : décochez alors l'option pour lister <strong>l'ensemble des cours</strong> (avec les 8&nbsp;fonctions de contenu seules). Le mode «&nbsp;tout indexer&nbsp;» est un choix de l'établissement.</dd>
@@ -643,7 +643,7 @@
         <div class="col-lg-7">
           <figure class="diagram">
             <img class="diagram-img" src="assets/doceria-multimodeles.svg"
-                 alt="Schéma de la comparaison multi-modèles : une question envoyée simultanément à deux modèles, deux réponses affichées côte à côte dans une fenêtre divisée, l'enseignant garde la meilleure ; option opt-in car le coût est multiplié par le nombre de modèles.">
+                 alt="Schéma de la comparaison multi-modèles : une question envoyée simultanément à deux modèles, deux réponses affichées côte à côte dans une fenêtre divisée, l'enseignant·e garde la meilleure ; option opt-in car le coût est multiplié par le nombre de modèles.">
           </figure>
         </div>
       </div>
@@ -655,11 +655,11 @@
           <p>
             <strong>Complet et validé de bout en bout</strong>&nbsp;: indexation du <strong>texte et des
             fichiers</strong> de vos cours, <strong>synchronisation incrémentale</strong> (jamais de doublon)
-            et <strong>opt-in par consentement</strong>&nbsp;: un cours n'est indexé que si l'enseignant a inscrit
+            et <strong>opt-in par consentement</strong>&nbsp;: un cours n'est indexé que si l'enseignant·e a inscrit
             le compte de lecture. <a href="#moodle">↑ Voir la section Moodle</a> pour le détail et le schéma de configuration.
           </p>
           <p class="mt-3">
-            <em>Il arrive dans la <strong>prochaine version</strong>&nbsp;; la version téléchargeable ci-dessus ne
+            <em><strong>Disponible la semaine du 6 juillet</strong>&nbsp;; la version téléchargeable ci-dessus ne
             l'inclut pas encore.</em>
           </p>
         </div>
@@ -668,6 +668,55 @@
             <img class="diagram-img" src="assets/doceria-moodle.svg"
                  alt="Schéma de l'intégration Moodle : Doceria interroge Moodle en lecture seule via les web services REST (jeton dédié), n'extrait que des contenus pédagogiques, les convertit en Markdown, et les indexe dans une collection privée OpenGateLLM qui enrichit le RAG, sans données personnelles.">
           </figure>
+        </div>
+      </div>
+
+      <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature">
+        <div class="col-lg-5">
+          <span class="roadmap-pill">juillet 2026</span>
+          <h3>Une interface entièrement repensée</h3>
+          <p>
+            Doceria devient une <strong>véritable app macOS</strong>, pensée comme une application Apple de
+            première partie&nbsp;: vos <strong>cours et documents en objets de première classe</strong> dans
+            une barre latérale, les <strong>réglages techniques rangés</strong> dans une fenêtre Réglages
+            dédiée, un seul accent, et les <strong>modes clair et sombre</strong>. Moins de jargon, plus de plaisir.
+          </p>
+          <p class="mt-3">
+            <a class="btn btn-light" href="nouvelle-interface.html">Découvrir la nouvelle interface <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+          </p>
+        </div>
+        <div class="col-lg-7">
+          <a class="ui-preview" href="nouvelle-interface.html" aria-label="Aperçu de la nouvelle interface Doceria, disponible en juillet 2026">
+            <span class="ui-bar"><span class="ui-tl r"></span><span class="ui-tl y"></span><span class="ui-tl g"></span></span>
+            <span class="ui-body">
+              <span class="ui-side"></span>
+              <span class="ui-main">
+                <span class="ui-line w60"></span>
+                <span class="ui-line w90"></span>
+                <span class="ui-line w75"></span>
+                <span class="ui-cta">Aperçu de la nouvelle interface <i class="fa-solid fa-arrow-right fa-xs"></i></span>
+              </span>
+            </span>
+          </a>
+        </div>
+      </div>
+
+      <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature flex-lg-row-reverse">
+        <div class="col-lg-5">
+          <span class="roadmap-pill">à venir</span>
+          <h3>Windows, puis Linux</h3>
+          <p>
+            Tauri est multiplateforme&nbsp;: après macOS viendront une version <strong>Windows</strong>
+            (le vrai chantier étant la signature Authenticode) puis <strong>Linux</strong> (AppImage),
+            sans jamais trahir l'ADN&nbsp;: souverain, simple, en français.
+          </p>
+        </div>
+        <div class="col-lg-7">
+          <div class="platforms">
+            <span class="plat done"><i class="fa-brands fa-apple"></i><span class="plat-n">macOS</span><span class="plat-tag">disponible</span></span>
+            <span class="plat"><i class="fa-brands fa-windows"></i><span class="plat-n">Windows</span><span class="plat-tag">prévu</span></span>
+            <span class="plat"><i class="fa-brands fa-linux"></i><span class="plat-n">Linux</span><span class="plat-tag">prévu</span></span>
+          </div>
         </div>
       </div>
 
@@ -751,7 +800,7 @@
         </div>
       </div>
       <p class="footer-fine">Pédagogie ouverte, conçue avec soin.</p>
-      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-03.6</span></p>
+      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-03.8</span></p>
     </div>
   </footer>
 

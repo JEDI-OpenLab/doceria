@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="660" viewBox="0 0 1280 660" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dmm-title dmm-desc">
   <title id="dmm-title">Comparer plusieurs modèles côte à côte</title>
-  <desc id="dmm-desc">Fonctionnalité à venir : une seule question est envoyée en même temps à plusieurs modèles souverains ; la fenêtre se divise en colonnes pour afficher les réponses côte à côte ; l'enseignant garde la meilleure. Option à activer (opt-in) car le coût est multiplié par le nombre de modèles.</desc>
+  <desc id="dmm-desc">Fonctionnalité à venir : une seule question est envoyée en même temps à plusieurs modèles souverains ; la fenêtre se divise en colonnes pour afficher les réponses côte à côte ; l'enseignant·e garde la meilleure. Option à activer (opt-in) car le coût est multiplié par le nombre de modèles.</desc>
   <defs>
     <marker id="dmm-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
     <filter id="dmm-shadow" x="-15%" y="-15%" width="130%" height="135%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#11302E" flood-opacity=".14"/></filter>
