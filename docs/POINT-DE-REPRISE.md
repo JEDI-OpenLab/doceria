@@ -62,7 +62,7 @@ configurable, **document de contexte**, **conso/coût** (`/me/usage`). **Correct
 **Synchro dossier ↔ collection** : « Lier un dossier » → import + suivi ; bouton Synchroniser (diff
 incrémental sur taille+mtime, retrait des fichiers disparus) ; option `ragAutoSync`. Index local
 `localStorage doceria_sync_v1`. Durci par revue adversariale (profil figé, verrou global `syncing`).
-**DA & thème** : charte « Atelier », clair/sombre/auto, vibrance macOS, colonnes pliables, sections
+**DA & thème** : charte chaleureuse (papier chaud, pétrole, or), clair/sombre/auto, vibrance macOS, colonnes pliables, sections
 du rail pliables. **Site web** (GitHub Pages, `docs/`) en ligne : https://jedi-openlab.github.io/doceria/
 **CONNECTEUR MOODLE (branche `moodle`)** : voir encart en tête + `docs/MOODLE-IMPLEMENTATION-ROADMAP.md`.
 Module `src-tauri/src/moodle.rs` : client REST `ws_call` (client HTTP **dédié sans redirections** car
