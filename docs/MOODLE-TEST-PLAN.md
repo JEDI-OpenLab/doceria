@@ -1,10 +1,10 @@
 # Plan de test — Connecteur Moodle (hors code Doceria)
 
 > **STATUT : validation historique.** Ce document retrace la préparation et la validation manuelle
-> qui ont précédé le code. L'intégration est désormais **LIVRÉE** (Lots 0–3, branche `moodle`) :
-> le connecteur n'est pas encore dans le `.dmg` publié (20260626.8.0) mais est livré et validé sur
-> la branche, destiné à la **prochaine version**. Le périmètre du Lot 3 est le **texte des cours**
-> (résumés de section + descriptions de modules) ; les fichiers/PDF sont le **Lot 4** (à venir).
+> qui ont précédé le code. L'intégration est désormais **LIVRÉE en totalité** (Lots 0–7, fusionnés
+> dans `main`) : le connecteur n'est pas encore dans le `.dmg` publié (20260626.8.0) mais est livré
+> et validé, destiné à la **prochaine version**. Texte des cours (Lot 3 ✅), fichiers/PDF (Lot 4 ✅),
+> synchro incrémentale (Lot 5 ✅), opt-in (Lot 7 ✅), interrupteur chat (Lot 6 ✅ 2026-07-03).
 > Journal d'implémentation : [`docs/MOODLE-IMPLEMENTATION-ROADMAP.md`](MOODLE-IMPLEMENTATION-ROADMAP.md).
 > Les Phases 0 à 3 ci-dessous sont conservées comme **repères de validation** (au passé).
 
@@ -472,7 +472,7 @@ de cours (recherche + filtre catégorie + cases à cochées persistées), et bou
 ingestion des **résumés de section + descriptions de modules** convertis en Markdown vers une
 collection RAG « Moodle · <cours> » du profil ILaaS actif (barre de progression par cours, synchro
 anti-corruption inter-profils). Les **fichiers/PDF** (`pluginfile.php?token=` → `rag_upload_document`)
-restent le **Lot 4** (à venir). Référence de vérité : `src-tauri/src/moodle.rs` et
+sont livrés depuis (**Lot 4 ✅**, 2026-07-02). Référence de vérité : `src-tauri/src/moodle.rs` et
 [`docs/MOODLE-IMPLEMENTATION-ROADMAP.md`](MOODLE-IMPLEMENTATION-ROADMAP.md).
 
 ### Sécurité livrée — client HTTP sans redirections

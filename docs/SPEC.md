@@ -123,12 +123,13 @@ justification. Décision définitive.
 - **P2** — Windows (Tauri + WebView2 + signature Authenticode) ; Linux ; mise à jour automatique ;
   signature/notarisation (quarantaine macOS + SmartScreen Windows).
 
-### H. Connecteur Moodle (quasi complet — voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
-> **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Quasi complet** (lecture
+### H. Connecteur Moodle (complet — voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
+> **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Complet** (lecture
 > seule, **opt-in par consentement**) : Lots 0-7 livrés, relus par revues multi-agents adversariales et
 > **fusionnés dans `main`**, destinés à la **prochaine** version (**pas encore dans le `.dmg` publié
-> `20260626.8.0`**). Reste le Lot 6 (interrupteur « inclure les cours Moodle » dans le chat), puis
-> merge/release. Référence de vérité : `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
+> `20260626.8.0`**). Le Lot 6 (interrupteur « Inclure les cours Moodle » dans le chat) est **livré
+> (2026-07-03)** ; reste le test en réel puis le merge/release. Référence de vérité :
+> `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
 - **Lecture seule stricte** (web services REST Moodle).
 - **Profils de connexion Moodle** (nom + URL + jeton ; jeton au **trousseau**, rôle « moodle » ;
   indépendants des profils ILaaS ; plusieurs connexions possibles).
@@ -148,7 +149,9 @@ justification. Décision définitive.
   technique vaut accord ; `core_enrol_get_users_courses` appelée **uniquement pour le compte technique**
   (zéro donnée d'étudiant) ; interrupteur, **défaut ON** ; le mode « tout indexer » relève d'une décision
   de la Direction.
-- **À venir** : interrupteur « inclure les cours Moodle » dans le chat (Lot 6), puis merge/release.
+- **Interrupteur « Inclure les cours Moodle »** dans le composer du chat (Lot 6, ✅ 2026-07-03) :
+  étend la recherche RAG à la collection active **+ toutes** les collections « Moodle · … », en un
+  seul appel, avec citations. Reste : test en réel puis merge/release.
 
 ## 6. Exigences non-fonctionnelles
 - **Sécurité/souveraineté** : clés et jetons au trousseau ; zéro télémétrie ; aucune dépendance CDN.

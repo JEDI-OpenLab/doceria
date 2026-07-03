@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doceria — Enseigner avec l'IA</title>
-  <meta name="description" content="Doceria — application de bureau souveraine pour enseigner avec l'IA : chat et RAG sur l'API ILaaS (fédération d'inférence de l'ESR). Macquette native, clés au trousseau, documents privés.">
+  <meta name="description" content="Doceria — application de bureau souveraine pour enseigner avec l'IA : chat et RAG sur l'API ILaaS (fédération d'inférence de l'ESR). Application native, clés au trousseau, documents privés.">
   <meta name="theme-color" content="#11302E">
 
   <meta property="og:title" content="Doceria — Enseigner avec l'IA">
@@ -21,6 +21,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <a class="skip-link" href="#top">Aller au contenu</a>
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg sticky-top site-nav">
@@ -193,6 +195,12 @@
           </div>
         </div>
       </div>
+
+      <p class="section-lead text-center" style="font-size:1.02rem;margin:2.4rem auto 0;max-width:44rem">
+        Vos cours vivent dans <strong>Moodle</strong>&nbsp;? Doceria les indexe — <strong>en lecture seule,
+        sur consentement de l'enseignant</strong> — pour les interroger avec citations, sans copier-coller&nbsp;:
+        <a href="#moodle">découvrir le connecteur Moodle</a>.
+      </p>
     </div>
   </section>
 
@@ -203,26 +211,40 @@
         <span class="kicker">Fonctionnalités</span>
         <h2 class="section-serif">Ce que Doceria fait, vraiment bien.</h2>
       </div>
-      <div class="row g-4">
+      <div class="row g-4 justify-content-center">
         <div class="col-md-6 col-lg-4">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-comments"></i></div>
             <h3>Chat en streaming</h3>
-            <p>Réponses au fil de l'eau, bouton Stop, multi-conversations (créer, renommer, exporter en Markdown). <strong>Mémoire ajustable</strong> : choisissez le nombre de tours d'historique envoyés.</p>
+            <p>Réponses au fil de l'eau, bouton Stop, multi-conversations (créer, renommer, exporter en Markdown). <strong>Mémoire ajustable</strong>&nbsp;: choisissez le nombre de tours d'historique envoyés.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-book-open-reader"></i></div>
             <h3>RAG sur vos documents</h3>
-            <p>Bibliothèque de collections privées (RAG géré ILaaS) : ajoutez fichiers ou dossiers, posez vos questions, obtenez des réponses <strong>avec citations des sources</strong>. Modes <strong>Chat ⇄ Requête</strong> (réponse strictement fondée sur vos documents), réglages de récupération (méthode, nombre d'extraits, seuil) et <strong>message de « non trouvé » personnalisable</strong>.</p>
+            <p>Bibliothèque de collections privées (RAG géré ILaaS)&nbsp;: ajoutez fichiers ou dossiers, posez vos questions, obtenez des réponses <strong>avec citations des sources</strong>. Modes <strong>Chat ⇄ Requête</strong> (réponse strictement fondée sur vos documents), réglages de récupération (méthode, nombre d'extraits, seuil) et <strong>message de «&nbsp;non trouvé&nbsp;» personnalisable</strong>.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature">
+            <div class="feature-ic"><i class="fa-solid fa-pen-to-square"></i></div>
+            <h3>Réécrire, régénérer, copier</h3>
+            <p><strong>Régénérez</strong> une réponse, <strong>modifiez</strong> votre question d'un clic (✎), <strong>copiez</strong> une réponse (⧉) ou <strong>annulez</strong> le dernier tour. Plus un menu <strong>Aide</strong> intégré vers le site et le mode d'emploi.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-table-columns"></i></div>
             <h3>Comparer des modèles</h3>
-            <p>Posez une question à <strong>deux modèles souverains en même temps</strong>, affichés <strong>côte à côte</strong>, et gardez la meilleure réponse. Idéal pour choisir le modèle le plus juste pour une tâche — le coût (×2) reste suivi dans « Conso & coût ».</p>
+            <p>Posez une question à <strong>deux modèles souverains en même temps</strong>, affichés <strong>côte à côte</strong>, et gardez la meilleure réponse. Idéal pour choisir le modèle le plus juste pour une tâche — le coût (×2) reste suivi dans «&nbsp;Conso & coût&nbsp;».</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature">
+            <div class="feature-ic"><i class="fa-solid fa-sliders"></i></div>
+            <h3>Réglages de génération</h3>
+            <p>Température, longueur maximale, mémoire de conversation — et une <strong>consigne système</strong> appliquée à chaque message. Enregistrez vos consignes récurrentes en <strong>modèles réutilisables</strong>, rappelés en un clic.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -234,9 +256,9 @@
         </div>
         <div class="col-md-6 col-lg-4">
           <div class="feature">
-            <div class="feature-ic"><i class="fa-solid fa-pen-to-square"></i></div>
-            <h3>Réécrire, régénérer, copier</h3>
-            <p><strong>Régénérez</strong> une réponse, <strong>modifiez</strong> votre question d'un clic (✎), <strong>copiez</strong> une réponse (⧉) ou <strong>annulez</strong> le dernier tour. Plus un menu <strong>Aide</strong> intégré vers le site et le mode d'emploi.</p>
+            <div class="feature-ic"><i class="fa-solid fa-file-lines"></i></div>
+            <h3>Documents de contexte</h3>
+            <p>Chargez ponctuellement un PDF, DOCX, Markdown, CSV… pour cadrer une conversation, sans rien indexer.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -250,21 +272,14 @@
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-palette"></i></div>
             <h3>Thème & vibrance</h3>
-            <p>Charte « Atelier » chaleureuse, mode clair/sombre/auto qui suit le système, translucidité native macOS.</p>
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-4">
-          <div class="feature">
-            <div class="feature-ic"><i class="fa-solid fa-file-lines"></i></div>
-            <h3>Documents de contexte</h3>
-            <p>Chargez ponctuellement un PDF, DOCX, Markdown, CSV… pour cadrer une conversation, sans rien indexer.</p>
+            <p>Charte «&nbsp;Atelier&nbsp;» chaleureuse, mode clair/sombre/auto qui suit le système, translucidité native macOS.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-feather"></i></div>
             <h3>Léger & natif</h3>
-            <p>Construit avec Tauri (Rust + webview système) : ~15&nbsp;Mo, démarrage instantané, double-clic, sans terminal.</p>
+            <p>Construit avec Tauri (Rust + webview système)&nbsp;: ~15&nbsp;Mo installée — 7&nbsp;Mo à télécharger —, démarrage instantané, double-clic, sans terminal.</p>
           </div>
         </div>
       </div>
@@ -280,13 +295,13 @@
           <h2 class="section-serif light">Conçu pour rester dans le bon périmètre.</h2>
           <p class="deep-lead">
             L'inférence passe par <strong>ILaaS</strong>, la fédération souveraine de l'ESR (tutelle MESR).
-            Le RAG s'appuie sur <strong>OpenGateLLM</strong> (DINUM/Etalab) : vos documents sont indexés
+            Le RAG s'appuie sur <strong>OpenGateLLM</strong> (DINUM/Etalab)&nbsp;: vos documents sont indexés
             dans des collections <strong>privées</strong> sur l'infrastructure ESR, jamais sur un cloud tiers.
           </p>
           <ul class="deep-list">
             <li><i class="fa-solid fa-check"></i> Réseau porté par le cœur natif (Rust) — pas de CORS, clé hors de la page.</li>
             <li><i class="fa-solid fa-check"></i> Deux jetons distincts (inférence / RAG), au trousseau OS.</li>
-            <li><i class="fa-solid fa-check"></i> Aucune télémétrie : rien ne sort vers un tiers.</li>
+            <li><i class="fa-solid fa-check"></i> Aucune télémétrie&nbsp;: rien ne sort vers un tiers.</li>
           </ul>
         </div>
         <div class="col-lg-6 text-center">
@@ -309,28 +324,28 @@
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-shield-halved"></i></div>
             <h3>Souverain par conception</h3>
-            <p>Bâti pour ILaaS / OpenGateLLM (ESR, tutelle MESR) : données et vecteurs restent dans le périmètre ESR. Les outils agnostiques, eux, laissent la souveraineté dépendre de votre configuration.</p>
+            <p>Bâti pour ILaaS / OpenGateLLM (ESR, tutelle MESR)&nbsp;: données et vecteurs restent dans le périmètre ESR. Les outils agnostiques, eux, laissent la souveraineté dépendre de votre configuration.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-3">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-folder-tree"></i></div>
             <h3>Dossier toujours à jour</h3>
-            <p>Liez une collection à un dossier : Doceria ajoute les nouveaux fichiers, met à jour les modifiés et <strong>retire</strong> ceux supprimés — tout le dossier, à la demande ou à l'ouverture du profil. Là où d'autres ne suivent qu'un fichier à la fois.</p>
+            <p>Liez une collection à un dossier&nbsp;: Doceria ajoute les nouveaux fichiers, met à jour les modifiés et <strong>retire</strong> ceux supprimés — tout le dossier, à la demande ou à l'ouverture du profil. Là où d'autres ne suivent qu'un fichier à la fois.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-3">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-feather"></i></div>
             <h3>Léger & vraiment natif</h3>
-            <p>Tauri (webview système + cœur Rust) plutôt qu'Electron : ~15 Mo, démarrage instantané, vibrance macOS. Et vos clés vivent dans le <strong>trousseau du système</strong>, pas dans un fichier de l'app.</p>
+            <p>Tauri (webview système + cœur Rust) plutôt qu'Electron&nbsp;: ~15 Mo, démarrage instantané, vibrance macOS. Et vos clés vivent dans le <strong>trousseau du système</strong>, pas dans un fichier de l'app.</p>
           </div>
         </div>
         <div class="col-md-6 col-lg-3">
           <div class="feature">
             <div class="feature-ic"><i class="fa-solid fa-user-shield"></i></div>
             <h3>Sobre et privé</h3>
-            <p><strong>Zéro télémétrie</strong> : rien ne sort vers un tiers, par défaut et sans réglage à activer. Une interface en français, centrée sur « enseigner avec l'IA », sans Docker ni base vectorielle à configurer.</p>
+            <p><strong>Zéro télémétrie</strong> : rien ne sort vers un tiers, par défaut et sans réglage à activer. Une interface en français, centrée sur «&nbsp;enseigner avec l'IA&nbsp;», sans Docker ni base vectorielle à configurer.</p>
           </div>
         </div>
       </div>
@@ -359,8 +374,8 @@
           <p class="deep-lead" style="margin:0 0 1.1rem">
             <strong>Opt-in par défaut</strong> : un cours n'est indexé <strong>que si l'enseignant a
             inscrit le compte de lecture</strong> de Doceria. L'inscription <strong>vaut accord</strong> —
-            jamais à son insu. À rebours du « l'IA est partout, à vous de la désactiver », on part de
-            l'inverse : <strong>transparence, choix, liberté</strong>.
+            jamais à son insu. À rebours du «&nbsp;l'IA est partout, à vous de la désactiver&nbsp;», on part de
+            l'inverse&nbsp;: <strong>transparence, choix, liberté</strong>.
           </p>
           <ul class="moodle-points">
             <li><i class="fa-solid fa-check"></i> Texte des cours <strong>+ fichiers joints</strong> (PDF…)</li>
@@ -373,15 +388,22 @@
           <figure class="diagram">
             <img class="diagram-img" src="assets/doceria-moodle-setup.svg"
                  alt="Schéma de configuration Moodle : un compte technique doceria-rag-readonly reçoit un rôle en lecture seule et un jeton web-service ; un service dédié n'expose qu'une liste blanche de fonctions de contenu ; le compte n'est inscrit que dans les cours dont l'enseignant a donné son accord (consentement) ; Doceria lit ces cours via le jeton et les indexe dans une collection privée, sans aucune donnée d'étudiant.">
-            <figcaption>Comment on paramètre Moodle : compte de lecture, rôle dédié, liste blanche de fonctions, et inscription&nbsp;=&nbsp;consentement.</figcaption>
+            <figcaption>Comment on paramètre Moodle&nbsp;: compte de lecture, rôle dédié, liste blanche de fonctions, et inscription&nbsp;=&nbsp;consentement.</figcaption>
           </figure>
         </div>
       </div>
 
       <div class="text-center mt-5">
         <p class="deep-lead" style="margin:0 auto;max-width:44rem">
-          <em>Le connecteur est <strong>fonctionnel et validé de bout en bout</strong> ; il arrive dans la
-          <strong>prochaine version</strong> — la version téléchargeable ne l'inclut pas encore.</em>
+          <em>Le connecteur est <strong>développé, relu et validé de bout en bout</strong> ; il arrive dans la
+          <strong>prochaine version</strong> — la version téléchargeable ne l'inclut pas encore. Doceria est en
+          phase de <strong>développement actif</strong>&nbsp;; l'étape suivante&nbsp;: l'expérimentation à
+          l'échelle avec plusieurs enseignants.</em>
+        </p>
+        <p class="deep-lead" style="margin:1rem auto 0;max-width:44rem;font-size:.95rem">
+          <strong>Pour les administrateurs (DSI)</strong>&nbsp;: le paramétrage Moodle pas à pas est documenté dans le
+          <a href="https://github.com/JEDI-OpenLab/doceria/blob/main/docs/MOODLE-TEST-PLAN.md" target="_blank" rel="noopener">plan de paramétrage &amp; test</a>
+          et l'<a href="https://github.com/JEDI-OpenLab/doceria/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">architecture technique</a> est publique.
         </p>
       </div>
     </div>
@@ -401,11 +423,11 @@
         </figure>
         <figure class="col-md-6 shot m-0">
           <img class="shot-img" src="assets/screen-2-side-by-side.png" alt="Comparaison de deux modèles : une même question envoyée à deux modèles souverains, réponses affichées côte à côte." loading="lazy" onerror="this.closest('.shot').remove()">
-          <figcaption class="shot-cap">Comparer deux modèles : la même question, deux réponses côte à côte.</figcaption>
+          <figcaption class="shot-cap">Comparer deux modèles&nbsp;: la même question, deux réponses côte à côte.</figcaption>
         </figure>
         <figure class="col-md-6 shot m-0">
           <img class="shot-img" src="assets/screen-3-synchro-moodle.png" alt="Explorateur de cours Moodle : recherche, cours groupés par catégorie et cases à cocher pour choisir ce qu'on synchronise vers la bibliothèque." loading="lazy" onerror="this.closest('.shot').remove()">
-          <figcaption class="shot-cap">Connecteur Moodle : on choisit les cours (recherche + catégories) et on synchronise. <span class="shot-soon">prochaine version</span></figcaption>
+          <figcaption class="shot-cap">Connecteur Moodle&nbsp;: on choisit les cours (recherche + catégories) et on synchronise. <span class="shot-soon">prochaine version</span></figcaption>
         </figure>
         <figure class="col-md-6 shot m-0">
           <img class="shot-img" src="assets/screen-4-rag-moodle.png" alt="Réponse sur un cours Moodle : question posée en mode Requête, réponse structurée à partir du cours indexé, avec citations et bloc Sources." loading="lazy" onerror="this.closest('.shot').remove()">
@@ -421,18 +443,21 @@
       <div class="text-center mb-5">
         <span class="kicker">Mode d'emploi</span>
         <h2 class="section-serif">Chaque fonction, chaque réglage — expliqué.</h2>
-        <p class="section-lead">Le guide complet : à quoi sert chaque bouton, chaque curseur, chaque option. Dépliez une rubrique.</p>
-        <p class="guide-tip"><i class="fa-solid fa-circle-question"></i> Bon à savoir : dans l'application, une <strong>aide « ? »</strong> est disponible un peu partout — survolez-la pour une explication contextuelle, sans quitter votre écran.</p>
+        <p class="section-lead">Le guide complet&nbsp;: à quoi sert chaque bouton, chaque curseur, chaque option. Dépliez une rubrique.</p>
+        <p class="guide-tip"><i class="fa-solid fa-circle-question"></i> Bon à savoir&nbsp;: dans l'application, une <strong>aide «&nbsp;?&nbsp;»</strong> est disponible un peu partout — survolez-la pour une explication contextuelle, sans quitter votre écran.</p>
+      </div>
+      <div class="doc-toolbar">
+        <button type="button" id="guideToggleAll" class="doc-toggle-all" aria-expanded="false">Tout afficher</button>
       </div>
       <div class="doc-guide">
 
         <details class="doc-group" open>
-          <summary><i class="fa-solid fa-key"></i> Démarrer : connexion &amp; profils</summary>
+          <summary><i class="fa-solid fa-key"></i> Démarrer&nbsp;: connexion &amp; profils</summary>
           <dl>
-            <dt>Profil</dt><dd>Un profil regroupe vos clés, vos URLs et un modèle par défaut. Créez-en plusieurs (par exemple un par établissement ou par clé). Bascule en deux clics depuis le menu « Profil actif ».</dd>
+            <dt>Profil</dt><dd>Un profil regroupe vos clés, vos URLs et un modèle par défaut. Créez-en plusieurs (par exemple un par établissement ou par clé). Bascule en deux clics depuis le menu «&nbsp;Profil actif&nbsp;».</dd>
             <dt>Clé d'inférence (chat)</dt><dd>Votre clé ILaaS pour discuter (URL par défaut <code>https://llm.ilaas.fr/v1</code>). Le bouton <strong>Tester</strong> vérifie la clé et récupère la liste des modèles. Les clés sont stockées dans le <strong>trousseau du système</strong> — jamais en clair, jamais dans la page.</dd>
             <dt>Clé RAG (optionnelle)</dt><dd>Une <strong>seconde</strong> clé, distincte, pour la bibliothèque de documents (URL <code>https://rag-api.ilaas.fr/v1</code>). Sans elle, la bibliothèque reste désactivée.</dd>
-            <dt>Modèle par défaut</dt><dd>Le modèle pré-sélectionné à l'ouverture du profil.</dd>
+            <dt>Modèle par défaut</dt><dd>Le modèle appliqué <strong>automatiquement</strong> à chaque activation du profil — sans autre réglage. Changeable à tout moment depuis le sélecteur du chat.</dd>
             <dt>Charger les modèles</dt><dd>Remplit la liste des modèles disponibles. Une fois fait, vous pouvez discuter.</dd>
           </dl>
         </details>
@@ -441,37 +466,38 @@
           <summary><i class="fa-solid fa-comments"></i> Discuter</summary>
           <dl>
             <dt>Message &amp; Envoyer</dt><dd>Tapez votre question, puis <strong>Envoyer</strong> (ou Entrée). La réponse s'affiche au fil de l'eau ; <strong>Stop</strong> l'interrompt.</dd>
-            <dt>Sélecteur de modèle</dt><dd>Au-dessus de la zone de message : changez le modèle interrogé sans quitter le chat. Il est synchronisé avec le menu « Modèle » du panneau de droite.</dd>
+            <dt>Sélecteur de modèle</dt><dd>Au-dessus de la zone de message&nbsp;: changez le modèle interrogé sans quitter le chat. Il est synchronisé avec le menu «&nbsp;Modèle&nbsp;» du panneau de droite.</dd>
             <dt>Conversations</dt><dd>Créez, renommez (icône crayon) et supprimez des conversations ; exportez-en une en <strong>Markdown</strong>. L'historique reste sur votre machine.</dd>
-            <dt>Régénérer / Annuler</dt><dd>Sous la dernière réponse : <strong>↻ Régénérer</strong> relance la même question (avec les réglages courants) ; <strong>↩ Annuler</strong> retire le tour et remet la question dans le champ.</dd>
+            <dt>Régénérer / Annuler</dt><dd>Sous la dernière réponse&nbsp;: <strong>↻ Régénérer</strong> relance la même question (avec les réglages courants) ; <strong>↩ Annuler</strong> retire le tour et remet la question dans le champ.</dd>
             <dt>Modifier une question (✎)</dt><dd>Au survol de votre message, l'icône <strong>✎</strong> remet la question dans le champ pour la corriger et la renvoyer — la conversation repart de ce point.</dd>
-            <dt>Copier une réponse (⧉)</dt><dd>Au survol d'une réponse, l'icône <strong>⧉</strong> copie son contenu (Markdown) dans le presse-papiers.</dd>
-            <dt>Comparer des modèles</dt><dd>Cochez <strong>Comparer</strong> : un <strong>second menu déroulant</strong> apparaît. Choisissez deux modèles <strong>différents</strong> → la question part aux deux <strong>en même temps</strong>, réponses <strong>côte à côte</strong>. Cliquez <strong>Garder</strong> sous la meilleure (ou <strong>Stop</strong> pour annuler). Coût ×2, suivi dans « Conso&nbsp;&amp;&nbsp;coût ».</dd>
+            <dt>Copier une réponse (⧉)</dt><dd>Au survol d'une réponse, l'icône <strong>⧉</strong> copie son contenu au format <strong>Markdown</strong> (texte brut, mise en forme conservée) dans le presse-papiers.</dd>
+            <dt>Comparer des modèles</dt><dd>Cochez <strong>Comparer</strong> : un <strong>second menu déroulant</strong> apparaît. Choisissez deux modèles <strong>différents</strong> → la question part aux deux <strong>en même temps</strong>, réponses <strong>côte à côte</strong>. Cliquez <strong>Garder</strong> sous la meilleure (ou <strong>Stop</strong> pour annuler). Coût ×2, suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;».</dd>
             <dt>Formules mathématiques</dt><dd>Les formules <strong>LaTeX</strong> (<code>$…$</code> en ligne, <code>$$…$$</code> en bloc) sont rendues automatiquement dans les réponses et les citations.</dd>
           </dl>
         </details>
 
         <details class="doc-group">
-          <summary><i class="fa-solid fa-book-open-reader"></i> Bibliothèque (RAG) : vos documents</summary>
+          <summary><i class="fa-solid fa-book-open-reader"></i> Bibliothèque (RAG)&nbsp;: vos documents</summary>
           <dl>
             <dt>Collection active</dt><dd>Une collection est un ensemble de documents indexés en <strong>privé</strong> chez ILaaS. Choisissez celle que vos questions interrogeront.</dd>
             <dt>Créer une collection</dt><dd>Saisissez un nom dans le champ, puis <strong>+ Créer</strong>.</dd>
             <dt>Ajouter des fichiers / un dossier</dt><dd>Indexe des documents (txt, md, csv, json, pdf, docx). Les <strong>PDF et DOCX sont extraits en texte localement</strong> avant l'envoi (rendu fiable, indépendant du parseur serveur).</dd>
-            <dt>Glisser-déposer</dt><dd>Déposez des fichiers directement sur la fenêtre : ils sont ajoutés à la collection active. Une <strong>barre de progression</strong> confirme l'ajout (ou affiche l'erreur), même panneau replié.</dd>
+            <dt>Glisser-déposer</dt><dd>Déposez des fichiers directement sur la fenêtre&nbsp;: ils sont ajoutés à la collection active. Une <strong>barre de progression</strong> confirme l'ajout (ou affiche l'erreur), même panneau replié.</dd>
             <dt>Gérer les documents</dt><dd>Liste les fichiers de la collection ; la croix en supprime un, sans toucher au reste.</dd>
-            <dt>Dossier synchronisé</dt><dd>Liez une collection à un <strong>dossier de votre disque</strong>. <strong>Synchroniser</strong> ajoute les nouveaux fichiers, met à jour les modifiés et <strong>retire</strong> ceux supprimés du dossier. Option « Synchroniser à l'ouverture du profil » pour une mise à jour automatique. <strong>Délier</strong> conserve les documents.</dd>
+            <dt>Dossier synchronisé</dt><dd>Liez une collection à un <strong>dossier de votre disque</strong>. <strong>Synchroniser</strong> ajoute les nouveaux fichiers, met à jour les modifiés et <strong>retire</strong> ceux supprimés du dossier. Option «&nbsp;Synchroniser à l'ouverture du profil&nbsp;» pour une mise à jour automatique. <strong>Délier</strong> conserve les documents.</dd>
             <dt>Supprimer la collection</dt><dd>Supprime la collection et ses documents côté ILaaS. Action définitive.</dd>
           </dl>
         </details>
 
         <details class="doc-group">
-          <summary><i class="fa-solid fa-magnifying-glass"></i> Bibliothèque (RAG) : interroger</summary>
+          <summary><i class="fa-solid fa-magnifying-glass"></i> Bibliothèque (RAG)&nbsp;: interroger</summary>
           <dl>
             <dt>Utiliser la bibliothèque</dt><dd>À cocher (sous la zone de message) pour que chaque question cherche dans la collection active et <strong>cite ses sources</strong> sous la réponse.</dd>
-            <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales (avec un avertissement si la bibliothèque est indisponible). <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit (« non trouvé »). Si la recherche est momentanément indisponible, le mode Requête <strong>ne bascule jamais</strong> sur les connaissances générales — il bloque et vous le signale.</dd>
+            <dt>Inclure les cours Moodle</dt><dd>Case située à côté de «&nbsp;Utiliser la bibliothèque&nbsp;», visible dès qu'un cours Moodle est synchronisé&nbsp;: étend la recherche à <strong>tous vos cours Moodle indexés</strong> en plus de la collection active, citations comprises. Détails dans la rubrique «&nbsp;Connecteur Moodle&nbsp;».</dd>
+            <dt>Mode Chat ⇄ Requête</dt><dd><strong>Chat</strong> : s'appuie sur vos documents et peut compléter par ses connaissances générales (avec un avertissement si la bibliothèque est indisponible). <strong>Requête</strong> : répond <strong>uniquement</strong> à partir des documents ; si la réponse n'y est pas, il le dit («&nbsp;non trouvé&nbsp;»). Si la recherche est momentanément indisponible, le mode Requête <strong>ne bascule jamais</strong> sur les connaissances générales — il bloque et vous le signale.</dd>
             <dt>Méthode de recherche</dt><dd><strong>Hybride</strong> (sens + mots-clés, recommandé), <strong>Sémantique</strong> (proximité de sens), <strong>Lexicale</strong> (correspondance de termes).</dd>
             <dt>Extraits récupérés (top-k)</dt><dd>Nombre maximum de passages fournis au modèle à chaque question (défaut 5).</dd>
-            <dt>Seuil de similarité</dt><dd>Écarte les passages sous ce score. 0 = aucun filtre ; plus haut = plus strict (et davantage de « non trouvé » en mode Requête).</dd>
+            <dt>Seuil de similarité</dt><dd>Écarte les passages sous ce score. 0 = aucun filtre ; plus haut = plus strict (et davantage de «&nbsp;non trouvé&nbsp;» en mode Requête).</dd>
             <dt>Reranking</dt><dd>Réordonne les passages par <strong>pertinence</strong> (modèle bge-reranker) avant de ne garder que le top-k. Améliore nettement la qualité ; ajoute un appel.</dd>
             <dt>Message si aucune réponse (mode Requête)</dt><dd>Personnalisez la phrase renvoyée quand la réponse n'est pas dans vos documents (ton, langue, consigne pour l'étudiant). Laissez le champ vide pour rétablir le texte par défaut.</dd>
             <dt>Citations [n] &amp; Sources</dt><dd>Les passages utilisés apparaissent numérotés dans la réponse et listés en dessous, avec le nom du document.</dd>
@@ -479,18 +505,23 @@
         </details>
 
         <details class="doc-group">
-          <summary><i class="fa-solid fa-graduation-cap"></i> Connecteur Moodle : paramétrage</summary>
+          <summary><i class="fa-solid fa-graduation-cap"></i> Connecteur Moodle&nbsp;: paramétrage &amp; usage</summary>
           <p><i class="fa-solid fa-circle-info"></i> Le connecteur arrive dans la <strong>prochaine version</strong>. La configuration <strong>côté Moodle</strong> est un réglage <strong>unique</strong>, fait par un administrateur (DSI) ; l'usage <strong>côté Doceria</strong> est ensuite à la main de l'enseignant. Tout est en <strong>lecture seule</strong> et sur <strong>consentement</strong>.</p>
           <dl>
             <dt>Côté Moodle — activer les web services</dt><dd>Dans <em>Administration du site → Serveur → Web services</em> : activer les <strong>services web</strong>, puis le <strong>protocole REST</strong> uniquement (laisser les autres désactivés).</dd>
             <dt>Compte de lecture dédié</dt><dd>Créer un compte technique <code>doceria-rag-readonly</code> (authentification manuelle). C'est <strong>ce compte</strong>, jamais l'administrateur, qui portera le jeton — d'où sa portée strictement limitée.</dd>
             <dt>Rôle minimal</dt><dd>Créer un rôle <em>Web services REST (lecture seule)</em> avec une <strong>seule</strong> capacité, <code>webservice/rest:use</code>, au contexte <strong>Système</strong>, puis l'attribuer au compte. Le strict nécessaire pour parler REST.</dd>
-            <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>« peut télécharger des fichiers »</strong> coché (pour lire les PDF), <strong>« autoriser le dépôt de fichiers » décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>« cours consentis »</strong> — actif par défaut (voir plus bas) — ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong> — surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>.</dd>
+            <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>«&nbsp;peut télécharger des fichiers&nbsp;»</strong> coché (pour lire les PDF), <strong>«&nbsp;autoriser le dépôt de fichiers&nbsp;» décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>«&nbsp;cours consentis&nbsp;»</strong> — actif par défaut (voir plus bas) — ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong> — surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>.</dd>
             <dt>Jeton</dt><dd>Générer un jeton pour ce compte et ce service (<em>Gérer les jetons</em>). Il est <strong>révocable</strong> à tout moment et se colle dans Doceria — où il est rangé dans le <strong>trousseau du système</strong>, jamais en clair.</dd>
             <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant y <strong>inscrit le compte de lecture</strong> (comme un participant). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant.</dd>
-            <dt>Côté Doceria — profil Moodle</dt><dd>Dans l'application : créer un <strong>profil Moodle</strong> (indépendant des profils ILaaS), renseigner l'<strong>URL</strong> de Moodle et coller le <strong>jeton</strong>. Le bouton <strong>Tester</strong> vérifie l'accès.</dd>
-            <dt>Explorateur &amp; synchronisation</dt><dd>L'<strong>explorateur de cours</strong> liste les cours accessibles (recherche, filtre par catégorie). Cochez ceux à indexer puis <strong>Synchroniser</strong> : Doceria crée <strong>une collection «&nbsp;Moodle&nbsp;· &lt;cours&gt;&nbsp;» par cours</strong> dans le RAG du profil ILaaS actif. La synchro est <strong>incrémentale</strong> (jamais de doublon) ; un badge <strong>« ⟳ à mettre à jour »</strong> signale les cours modifiés depuis.</dd>
-            <dt>Cours consentis uniquement (option)</dt><dd><strong>Cochée par défaut</strong>, cette bascule ne montre que les cours où le compte de lecture est inscrit — via la 9ᵉ fonction <code>core_enrol_get_users_courses</code> ci-dessus. Si cette fonction n'a pas été ajoutée au service, Doceria l'<strong>indique clairement</strong> : décochez alors l'option pour lister <strong>l'ensemble des cours</strong> (avec les 8&nbsp;fonctions de contenu seules). Le mode « tout indexer » est un choix de l'établissement.</dd>
+            <dt>Côté Doceria — profil Moodle</dt><dd>Dans l'application&nbsp;: créer un <strong>profil Moodle</strong> (indépendant des profils ILaaS), renseigner l'<strong>URL</strong> de Moodle et coller le <strong>jeton</strong>. Le bouton <strong>Tester</strong> vérifie l'accès.</dd>
+            <dt>Explorateur de cours</dt><dd>Le panneau central qui liste vos cours Moodle, groupés par catégorie repliable. <strong>«&nbsp;Rechercher un cours…&nbsp;»</strong> filtre la liste en direct ; le menu <strong>«&nbsp;Toutes les catégories&nbsp;»</strong> la restreint à une catégorie (les deux se combinent). <strong>«&nbsp;Tout cocher (filtré)&nbsp;»</strong> sélectionne d'un clic tous les cours visibles ; le pied de page compte les cours cochés et la sélection est <strong>mémorisée</strong>.</dd>
+            <dt>Cours consentis uniquement (option)</dt><dd><strong>Cochée par défaut</strong>, cette bascule ne montre que les cours où le compte de lecture est inscrit — via la 9ᵉ fonction <code>core_enrol_get_users_courses</code> ci-dessus. Si cette fonction n'a pas été ajoutée au service, Doceria l'<strong>indique clairement</strong> : décochez alors l'option pour lister <strong>l'ensemble des cours</strong> (avec les 8&nbsp;fonctions de contenu seules). Le mode «&nbsp;tout indexer&nbsp;» est un choix de l'établissement.</dd>
+            <dt>Synchroniser</dt><dd>Indexe les cours cochés&nbsp;: <strong>une collection «&nbsp;Moodle&nbsp;· &lt;cours&gt;&nbsp;» par cours</strong> dans la bibliothèque du profil ILaaS actif (texte des sections <strong>+ fichiers joints</strong>, PDF compris), avec <strong>barre de progression</strong> cours par cours. La synchro est <strong>incrémentale</strong> : une re-synchronisation n'ajoute que le nouveau, met à jour le modifié, <strong>retire</strong> le disparu — jamais de doublon. Un bilan détaille «&nbsp;X ajoutés · Y mis à jour · Z inchangés · W retirés&nbsp;».</dd>
+            <dt>Badge «&nbsp;✓ synchronisé&nbsp;»</dt><dd>Affiché sur les cours dont au moins un document est réellement indexé dans la collection. Repère d'un coup d'œil ce qui est déjà dans votre bibliothèque.</dd>
+            <dt>Nouveautés &amp; badge «&nbsp;⟳ à mettre à jour&nbsp;»</dt><dd>Le bouton <strong>Nouveautés</strong> vérifie — <strong>sans rien modifier</strong> — si les cours déjà synchronisés ont changé côté Moodle (texte ou fichiers ajoutés, modifiés, supprimés). Les cours concernés reçoivent le badge <strong>«&nbsp;⟳ à mettre à jour&nbsp;»</strong> : re-cliquez <strong>Synchroniser</strong> pour indexer les changements.</dd>
+            <dt>Rafraîchir</dt><dd>Recharge la <strong>liste des cours</strong> depuis Moodle — utile après l'inscription du compte de lecture dans un nouveau cours. Si un cours coché a disparu (supprimé côté Moodle, ou consentement retiré), Doceria le signale et l'enlève de la sélection.</dd>
+            <dt>Inclure les cours Moodle (dans le chat)</dt><dd>Case du composer, à côté de «&nbsp;Utiliser la bibliothèque&nbsp;». Cochée, chaque question interroge la collection active <strong>et tous vos cours Moodle indexés</strong> en une seule recherche, citations comprises. Elle apparaît dès qu'un cours Moodle est synchronisé et nécessite «&nbsp;Utiliser la bibliothèque&nbsp;».</dd>
           </dl>
         </details>
 
@@ -500,8 +531,8 @@
             <dt>Température</dt><dd>Basse pour des réponses stables et factuelles, haute pour davantage de variété et de créativité.</dd>
             <dt>Longueur max (tokens)</dt><dd>Plafond de longueur de la réponse.</dd>
             <dt>Mémoire — tours précédents</dt><dd>Combien d'échanges passés sont renvoyés à chaque message. <strong>0 = tout l'historique</strong> ; à réduire si la conversation devient très longue (au-delà de ~45 tours, risque d'échec côté API).</dd>
-            <dt>Consigne système</dt><dd>Instruction appliquée automatiquement à chaque message (ex. « Réponds en français, de façon concise »).</dd>
-            <dt>Modèles de consigne</dt><dd>Enregistrez vos consignes récurrentes et rappelez-les en un clic.</dd>
+            <dt>Consigne système</dt><dd>Instruction appliquée automatiquement à chaque message (ex. «&nbsp;Réponds en français, de façon concise&nbsp;»).</dd>
+            <dt>Modèles de consigne</dt><dd>Enregistrez vos consignes récurrentes&nbsp;: saisissez la consigne, donnez-lui un nom, puis <strong>Enregistrer</strong>. Le menu «&nbsp;Modèles de consigne enregistrés&nbsp;» la rappelle en un clic ; <strong>Suppr.</strong> retire le modèle sélectionné.</dd>
           </dl>
         </details>
 
@@ -515,18 +546,18 @@
         <details class="doc-group">
           <summary><i class="fa-solid fa-gauge-high"></i> Conso &amp; coût</summary>
           <dl>
-            <dt>Actualiser la consommation</dt><dd>Agrège votre usage ILaaS (environ 30 derniers jours) : nombre de requêtes, tokens entrée/sortie, <strong>coût cumulé</strong> et <strong>empreinte carbone</strong> estimée. L'API expose le consommé, pas un quota restant.</dd>
+            <dt>Actualiser la consommation</dt><dd>Agrège votre usage ILaaS (environ 30 derniers jours)&nbsp;: nombre de requêtes, tokens entrée/sortie, <strong>coût cumulé</strong> et <strong>empreinte carbone</strong> estimée. L'API expose le consommé, pas un quota restant.</dd>
           </dl>
         </details>
 
         <details class="doc-group">
           <summary><i class="fa-solid fa-wand-magic-sparkles"></i> Interface &amp; confort</summary>
           <dl>
-            <dt>Thème</dt><dd>Icône en haut à droite : <strong>clair</strong> (soleil), <strong>sombre</strong> (lune) ou <strong>automatique</strong> (demi-cercle, suit le système).</dd>
+            <dt>Thème</dt><dd>Icône en haut à droite&nbsp;: <strong>clair</strong> (soleil), <strong>sombre</strong> (lune) ou <strong>automatique</strong> (demi-cercle, suit le système).</dd>
             <dt>Colonnes pliables</dt><dd>Chevrons dans la barre du haut pour masquer la liste des conversations (gauche) ou le panneau de réglages (droite).</dd>
             <dt>Sections pliables</dt><dd>Cliquez le titre d'une section du panneau (Connexion, Bibliothèque, Génération…) pour la replier. L'état est mémorisé.</dd>
-            <dt>Aides « ? »</dt><dd>Survolez les points d'interrogation pour une explication contextuelle.</dd>
-            <dt>Menu Aide</dt><dd>Dans la barre de menus macOS : <strong>Aide</strong> → ouvre le site, le mode d'emploi ou le suivi des problèmes (GitHub) dans votre navigateur.</dd>
+            <dt>Aides «&nbsp;?&nbsp;»</dt><dd>Survolez les points d'interrogation pour une explication contextuelle.</dd>
+            <dt>Menu Aide</dt><dd>Dans la barre de menus macOS&nbsp;: <strong>Aide</strong> → ouvre le site, le mode d'emploi ou le suivi des problèmes (GitHub) dans votre navigateur.</dd>
             <dt>Mises à jour</dt><dd>Au démarrage, Doceria vérifie s'il existe une version plus récente sur GitHub et propose de la télécharger.</dd>
           </dl>
         </details>
@@ -546,7 +577,7 @@
       <div class="row g-4">
         <div class="col-md-6">
           <div class="limit"><i class="fa-solid fa-circle-info"></i>
-            <div><strong>Application non signée.</strong> Pas de compte Apple Developer : macOS demande une autorisation au 1ᵉʳ lancement (clic droit → Ouvrir). Guide pas-à-pas fourni.</div>
+            <div><strong>Application non signée.</strong> Pas de compte Apple Developer&nbsp;: macOS demande une autorisation au 1ᵉʳ lancement (clic droit → Ouvrir). Guide pas-à-pas fourni.</div>
           </div>
         </div>
         <div class="col-md-6">
@@ -556,22 +587,22 @@
         </div>
         <div class="col-md-6">
           <div class="limit"><i class="fa-solid fa-flask"></i>
-            <div><strong>Passerelle RAG en bêta.</strong> OpenGateLLM évolue ; certains comportements peuvent changer.</div>
+            <div><strong>Passerelle RAG en bêta.</strong> OpenGateLLM évolue ; certains comportements peuvent changer. Doceria suit ses versions et s'adapte à chaque évolution.</div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="limit"><i class="fa-solid fa-triangle-exclamation"></i>
-            <div><strong>Injection de prompt.</strong> Un document piégé peut tenter d'influencer les réponses : n'indexez que des sources de confiance (atténuation intégrée).</div>
+            <div><strong>Injection de prompt.</strong> Un document piégé peut tenter d'influencer les réponses&nbsp;: n'indexez que des sources de confiance (atténuation intégrée).</div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="limit"><i class="fa-brands fa-apple"></i>
-            <div><strong>macOS Apple Silicon d'abord.</strong> Version Linux (AppImage) à venir ; pas d'Intel.</div>
+            <div><strong>macOS Apple Silicon d'abord.</strong> Versions <strong>Windows puis Linux</strong> planifiées (voir la feuille de route) ; pas de Mac Intel.</div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="limit"><i class="fa-solid fa-screwdriver-wrench"></i>
-            <div><strong>Pas (encore) de mode « agent ».</strong> L'appel d'outils par le modèle est au backlog.</div>
+            <div><strong>Pas (encore) de mode «&nbsp;agent&nbsp;».</strong> L'appel d'outils par le modèle est au backlog.</div>
           </div>
         </div>
       </div>
@@ -659,15 +690,15 @@
       </div>
       <div class="row g-4 mt-2 justify-content-center">
         <div class="col-md-4"><div class="step"><span class="step-n">1</span><p>Téléchargez le <code>.dmg</code> et glissez <strong>Doceria</strong> dans Applications.</p></div></div>
-        <div class="col-md-4"><div class="step"><span class="step-n">2</span><p>1ᵉʳ lancement : <strong>clic droit → Ouvrir</strong> (ou Réglages → Confidentialité et sécurité → « Ouvrir quand même »).</p></div></div>
+        <div class="col-md-4"><div class="step"><span class="step-n">2</span><p>1ᵉʳ lancement&nbsp;: <strong>clic droit → Ouvrir</strong> (ou Réglages → Confidentialité et sécurité → «&nbsp;Ouvrir quand même&nbsp;»).</p></div></div>
         <div class="col-md-4"><div class="step"><span class="step-n">3</span><p>Créez un profil, collez votre <strong>clé ILaaS</strong>, et c'est parti.</p></div></div>
       </div>
       <div class="row justify-content-center mt-4">
         <div class="col-lg-9">
           <div class="install-note">
-            <p><i class="fa-solid fa-shield-halved"></i> <strong>« Ouvrir quand même » — c'est normal et sans danger.</strong> Doceria n'est pas signée par Apple (projet interne, sans compte développeur payant) : macOS demande donc une autorisation <strong>une seule fois</strong>. Faites un <strong>clic droit</strong> sur l'app → <strong>Ouvrir</strong> ; ou Réglages Système → <strong>Confidentialité et sécurité</strong> → tout en bas, <strong>« Ouvrir quand même »</strong>.</p>
-            <p><i class="fa-solid fa-terminal"></i> <strong>Si macOS affiche « Doceria est endommagé ».</strong> C'est fréquent sur macOS récent (le bouton « Ouvrir quand même » n'apparaît alors pas). <strong>Ce n'est pas un vrai dommage</strong> : juste la « quarantaine » posée sur une app non signée téléchargée. Ouvrez le <strong>Terminal</strong> (Applications → Utilitaires), collez cette ligne — <strong>une seule fois</strong> — puis relancez Doceria :<br><code>xattr -dr com.apple.quarantine /Applications/Doceria.app</code></p>
-            <p><i class="fa-solid fa-key"></i> <strong>« Toujours autoriser » l'accès au trousseau.</strong> En enregistrant votre clé ILaaS, macOS demande l'accès au trousseau : cliquez <strong>« Toujours autoriser »</strong>. C'est <strong>votre</strong> clé que Doceria range au bon endroit — le <strong>trousseau du système</strong> — plutôt que de la laisser en clair ; l'app n'accède qu'à <strong>ses propres entrées</strong>. La demande peut réapparaître après une mise à jour : c'est normal pour une app non signée (sa signature change à chaque version), <strong>ce n'est pas un signe de danger</strong>.</p>
+            <p><i class="fa-solid fa-shield-halved"></i> <strong>«&nbsp;Ouvrir quand même&nbsp;» — c'est normal et sans danger.</strong> Doceria n'est pas signée par Apple (projet interne, sans compte développeur payant)&nbsp;: macOS demande donc une autorisation <strong>une seule fois</strong>. Faites un <strong>clic droit</strong> sur l'app → <strong>Ouvrir</strong> ; ou Réglages Système → <strong>Confidentialité et sécurité</strong> → tout en bas, <strong>«&nbsp;Ouvrir quand même&nbsp;»</strong>.</p>
+            <p><i class="fa-solid fa-terminal"></i> <strong>Si macOS affiche «&nbsp;Doceria est endommagé&nbsp;».</strong> C'est fréquent sur macOS récent (le bouton «&nbsp;Ouvrir quand même&nbsp;» n'apparaît alors pas). <strong>Ce n'est pas un vrai dommage</strong> : juste la «&nbsp;quarantaine&nbsp;» posée sur une app non signée téléchargée. Ouvrez le <strong>Terminal</strong> (Applications → Utilitaires), collez cette ligne — <strong>une seule fois</strong> — puis relancez Doceria&nbsp;:<br><code>xattr -dr com.apple.quarantine /Applications/Doceria.app</code></p>
+            <p><i class="fa-solid fa-key"></i> <strong>«&nbsp;Toujours autoriser&nbsp;» l'accès au trousseau.</strong> En enregistrant votre clé ILaaS, macOS demande l'accès au trousseau&nbsp;: cliquez <strong>«&nbsp;Toujours autoriser&nbsp;»</strong>. C'est <strong>votre</strong> clé que Doceria range au bon endroit — le <strong>trousseau du système</strong> — plutôt que de la laisser en clair ; l'app n'accède qu'à <strong>ses propres entrées</strong>. La demande peut réapparaître après une mise à jour&nbsp;: c'est normal pour une app non signée (sa signature change à chaque version), <strong>ce n'est pas un signe de danger</strong>.</p>
           </div>
         </div>
       </div>
@@ -720,7 +751,7 @@
         </div>
       </div>
       <p class="footer-fine">Pédagogie ouverte, conçue avec soin. Enseigner avec l'IA.</p>
-      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-03.1</span></p>
+      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-03.3</span></p>
     </div>
   </footer>
 
@@ -741,15 +772,40 @@
       const lb = document.getElementById('lightbox');
       const img = document.getElementById('lightbox-img');
       if (!lb || !img) return;
-      const open = (src, alt) => { img.src = src; img.alt = alt || ''; lb.hidden = false; document.body.style.overflow = 'hidden'; };
-      const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; };
+      let lastFocus = null; // accessibilité : mémorise l'élément focalisé pour le restaurer à la fermeture
+      const open = (src, alt) => { lastFocus = document.activeElement; img.src = src; img.alt = alt || ''; lb.hidden = false; document.body.style.overflow = 'hidden'; document.getElementById('lightbox-close')?.focus(); };
+      const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); };
       document.querySelectorAll('.shot-img, .diagram-img').forEach((el) => {
         el.style.cursor = 'zoom-in';
         el.addEventListener('click', () => open(el.currentSrc || el.src, el.alt));
       });
       lb.addEventListener('click', close);
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lb.hidden) close(); });
+      // Piège de focus : tant que la lightbox est ouverte, Tab/Maj+Tab reste sur « Fermer »
+      // (seul élément focalisable), le focus ne peut pas s'échapper vers l'arrière-plan.
+      lb.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') { e.preventDefault(); document.getElementById('lightbox-close')?.focus(); }
+      });
     })();
+    // Mode d'emploi : bouton « Tout afficher / Tout replier » (déplie/replie les 9 rubriques).
+    (() => {
+      const btn = document.getElementById('guideToggleAll');
+      const groups = document.querySelectorAll('#guide .doc-group');
+      if (!btn || !groups.length) return;
+      btn.addEventListener('click', () => {
+        const expand = btn.getAttribute('aria-expanded') !== 'true';
+        groups.forEach((g) => { g.open = expand; });
+        btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
+        btn.textContent = expand ? 'Tout replier' : 'Tout afficher';
+      });
+    })();
+    // Accessibilité : signale aux lecteurs d'écran que les liens externes ouvrent un nouvel onglet.
+    document.querySelectorAll('a[target="_blank"]').forEach((a) => {
+      const s = document.createElement('span');
+      s.className = 'sr-only';
+      s.textContent = ' (ouvre un nouvel onglet)';
+      a.appendChild(s);
+    });
   </script>
 </body>
 </html>

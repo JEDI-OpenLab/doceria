@@ -37,10 +37,10 @@ du POC **Learnix**.
 - **Version publiée : `20260626.8.0`** (macOS **arm64**, **non signée** — pas de compte Apple).
   Guide : `INSTALLATION-macOS.md`.
 - **macOS : fonctionnellement complet et soigné** (chat, RAG, comparaison multi-modèles, LaTeX…).
-- **Connecteur Moodle : Lots 0-7 + 5.1 livrés et relus** sur la branche `moodle` (voir encart
-  ci-dessus). Lecture seule quasi complète. **Reste = Lot 6** (interrupteur « inclure les cours
-  Moodle » dans le chat) puis **fusion `moodle` → `main` + release**. **Pas encore intégré au .dmg
-  publié** → à embarquer dans la prochaine version.
+- **Connecteur Moodle : TOUS les lots livrés et relus** (0-7 + 5.1, dont le **Lot 6 « Inclure les
+  cours Moodle » ✅ 2026-07-03** — dernier lot, fusionnés dans `main`). Lecture seule complète.
+  **Reste = test en réel du Lot 6 puis release.** **Pas encore intégré au .dmg publié** → à
+  embarquer dans la prochaine version.
 - **Windows / Linux : non livrés** (feuille de route). Tauri est multiplateforme → portage Windows
   surtout conditionné par la **signature Authenticode** (+ WebView2), Linux par le build AppImage.
 
@@ -134,9 +134,9 @@ autorisant KaTeX, bundle « all »).
 - **Webview Tauri** : `window.prompt()` **ne marche pas** → toujours des champs inline.
 
 ## 7. Prochaines étapes (feuille de route, dans l'ordre)
-1. **Lot 6 — interrupteur « inclure les cours Moodle »** dans le chat (**seul lot restant** du
-   connecteur avant la fusion).
-2. **Fusionner `moodle` → `main`** et publier une version embarquant le connecteur (Lots 0-7 + 5.1).
+1. **Lot 6 — interrupteur « Inclure les cours Moodle »** dans le chat : **✅ livré (2026-07-03)** ;
+   reste son **test en réel** par l'utilisateur.
+2. **Publier une version embarquant le connecteur** (Lots 0-7 + 5.1, déjà fusionnés dans `main`).
 3. **Portage Windows** : Tauri multiplateforme (WebView2) ; le vrai chantier = **signature
    Authenticode** (équivalent Windows de la quarantaine macOS). Appui B7 (certificat + build).
 4. **Version serveur/web** : deux formats partageant le cœur Rust (app de bureau vs serveur central
@@ -151,7 +151,7 @@ autorisant KaTeX, bundle « all »).
   testés sur une instance Moodle réelle (synchro texte **et** fichiers/PDF d'un cours → collection RAG
   → réponse sourcée ; re-sync sans doublon ; badge « à mettre à jour » ; filtre « cours inscrits »).
   **Gouvernance OPT-IN par consentement actée** (jamais opt-out ; zéro donnée d'étudiant).
-  **Reste : Lot 6** (interrupteur chat) puis **merge/release**.
+  **Lot 6 (interrupteur chat) livré le 2026-07-03 ; reste : test en réel puis release.**
 - **Correctif RAG Requête** : validé (« ça marche parfaitement ») — plus de repli trompeur.
 - **Site web** : en ligne. Reste (utilisateur) : captures `docs/assets/screen-*.png` + Release GitHub
   avec le `.dmg`.

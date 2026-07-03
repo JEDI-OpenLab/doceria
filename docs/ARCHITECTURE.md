@@ -207,8 +207,9 @@ Module `src-tauri/src/moodle.rs` — **lecture seule stricte**, **aucune donnée
 ## 10. Feuille de route (résumé)
 - **Lots 4, 5, 5.1, 7** — **livrés** (voir §7) : fichiers/PDF, synchro incrémentale + déduplication,
   badge « à mettre à jour », filtre opt-in « cours inscrits ».
-- **Lot 6** — interrupteur « inclure les cours Moodle » dans le chat (**reste à faire**), puis
-  merge/release dans le `.dmg`.
+- **Lot 6** — interrupteur « Inclure les cours Moodle » dans le chat — **livré (2026-07-03)** :
+  recherche RAG multi-collections (collection active + toutes les collections « Moodle · … »).
+  **Reste : test en réel puis merge/release dans le `.dmg`.**
 - **Portage Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode**.
 - **Version serveur / web** — deux formats (app de bureau vs serveur central sans installation).
 - **Linux** (après Moodle).
