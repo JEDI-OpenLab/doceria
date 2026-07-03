@@ -479,6 +479,22 @@
         </details>
 
         <details class="doc-group">
+          <summary><i class="fa-solid fa-graduation-cap"></i> Connecteur Moodle : paramétrage</summary>
+          <p><i class="fa-solid fa-circle-info"></i> Le connecteur arrive dans la <strong>prochaine version</strong>. La configuration <strong>côté Moodle</strong> est un réglage <strong>unique</strong>, fait par un administrateur (DSI) ; l'usage <strong>côté Doceria</strong> est ensuite à la main de l'enseignant. Tout est en <strong>lecture seule</strong> et sur <strong>consentement</strong>.</p>
+          <dl>
+            <dt>Côté Moodle — activer les web services</dt><dd>Dans <em>Administration du site → Serveur → Web services</em> : activer les <strong>services web</strong>, puis le <strong>protocole REST</strong> uniquement (laisser les autres désactivés).</dd>
+            <dt>Compte de lecture dédié</dt><dd>Créer un compte technique <code>doceria-rag-readonly</code> (authentification manuelle). C'est <strong>ce compte</strong>, jamais l'administrateur, qui portera le jeton — d'où sa portée strictement limitée.</dd>
+            <dt>Rôle minimal</dt><dd>Créer un rôle <em>Web services REST (lecture seule)</em> avec une <strong>seule</strong> capacité, <code>webservice/rest:use</code>, au contexte <strong>Système</strong>, puis l'attribuer au compte. Le strict nécessaire pour parler REST.</dd>
+            <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>« peut télécharger des fichiers »</strong> coché (pour lire les PDF), <strong>« autoriser le dépôt de fichiers » décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>« cours consentis »</strong> — actif par défaut (voir plus bas) — ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong> — surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>.</dd>
+            <dt>Jeton</dt><dd>Générer un jeton pour ce compte et ce service (<em>Gérer les jetons</em>). Il est <strong>révocable</strong> à tout moment et se colle dans Doceria — où il est rangé dans le <strong>trousseau du système</strong>, jamais en clair.</dd>
+            <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant y <strong>inscrit le compte de lecture</strong> (comme un participant). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant.</dd>
+            <dt>Côté Doceria — profil Moodle</dt><dd>Dans l'application : créer un <strong>profil Moodle</strong> (indépendant des profils ILaaS), renseigner l'<strong>URL</strong> de Moodle et coller le <strong>jeton</strong>. Le bouton <strong>Tester</strong> vérifie l'accès.</dd>
+            <dt>Explorateur &amp; synchronisation</dt><dd>L'<strong>explorateur de cours</strong> liste les cours accessibles (recherche, filtre par catégorie). Cochez ceux à indexer puis <strong>Synchroniser</strong> : Doceria crée <strong>une collection «&nbsp;Moodle&nbsp;· &lt;cours&gt;&nbsp;» par cours</strong> dans le RAG du profil ILaaS actif. La synchro est <strong>incrémentale</strong> (jamais de doublon) ; un badge <strong>« ⟳ à mettre à jour »</strong> signale les cours modifiés depuis.</dd>
+            <dt>Cours consentis uniquement (option)</dt><dd><strong>Cochée par défaut</strong>, cette bascule ne montre que les cours où le compte de lecture est inscrit — via la 9ᵉ fonction <code>core_enrol_get_users_courses</code> ci-dessus. Si cette fonction n'a pas été ajoutée au service, Doceria l'<strong>indique clairement</strong> : décochez alors l'option pour lister <strong>l'ensemble des cours</strong> (avec les 8&nbsp;fonctions de contenu seules). Le mode « tout indexer » est un choix de l'établissement.</dd>
+          </dl>
+        </details>
+
+        <details class="doc-group">
           <summary><i class="fa-solid fa-sliders"></i> Génération</summary>
           <dl>
             <dt>Température</dt><dd>Basse pour des réponses stables et factuelles, haute pour davantage de variété et de créativité.</dd>
@@ -704,7 +720,7 @@
         </div>
       </div>
       <p class="footer-fine">Pédagogie ouverte, conçue avec soin. Enseigner avec l'IA.</p>
-      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-02.3</span></p>
+      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-03.1</span></p>
     </div>
   </footer>
 
