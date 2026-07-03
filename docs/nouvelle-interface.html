@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doceria, la nouvelle interface (juillet 2026)</title>
+<style>
+/* ============================================================
+   Doceria, aperçu de la nouvelle interface (disponible juillet 2026)
+   Grille 4/8 px · SF Pro système · accent unique pétrole
+   ============================================================ */
+:root{
+  --petrole:#1A5A55;
+  --petrole-dark:#134540;
+  --tint:rgba(26,90,85,.12);
+  --tint-strong:rgba(26,90,85,.18);
+  --ink:#1D1D1F;
+  --sec:#6E6E73;
+  --ter:#AEAEB2;
+  --hairline:rgba(0,0,0,.08);
+  --hairline-soft:rgba(0,0,0,.05);
+  --surface:#FFFFFF;
+  --control:#F5F4F2;
+  --board-bg:#FAFAF9;
+  --font:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  font-family:var(--font);
+  background:var(--board-bg);
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.5;
+}
+svg{display:block;flex:none}
+
+/* ---------- En-tête de planche ---------- */
+.board-head{
+  max-width:1120px;
+  margin:0 auto;
+  padding:96px 48px 72px;
+}
+.board-head .eyebrow{
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--petrole);
+  margin-bottom:16px;
+}
+.board-head h1{
+  font-size:44px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  line-height:1.1;
+  margin-bottom:12px;
+}
+.board-head .pitch{
+  font-size:18px;
+  color:var(--sec);
+  max-width:680px;
+  margin-bottom:40px;
+}
+.swatches{display:flex;gap:24px;flex-wrap:wrap}
+.swatch{display:flex;flex-direction:column;gap:8px}
+.swatch .chip{
+  width:88px;height:56px;border-radius:10px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.swatch .hex{font-size:11px;font-weight:600;letter-spacing:.02em}
+.swatch .role{font-size:11px;color:var(--sec)}
+
+/* ---------- Sections d'écran ---------- */
+.screen{max-width:1560px;margin:0 auto;padding:0 48px 32px}
+.screen-label{
+  max-width:1024px;margin:0 auto;
+  padding:56px 0 24px;
+}
+.screen-label .num{
+  font-size:11px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--petrole);margin-bottom:6px;
+}
+.screen-label h2{font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.screen-label p{font-size:14px;color:var(--sec)}
+
+/* ---------- Bureau macOS ---------- */
+.desktop{
+  border-radius:20px;
+  background:linear-gradient(155deg,#AFC4BE 0%,#C7D4CB 42%,#E3E0D3 100%);
+  padding:0 48px 72px;
+  overflow-x:auto;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+}
+.desktop-inner{min-width:fit-content;display:flex;flex-direction:column;align-items:center}
+.menubar{
+  align-self:stretch;
+  height:28px;
+  margin:0 -48px 56px;
+  padding:0 20px;
+  display:flex;align-items:center;gap:20px;
+  background:rgba(252,252,250,.55);
+  backdrop-filter:blur(24px) saturate(1.6);
+  -webkit-backdrop-filter:blur(24px) saturate(1.6);
+  font-size:12px;color:rgba(0,0,0,.78);
+  border-radius:20px 20px 0 0;
+}
+.menubar .apple{font-size:13px}
+.menubar .appname{font-weight:700}
+.menubar .spacer{flex:1}
+.menubar .status{font-size:12px;color:rgba(0,0,0,.6)}
+
+/* ---------- Fenêtre macOS ---------- */
+.window{
+  border-radius:12px;
+  overflow:hidden;
+  background:transparent; /* la vibrance de la sidebar laisse voir le bureau */
+  box-shadow:
+    0 0 0 .5px rgba(0,0,0,.18),
+    inset 0 .5px 0 rgba(255,255,255,.55),
+    0 2px 6px rgba(0,0,0,.08),
+    0 12px 28px rgba(20,40,36,.16),
+    0 36px 80px rgba(20,40,36,.26);
+}
+.traffic{display:flex;gap:8px}
+.traffic span{
+  width:12px;height:12px;border-radius:50%;
+  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12);
+}
+.traffic .r{background:#FF5F57}
+.traffic .y{background:#FEBC2E}
+.traffic .g{background:#28C840}
+
+/* ---------- ÉCRAN 1 : fenêtre principale ---------- */
+.app-window{width:1360px;height:848px;display:flex}
+
+/* Sidebar vibrante */
+.sidebar{
+  width:252px;flex:none;
+  display:flex;flex-direction:column;
+  background:rgba(243,242,238,.62);
+  backdrop-filter:blur(28px) saturate(1.7);
+  -webkit-backdrop-filter:blur(28px) saturate(1.7);
+  border-right:1px solid var(--hairline-soft);
+}
+.sidebar .traffic{padding:20px 20px 8px}
+.sidebar nav{flex:1;overflow:hidden;padding:12px 10px 0}
+.side-section{
+  font-size:11px;font-weight:600;color:var(--sec);
+  padding:16px 10px 6px;letter-spacing:.01em;
+}
+.side-item{
+  display:flex;align-items:center;gap:8px;
+  height:30px;padding:0 10px;border-radius:6px;
+  font-size:13px;color:var(--ink);
+}
+.side-item svg{color:var(--sec)}
+.side-item.sel{background:var(--tint-strong);font-weight:600;color:var(--petrole-dark)}
+.side-item.sel svg{color:var(--petrole)}
+.side-item .badge{
+  margin-left:auto;
+  min-width:18px;height:18px;padding:0 5px;
+  border-radius:9px;background:var(--petrole);color:#fff;
+  font-size:11px;font-weight:600;line-height:18px;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.side-item .count{margin-left:auto;font-size:11px;color:var(--ter);font-variant-numeric:tabular-nums}
+.side-item.child{padding-left:30px}
+.side-item .disclosure{margin-left:auto;color:var(--ter)}
+.side-foot{
+  padding:12px 20px 16px;
+  border-top:1px solid var(--hairline-soft);
+  display:flex;flex-direction:column;gap:6px;
+}
+.side-foot .conso{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--sec);font-variant-numeric:tabular-nums;
+}
+.side-foot .souverain{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--ter);
+}
+.side-foot svg{color:var(--ter)}
+
+/* Zone principale */
+.main{flex:1;display:flex;flex-direction:column;background:var(--surface);min-width:0}
+.toolbar{
+  height:52px;flex:none;
+  display:flex;align-items:center;gap:12px;
+  padding:0 16px;
+  border-bottom:1px solid var(--hairline-soft);
+}
+.tb-icon{
+  width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sec);
+}
+.tb-icon:hover{background:rgba(0,0,0,.05)}
+.tb-title{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.tb-spacer{flex:1}
+.tb-model{
+  display:flex;align-items:center;gap:6px;
+  height:28px;padding:0 10px;border-radius:6px;
+  font-size:12px;color:var(--sec);
+  border:1px solid var(--hairline);
+  background:var(--surface);
+}
+.tb-model svg{color:var(--ter)}
+.tb-btn{
+  display:flex;align-items:center;gap:6px;
+  height:28px;padding:0 12px;border-radius:6px;
+  font-size:12px;font-weight:500;color:var(--ink);
+  background:var(--control);
+}
+.tb-btn svg{color:var(--sec)}
+
+/* Chat */
+.chat{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.chat-scroll{flex:1;padding:36px 32px 8px;overflow:hidden}
+.chat-col{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.timestamp{text-align:center;font-size:11px;color:var(--ter)}
+.msg-user{align-self:flex-end;max-width:78%}
+.msg-user .bubble{
+  background:var(--control);
+  border-radius:18px;border-bottom-right-radius:6px;
+  padding:10px 16px;
+  font-size:15px;line-height:1.5;
+}
+.msg-ai{max-width:100%;font-size:15px;line-height:1.65}
+.msg-ai p{margin-bottom:8px}
+.cite{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:18px;padding:0 5px;
+  border-radius:9px;
+  background:var(--tint);color:var(--petrole);
+  font-size:11px;font-weight:600;
+  vertical-align:2px;
+  font-variant-numeric:tabular-nums;
+}
+.cite.active{background:var(--petrole);color:#fff}
+.sources{
+  margin-top:16px;
+  border:1px solid var(--hairline);
+  border-radius:10px;
+  overflow:hidden;
+}
+.sources .src-head{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--sec);
+  padding:10px 14px 8px;
+}
+.src-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  border-top:1px solid var(--hairline-soft);
+}
+.src-row .title{font-size:13px;font-weight:500}
+.src-row .meta{font-size:11px;color:var(--sec)}
+.src-row .chev{margin-left:auto;color:var(--ter)}
+.msg-actions{display:flex;gap:4px;margin-top:10px}
+.msg-actions span{
+  width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ter);
+}
+
+/* Composer */
+.composer-wrap{padding:8px 32px 20px;flex:none}
+.composer{
+  max-width:720px;margin:0 auto;
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:0 1px 2px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.04);
+}
+.composer .field{
+  padding:14px 16px 6px;
+  font-size:15px;color:var(--ter);
+}
+.composer .row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px 10px;
+}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  height:26px;padding:0 10px;border-radius:13px;
+  font-size:12px;font-weight:500;
+  border:1px solid var(--hairline);
+  color:var(--sec);background:var(--surface);
+}
+.chip svg{color:var(--ter)}
+.chip.on{
+  background:var(--tint);border-color:transparent;
+  color:var(--petrole-dark);
+}
+.chip.on svg{color:var(--petrole)}
+.icon-btn{
+  width:26px;height:26px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--hairline);color:var(--sec);
+}
+.seg{
+  margin-left:auto;
+  display:flex;align-items:center;
+  background:var(--control);
+  border-radius:7px;padding:2px;
+}
+.seg span{
+  font-size:12px;font-weight:500;color:var(--sec);
+  padding:3px 12px;border-radius:5px;
+}
+.seg .sel{
+  background:var(--surface);color:var(--ink);font-weight:600;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.10);
+}
+.send{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--petrole);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 2px rgba(19,69,64,.35);
+}
+
+/* ---------- Annotations ---------- */
+.notes{
+  max-width:1024px;margin:0 auto;
+  padding:32px 0 24px;
+  list-style:none;
+  display:grid;grid-template-columns:1fr 1fr;gap:20px 48px;
+  counter-reset:note;
+}
+.notes li{
+  counter-increment:note;
+  display:flex;gap:12px;
+  font-size:13px;color:var(--sec);line-height:1.55;
+}
+.notes li::before{
+  content:counter(note);
+  flex:none;
+  width:22px;height:22px;border-radius:50%;
+  border:1px solid var(--petrole);
+  color:var(--petrole);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+.notes b{color:var(--ink);font-weight:600}
+
+/* ---------- ÉCRAN 2 : Réglages ---------- */
+.settings-window{width:715px}
+.settings-titlebar{
+  position:relative;
+  background:linear-gradient(#F7F6F4,#F1F0ED);
+  border-bottom:1px solid var(--hairline);
+  padding:16px 20px 10px;
+}
+.settings-titlebar .traffic{position:absolute;top:20px;left:20px}
+.settings-titlebar .wtitle{
+  text-align:center;font-size:13px;font-weight:600;
+  color:var(--ink);margin-bottom:8px;
+}
+.tabs{display:flex;justify-content:center;gap:4px}
+.tab{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:5px 14px 6px;border-radius:8px;
+  font-size:11px;color:var(--sec);
+}
+.tab svg{color:var(--sec)}
+.tab.sel{background:rgba(0,0,0,.06);color:var(--ink)}
+.tab.sel svg{color:var(--petrole)}
+.settings-body{background:var(--control);padding:24px 24px 24px}
+.group-label{
+  font-size:13px;font-weight:600;
+  padding:0 2px 8px;
+}
+.group-desc{font-size:12px;color:var(--sec);padding:0 2px 10px;margin-top:-4px}
+.group{
+  background:var(--surface);
+  border-radius:10px;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.03);
+  margin-bottom:24px;
+  overflow:hidden;
+}
+.grow{
+  display:flex;align-items:center;gap:12px;
+  min-height:44px;padding:10px 14px;
+}
+.grow + .grow{border-top:1px solid var(--hairline-soft)}
+.grow .glabel{font-size:13px}
+.grow .gsub{font-size:11px;color:var(--sec);margin-top:1px}
+.grow .gright{margin-left:auto;display:flex;align-items:center;gap:10px}
+.grow .gvalue{font-size:13px;color:var(--sec)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ok{background:#28C840;box-shadow:0 0 0 3px rgba(40,200,64,.15)}
+.mini-btn{
+  font-size:12px;font-weight:500;
+  height:26px;padding:0 12px;border-radius:6px;
+  background:var(--surface);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.16),0 1px 1px rgba(0,0,0,.06);
+}
+.mini-btn.primary{
+  background:var(--petrole);color:#fff;
+  box-shadow:0 0 0 .5px rgba(19,69,64,.4),0 1px 2px rgba(19,69,64,.3);
+}
+.switch{
+  width:38px;height:22px;border-radius:11px;flex:none;
+  background:rgba(0,0,0,.14);position:relative;
+}
+.switch::after{
+  content:"";position:absolute;top:1px;left:1px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.25);
+}
+.switch.on{background:var(--petrole)}
+.switch.on::after{left:auto;right:1px}
+.settings-foot{
+  display:flex;align-items:center;gap:12px;
+  padding:0 2px;
+}
+.settings-foot .last{font-size:12px;color:var(--sec)}
+.settings-foot .mini-btn{margin-left:auto}
+.badge-sm{
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+  background:var(--tint);color:var(--petrole);
+  font-size:11px;font-weight:600;line-height:18px;text-align:center;
+}
+.keycap{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:20px;padding:0 6px;border-radius:5px;
+  background:var(--surface);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 1px 0 rgba(0,0,0,.08);
+  font-size:11px;font-weight:500;color:var(--sec);
+}
+
+/* ---------- ÉCRAN 3 : geste signature ---------- */
+.gesture-stage{
+  display:flex;flex-direction:column;align-items:center;
+  padding:88px 48px 200px;
+}
+.excerpt{
+  width:720px;max-width:100%;
+  background:var(--surface);
+  border-radius:12px;
+  padding:28px 32px;
+  font-size:15px;line-height:1.65;
+  box-shadow:
+    0 0 0 .5px rgba(0,0,0,.14),
+    0 8px 20px rgba(20,40,36,.12),
+    0 24px 56px rgba(20,40,36,.18);
+  position:relative;
+}
+.popover{
+  position:absolute;
+  top:calc(100% - 34px);
+  left:96px;
+  width:400px;
+  background:rgba(252,252,251,.97);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-radius:12px;
+  box-shadow:
+    0 0 0 .5px rgba(0,0,0,.16),
+    0 10px 24px rgba(0,0,0,.14),
+    0 28px 64px rgba(20,40,36,.22);
+  z-index:2;
+}
+.popover .arrow{
+  position:absolute;top:-6px;left:64px;
+  width:12px;height:12px;
+  background:rgba(252,252,251,.97);
+  transform:rotate(45deg);
+  border-top:.5px solid rgba(0,0,0,.16);
+  border-left:.5px solid rgba(0,0,0,.16);
+}
+.pop-head{display:flex;gap:12px;padding:16px 16px 0}
+.pop-head .doc-ic{
+  width:34px;height:34px;border-radius:8px;flex:none;
+  background:var(--tint);color:var(--petrole);
+  display:flex;align-items:center;justify-content:center;
+}
+.pop-head .ptitle{font-size:13px;font-weight:600;line-height:1.35}
+.pop-head .pmeta{font-size:11px;color:var(--sec);margin-top:2px}
+.pop-quote{
+  margin:14px 16px;
+  padding:2px 0 2px 12px;
+  border-left:2px solid var(--petrole);
+  font-size:13px;line-height:1.55;color:var(--sec);
+}
+.pop-actions{
+  display:flex;justify-content:flex-end;gap:8px;
+  padding:12px 16px 14px;
+  border-top:1px solid var(--hairline-soft);
+}
+
+/* ============================================================
+   ÉCRAN 1 bis — MODE SOMBRE (toutes règles scopées .dkA-night,
+   aucune collision avec l'existant)
+   Accent sombre : #4BA396 (pétrole éclairci, AA sur #1E1E1E)
+   ============================================================ */
+.dkA-night{
+  background:
+    radial-gradient(120% 90% at 18% 0%,rgba(75,163,150,.10),transparent 55%),
+    linear-gradient(160deg,#10181C 0%,#172226 42%,#20272C 74%,#2B2D34 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.dkA-night .menubar{
+  background:rgba(24,26,27,.55);
+  color:rgba(255,255,255,.72);
+}
+.dkA-night .menubar .status{color:rgba(255,255,255,.48)}
+.dkA-night .window{
+  box-shadow:
+    0 0 0 .5px rgba(0,0,0,.65),
+    inset 0 .5px 0 rgba(255,255,255,.09),
+    0 2px 8px rgba(0,0,0,.35),
+    0 18px 44px rgba(0,0,0,.45),
+    0 56px 120px rgba(0,0,0,.52);
+}
+.dkA-night .traffic span{box-shadow:inset 0 0 0 .5px rgba(0,0,0,.30)}
+
+/* Sidebar : vibrance sombre — le bureau nuit transparaît */
+.dkA-night .sidebar{
+  background:rgba(30,30,30,.55);
+  backdrop-filter:blur(28px) saturate(1.4);
+  -webkit-backdrop-filter:blur(28px) saturate(1.4);
+  border-right:1px solid rgba(255,255,255,.08);
+}
+.dkA-night .side-section{color:#98989D}
+.dkA-night .side-item{color:#E8E8EA}
+.dkA-night .side-item svg{color:#98989D}
+.dkA-night .side-item.sel{background:rgba(75,163,150,.26);color:#9BD6CA}
+.dkA-night .side-item.sel svg{color:#4BA396}
+.dkA-night .side-item .badge{background:#4BA396;color:#0F2E29}
+.dkA-night .side-item .count{color:#6C6C70}
+.dkA-night .side-item .disclosure{color:#6C6C70}
+.dkA-night .side-foot{border-top:1px solid rgba(255,255,255,.08)}
+.dkA-night .side-foot .conso{color:#98989D}
+.dkA-night .side-foot .souverain{color:#6C6C70}
+.dkA-night .side-foot svg{color:#6C6C70}
+
+/* Zone principale : surface opaque #1E1E1E, relief par les champs #2A2A2C */
+.dkA-night .main{background:#1E1E1E;color:#E8E8EA}
+.dkA-night .toolbar{border-bottom:1px solid rgba(255,255,255,.08)}
+.dkA-night .tb-icon{color:#98989D}
+.dkA-night .tb-title{color:#E8E8EA}
+.dkA-night .tb-model{background:#262626;border:1px solid rgba(255,255,255,.12);color:#98989D}
+.dkA-night .tb-model svg{color:#6C6C70}
+.dkA-night .tb-btn{background:#2A2A2C;color:#E8E8EA}
+.dkA-night .tb-btn svg{color:#98989D}
+.dkA-night .timestamp{color:#6C6C70}
+.dkA-night .msg-user .bubble{background:#2E2E30;color:#E8E8EA}
+.dkA-night .msg-ai{color:#E8E8EA}
+.dkA-night .cite{background:rgba(75,163,150,.20);color:#6FC2B4}
+.dkA-night .sources{border:1px solid rgba(255,255,255,.10)}
+.dkA-night .sources .src-head{color:#98989D}
+.dkA-night .src-row{border-top:1px solid rgba(255,255,255,.06)}
+.dkA-night .src-row .title{color:#E8E8EA}
+.dkA-night .src-row .meta{color:#98989D}
+.dkA-night .src-row .chev{color:#6C6C70}
+.dkA-night .msg-actions span{color:#6C6C70}
+
+/* Composer : champ #2A2A2C, ombre profonde mais douce */
+.dkA-night .composer{
+  background:#2A2A2C;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 1px 2px rgba(0,0,0,.30),0 8px 22px rgba(0,0,0,.30);
+}
+.dkA-night .composer .field{color:#6C6C70}
+.dkA-night .chip{background:transparent;border:1px solid rgba(255,255,255,.12);color:#98989D}
+.dkA-night .chip svg{color:#6C6C70}
+.dkA-night .chip.on{background:rgba(75,163,150,.18);border-color:transparent;color:#7CC7BA}
+.dkA-night .chip.on svg{color:#4BA396}
+.dkA-night .icon-btn{border:1px solid rgba(255,255,255,.12);color:#98989D}
+.dkA-night .seg{background:rgba(255,255,255,.07)}
+.dkA-night .seg span{color:#98989D}
+.dkA-night .seg .sel{
+  background:#3A3A3C;color:#E8E8EA;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.20),0 1px 2px rgba(0,0,0,.35);
+}
+.dkA-night .send{
+  background:#4BA396;color:#0F2E29;
+  box-shadow:0 1px 3px rgba(0,0,0,.40);
+}
+
+/* Pastilles de palette sombre dans l'en-tête */
+.dkA-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14) !important}
+
+/* ---------- Pied de planche ---------- */
+.board-foot{
+  max-width:1120px;margin:0 auto;
+  padding:48px 48px 96px;
+  font-size:12px;color:var(--ter);
+  border-top:1px solid var(--hairline-soft);
+  display:flex;gap:24px;
+}
+.board-foot b{color:var(--sec);font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ==================== EN-TÊTE ==================== -->
+<header class="board-head">
+  <div class="eyebrow">Doceria · Aperçu de la nouvelle interface</div>
+  <h1>Bientôt, une interface entièrement repensée</h1>
+  <p class="pitch">Doceria devient une véritable app macOS de première partie : matériaux système, un seul accent pétrole, et vos cours et documents en objets de première classe. Moins de jargon, plus de plaisir. <b>Disponible en juillet 2026.</b></p>
+  <p style="margin-top:16px"><a href="index.html" style="color:#1A5A55;font-weight:600;text-decoration:none">← Retour au site Doceria</a></p>
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#1A5A55"></div><span class="hex">#1A5A55</span><span class="role">Accent pétrole, unique</span></div>
+    <div class="swatch"><div class="chip" style="background:rgba(26,90,85,.12)"></div><span class="hex">#1A5A55 · 12 %</span><span class="role">Teinte, sélections, pastilles</span></div>
+    <div class="swatch"><div class="chip" style="background:#FFFFFF"></div><span class="hex">#FFFFFF</span><span class="role">Surface de contenu</span></div>
+    <div class="swatch"><div class="chip" style="background:#F5F4F2"></div><span class="hex">#F5F4F2</span><span class="role">Gris système, contrôles</span></div>
+    <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,rgba(243,242,238,.9),rgba(220,224,218,.75))"></div><span class="hex">rgba · vibrance</span><span class="role">Matériau sidebar</span></div>
+    <div class="swatch"><div class="chip" style="background:#1D1D1F"></div><span class="hex">#1D1D1F</span><span class="role">Encre, texte</span></div>
+    <div class="swatch"><div class="chip dkA-chip" style="background:#4BA396"></div><span class="hex">#4BA396</span><span class="role">Accent pétrole, mode sombre</span></div>
+    <div class="swatch"><div class="chip dkA-chip" style="background:#1E1E1E"></div><span class="hex">#1E1E1E</span><span class="role">Surface sombre</span></div>
+    <div class="swatch"><div class="chip dkA-chip" style="background:#2A2A2C"></div><span class="hex">#2A2A2C</span><span class="role">Champs & contrôles sombres</span></div>
+    <div class="swatch"><div class="chip dkA-chip" style="background:linear-gradient(135deg,rgba(38,42,42,.96),rgba(52,58,56,.85))"></div><span class="hex">rgba(30,30,30,.55)</span><span class="role">Vibrance sombre, sidebar</span></div>
+    <div class="swatch"><div class="chip" style="background:#E8E8EA"></div><span class="hex">#E8E8EA</span><span class="role">Texte primaire, sombre</span></div>
+  </div>
+</header>
+
+<!-- ==================== ÉCRAN 1 ==================== -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="num">Écran 1</div>
+    <h2>La fenêtre principale</h2>
+    <p>Sidebar vibrante, toolbar unifiée, chat épuré. Le rail droit a disparu, rien ne se dresse entre l'enseignant·e et sa question.</p>
+  </div>
+
+  <div class="desktop">
+    <div class="desktop-inner">
+      <div class="menubar">
+        <span class="apple">&#63743;</span>
+        <span class="appname">Doceria</span>
+        <span>Fichier</span><span>Édition</span><span>Présentation</span><span>Conversation</span><span>Fenêtre</span><span>Aide</span>
+        <span class="spacer"></span>
+        <span class="status">jeu. 3 juil.&nbsp;&nbsp;10:24</span>
+      </div>
+
+      <div class="window app-window">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="traffic"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <nav>
+            <div class="side-section">Conversations</div>
+            <div class="side-item sel">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Littératie critique
+            </div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Préparation TD réseaux
+            </div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Correction copies L2
+            </div>
+
+            <div class="side-section">Sources</div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.8 14.2 5.6 8 8.4 1.8 5.6Z"/><path d="M4.2 7v2.9c0 1.05 1.7 1.9 3.8 1.9s3.8-.85 3.8-1.9V7"/><path d="M14.2 5.6v3.2"/></svg>
+              Mes cours Moodle
+              <svg class="disclosure" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 3.5 2.5 3 2.5-3"/></svg>
+            </div>
+            <div class="side-item child">Anthropologie des mondes numériques<span class="count">31</span></div>
+            <div class="side-item child">Littératie critique de l'IA<span class="badge">2</span></div>
+            <div class="side-item child">Algorithmique<span class="count">18</span></div>
+            <div class="side-item child">Histoire du cinéma<span class="count">24</span></div>
+
+            <div class="side-item" style="margin-top:8px">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.6C6.85 2.65 5 2.2 2.8 2.2v10c2.2 0 4.05.45 5.2 1.4 1.15-.95 3-1.4 5.2-1.4v-10c-2.2 0-4.05.45-5.2 1.4Z"/><path d="M8 3.6v10"/></svg>
+              Ma bibliothèque
+              <svg class="disclosure" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 3.5 2.5 3 2.5-3"/></svg>
+            </div>
+            <div class="side-item child">Polycopiés L3<span class="count">57</span></div>
+            <div class="side-item child">Articles HDR<span class="count">12</span></div>
+          </nav>
+          <div class="side-foot">
+            <div class="conso">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 11.2a5.5 5.5 0 1 1 10.4 0"/><path d="M8 11.2 10.6 7.4"/></svg>
+              Conso : 0,84&nbsp;€ ce mois
+            </div>
+            <div class="souverain">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8l4.8 1.9v3.9c0 3.3-2.1 5.4-4.8 6.6-2.7-1.2-4.8-3.3-4.8-6.6V3.7Z"/></svg>
+              ILaaS · hébergé en France
+            </div>
+          </div>
+        </aside>
+
+        <!-- Zone principale -->
+        <div class="main">
+          <div class="toolbar">
+            <div class="tb-icon">
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.8" y="3" width="12.4" height="10" rx="2"/><path d="M6.2 3v10"/></svg>
+            </div>
+            <span class="tb-title">Littératie critique</span>
+            <span class="tb-spacer"></span>
+            <div class="tb-model">
+              mistral-medium-latest
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 3.8 5 1.6l2.2 2.2M2.8 6.2 5 8.4l2.2-2.2"/></svg>
+            </div>
+            <div class="tb-btn">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.8" y="2.6" width="8.2" height="8.2" rx="2"/><rect x="6" y="5.2" width="8.2" height="8.2" rx="2"/></svg>
+              Comparer
+            </div>
+            <div class="tb-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.2v9.6M3.2 8h9.6"/></svg>
+            </div>
+          </div>
+
+          <div class="chat">
+            <div class="chat-scroll">
+              <div class="chat-col">
+                <div class="timestamp">Aujourd'hui, 10:21</div>
+
+                <div class="msg-user">
+                  <div class="bubble">Que disent mes cours sur la littératie critique&nbsp;?</div>
+                </div>
+
+                <div class="msg-ai">
+                  <p>La littératie critique vise à évaluer la provenance et la fiabilité d'une source plutôt qu'à la consommer passivement <span class="cite">1</span>. Elle réintègre l'IA dans l'éducation à l'information <span class="cite">2</span>.</p>
+                  <div class="sources">
+                    <div class="src-head">Sources</div>
+                    <div class="src-row">
+                      <span class="cite">1</span>
+                      <div>
+                        <div class="title">ch10, littératie de la provenance</div>
+                        <div class="meta">Polycopiés L3 · PDF · p. 214</div>
+                      </div>
+                      <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 2.5 3.5 3.5-3.5 3.5"/></svg>
+                    </div>
+                    <div class="src-row">
+                      <span class="cite">2</span>
+                      <div>
+                        <div class="title">De l'interdiction à la capacité critique</div>
+                        <div class="meta">Littératie critique de l'IA · cours Moodle</div>
+                      </div>
+                      <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 2.5 3.5 3.5-3.5 3.5"/></svg>
+                    </div>
+                  </div>
+                  <div class="msg-actions">
+                    <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8.5" height="8.5" rx="2"/><path d="M11 5V4a2 2 0 0 0-2-2H4.5a2 2 0 0 0-2 2V9a2 2 0 0 0 2 2h.5"/></svg></span>
+                    <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8L13.4 5.8"/><path d="M13.4 2.4v3.4H10"/></svg></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="composer-wrap">
+              <div class="composer">
+                <div class="field">Poser une question sur vos cours…</div>
+                <div class="row">
+                  <div class="icon-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.2v9.6M3.2 8h9.6"/></svg>
+                  </div>
+                  <div class="chip on">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.6C6.85 2.65 5 2.2 2.8 2.2v10c2.2 0 4.05.45 5.2 1.4 1.15-.95 3-1.4 5.2-1.4v-10c-2.2 0-4.05.45-5.2 1.4Z"/><path d="M8 3.6v10"/></svg>
+                    Bibliothèque · Polycopiés L3
+                  </div>
+                  <div class="chip on">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.8 14.2 5.6 8 8.4 1.8 5.6Z"/><path d="M4.2 7v2.9c0 1.05 1.7 1.9 3.8 1.9s3.8-.85 3.8-1.9V7"/></svg>
+                    Cours Moodle
+                  </div>
+                  <div class="seg"><span class="sel">Chat</span><span>Requête</span></div>
+                  <div class="send">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12.4V3.8M4.4 7.2 8 3.6l3.6 3.6"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ol class="notes">
+    <li><b>La sidebar vibrante donne un corps aux sources.</b> Cours Moodle et bibliothèques ne sont plus des menus déroulants mais des objets nommés, toujours visibles, comme des dossiers du Finder. Le badge pétrole signale les nouveautés d'un cours.</li>
+    <li><b>Toolbar unifiée = les seuls réglages quotidiens.</b> Titre, sélecteur de modèle discret, Comparer, nouvelle conversation. Rien d'autre ne réclame l'attention.</li>
+    <li><b>Le rail droit a disparu.</b> La configuration une-fois-pour-toutes vit dans Réglages (⌘,) ; l'usage quotidien vit dans le composer. La surcharge cognitive tombe à zéro.</li>
+    <li><b>L'accent pétrole est rationné.</b> Il ne colore que la connaissance sourcée (pastilles [n], sélection) et les actions (envoi). Tout le reste est gris système, c'est ce contraste qui fait le premium.</li>
+    <li><b>Zéro jargon en surface.</b> « Bibliothèque », pas « RAG » ; « Conso », pas « jetons » ; les chips s'allument comme des interrupteurs. La souveraineté s'affiche en une ligne discrète, pas en sticker.</li>
+  </ol>
+</section>
+
+<!-- ==================== ÉCRAN 1 BIS · MODE SOMBRE ==================== -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="num">Écran 1 bis</div>
+    <h2>La fenêtre principale · mode sombre</h2>
+    <p>Mêmes pièces, autres matériaux : le pétrole s'éclaircit en #4BA396, la sidebar passe en vibrance sombre, la structure ne bouge pas d'un pixel.</p>
+  </div>
+
+  <div class="desktop dkA-night">
+    <div class="desktop-inner">
+      <div class="menubar">
+        <span class="apple">&#63743;</span>
+        <span class="appname">Doceria</span>
+        <span>Fichier</span><span>Édition</span><span>Présentation</span><span>Conversation</span><span>Fenêtre</span><span>Aide</span>
+        <span class="spacer"></span>
+        <span class="status">jeu. 3 juil.&nbsp;&nbsp;21:42</span>
+      </div>
+
+      <div class="window app-window">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="traffic"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <nav>
+            <div class="side-section">Conversations</div>
+            <div class="side-item sel">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Littératie critique
+            </div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Préparation TD réseaux
+            </div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 7.7a5.4 5.4 0 0 1-5.5 5.3c-.85 0-1.66-.17-2.4-.48L2.5 13.3l.72-2.5A5.2 5.2 0 0 1 2.5 7.7a5.4 5.4 0 0 1 5.5-5.2 5.4 5.4 0 0 1 5.5 5.2Z"/></svg>
+              Correction copies L2
+            </div>
+
+            <div class="side-section">Sources</div>
+            <div class="side-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.8 14.2 5.6 8 8.4 1.8 5.6Z"/><path d="M4.2 7v2.9c0 1.05 1.7 1.9 3.8 1.9s3.8-.85 3.8-1.9V7"/><path d="M14.2 5.6v3.2"/></svg>
+              Mes cours Moodle
+              <svg class="disclosure" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 3.5 2.5 3 2.5-3"/></svg>
+            </div>
+            <div class="side-item child">Anthropologie des mondes numériques<span class="count">31</span></div>
+            <div class="side-item child">Littératie critique de l'IA<span class="badge">2</span></div>
+            <div class="side-item child">Algorithmique<span class="count">18</span></div>
+            <div class="side-item child">Histoire du cinéma<span class="count">24</span></div>
+
+            <div class="side-item" style="margin-top:8px">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.6C6.85 2.65 5 2.2 2.8 2.2v10c2.2 0 4.05.45 5.2 1.4 1.15-.95 3-1.4 5.2-1.4v-10c-2.2 0-4.05.45-5.2 1.4Z"/><path d="M8 3.6v10"/></svg>
+              Ma bibliothèque
+              <svg class="disclosure" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 3.5 2.5 3 2.5-3"/></svg>
+            </div>
+            <div class="side-item child">Polycopiés L3<span class="count">57</span></div>
+            <div class="side-item child">Articles HDR<span class="count">12</span></div>
+          </nav>
+          <div class="side-foot">
+            <div class="conso">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 11.2a5.5 5.5 0 1 1 10.4 0"/><path d="M8 11.2 10.6 7.4"/></svg>
+              Conso : 0,84&nbsp;€ ce mois
+            </div>
+            <div class="souverain">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8l4.8 1.9v3.9c0 3.3-2.1 5.4-4.8 6.6-2.7-1.2-4.8-3.3-4.8-6.6V3.7Z"/></svg>
+              ILaaS · hébergé en France
+            </div>
+          </div>
+        </aside>
+
+        <!-- Zone principale -->
+        <div class="main">
+          <div class="toolbar">
+            <div class="tb-icon">
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.8" y="3" width="12.4" height="10" rx="2"/><path d="M6.2 3v10"/></svg>
+            </div>
+            <span class="tb-title">Littératie critique</span>
+            <span class="tb-spacer"></span>
+            <div class="tb-model">
+              mistral-medium-latest
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 3.8 5 1.6l2.2 2.2M2.8 6.2 5 8.4l2.2-2.2"/></svg>
+            </div>
+            <div class="tb-btn">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.8" y="2.6" width="8.2" height="8.2" rx="2"/><rect x="6" y="5.2" width="8.2" height="8.2" rx="2"/></svg>
+              Comparer
+            </div>
+            <div class="tb-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.2v9.6M3.2 8h9.6"/></svg>
+            </div>
+          </div>
+
+          <div class="chat">
+            <div class="chat-scroll">
+              <div class="chat-col">
+                <div class="timestamp">Aujourd'hui, 21:38</div>
+
+                <div class="msg-user">
+                  <div class="bubble">Que disent mes cours sur la littératie critique&nbsp;?</div>
+                </div>
+
+                <div class="msg-ai">
+                  <p>La littératie critique vise à évaluer la provenance et la fiabilité d'une source plutôt qu'à la consommer passivement <span class="cite">1</span>. Elle réintègre l'IA dans l'éducation à l'information <span class="cite">2</span>.</p>
+                  <div class="sources">
+                    <div class="src-head">Sources</div>
+                    <div class="src-row">
+                      <span class="cite">1</span>
+                      <div>
+                        <div class="title">ch10, littératie de la provenance</div>
+                        <div class="meta">Polycopiés L3 · PDF · p. 214</div>
+                      </div>
+                      <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 2.5 3.5 3.5-3.5 3.5"/></svg>
+                    </div>
+                    <div class="src-row">
+                      <span class="cite">2</span>
+                      <div>
+                        <div class="title">De l'interdiction à la capacité critique</div>
+                        <div class="meta">Littératie critique de l'IA · cours Moodle</div>
+                      </div>
+                      <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 2.5 3.5 3.5-3.5 3.5"/></svg>
+                    </div>
+                  </div>
+                  <div class="msg-actions">
+                    <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8.5" height="8.5" rx="2"/><path d="M11 5V4a2 2 0 0 0-2-2H4.5a2 2 0 0 0-2 2V9a2 2 0 0 0 2 2h.5"/></svg></span>
+                    <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8L13.4 5.8"/><path d="M13.4 2.4v3.4H10"/></svg></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="composer-wrap">
+              <div class="composer">
+                <div class="field">Poser une question sur vos cours…</div>
+                <div class="row">
+                  <div class="icon-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.2v9.6M3.2 8h9.6"/></svg>
+                  </div>
+                  <div class="chip on">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.6C6.85 2.65 5 2.2 2.8 2.2v10c2.2 0 4.05.45 5.2 1.4 1.15-.95 3-1.4 5.2-1.4v-10c-2.2 0-4.05.45-5.2 1.4Z"/><path d="M8 3.6v10"/></svg>
+                    Bibliothèque · Polycopiés L3
+                  </div>
+                  <div class="chip on">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.8 14.2 5.6 8 8.4 1.8 5.6Z"/><path d="M4.2 7v2.9c0 1.05 1.7 1.9 3.8 1.9s3.8-.85 3.8-1.9V7"/></svg>
+                    Cours Moodle
+                  </div>
+                  <div class="seg"><span class="sel">Chat</span><span>Requête</span></div>
+                  <div class="send">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12.4V3.8M4.4 7.2 8 3.6l3.6 3.6"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ol class="notes">
+    <li><b>L'accent s'éclaircit : #1A5A55 → #4BA396.</b> Le pétrole clair rendu sur #1E1E1E ne tenait qu'à 2:1 environ, illisible. Éclairci vers #4BA396, il repasse au-dessus du seuil AA sur toutes les surfaces sombres, et garde exactement le même rationnement : pastilles [n], sélection, chips actives, envoi. Rien d'autre.</li>
+    <li><b>La vibrance sombre porte la hiérarchie.</b> La sidebar rgba(30,30,30,.55) + flou laisse sentir le bureau nuit : elle se lit comme du mobilier translucide, tandis que la zone de contenu, opaque en #1E1E1E, se lit comme le document. Trois profondeurs sans une seule couleur de plus : bureau, meuble, page.</li>
+    <li><b>Les états sont recalculés, pas inversés.</b> Le badge et le bouton d'envoi passent en encre sombre #0F2E29 sur #4BA396 (le blanc n'y tiendrait plus le contraste) ; les teintes d'accent montent de 12 % à 18–26 % ; les champs se posent en #2A2A2C sur le fond, le relief venant de la valeur, plus de l'ombre. Jamais de blanc pur : texte #E8E8EA / #98989D.</li>
+    <li><b>Rien ne bouge : structure, espacements, rayons, typographie.</b> Sidebar 252 px, colonne 720 px, grille 4/8, mêmes graisses SF Pro. Le sombre est un changement de matériaux, pas de plan, la mémoire musculaire de l'enseignant·e est intacte d'un mode à l'autre.</li>
+  </ol>
+</section>
+
+<!-- ==================== ÉCRAN 2 ==================== -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="num">Écran 2</div>
+    <h2>Les réglages, <span style="color:var(--sec);font-weight:400">Doceria ▸ Réglages… ou</span> <span class="keycap">⌘</span><span class="keycap">,</span></h2>
+    <p>Une vraie fenêtre Réglages macOS à onglets. La configuration rare quitte définitivement la fenêtre principale.</p>
+  </div>
+
+  <div class="desktop" style="padding-top:72px">
+    <div class="desktop-inner">
+      <div class="window settings-window">
+        <div class="settings-titlebar">
+          <div class="traffic"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <div class="wtitle">Réglages Doceria</div>
+          <div class="tabs">
+            <div class="tab">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.9M8 12.5v1.9M1.6 8h1.9M12.5 8h1.9M3.5 3.5l1.3 1.3M11.2 11.2l1.3 1.3M12.5 3.5l-1.3 1.3M4.8 11.2l-1.3 1.3"/></svg>
+              Général
+            </div>
+            <div class="tab">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5.2" r="2.6"/><path d="M2.8 13.6c.6-2.5 2.7-3.9 5.2-3.9s4.6 1.4 5.2 3.9"/></svg>
+              Connexion
+            </div>
+            <div class="tab">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.6C6.85 2.65 5 2.2 2.8 2.2v10c2.2 0 4.05.45 5.2 1.4 1.15-.95 3-1.4 5.2-1.4v-10c-2.2 0-4.05.45-5.2 1.4Z"/><path d="M8 3.6v10"/></svg>
+              Bibliothèque
+            </div>
+            <div class="tab sel">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.8 14.2 5.6 8 8.4 1.8 5.6Z"/><path d="M4.2 7v2.9c0 1.05 1.7 1.9 3.8 1.9s3.8-.85 3.8-1.9V7"/><path d="M14.2 5.6v3.2"/></svg>
+              Moodle
+            </div>
+            <div class="tab">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.2 4.6h11.6M2.2 8h11.6M2.2 11.4h11.6"/><circle cx="10.6" cy="4.6" r="1.7" fill="#F7F6F4"/><circle cx="5.4" cy="8" r="1.7" fill="#F7F6F4"/><circle cx="9" cy="11.4" r="1.7" fill="#F7F6F4"/></svg>
+              Avancé
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-body">
+          <div class="group-label">Compte</div>
+          <div class="group">
+            <div class="grow">
+              <span class="dot ok"></span>
+              <div>
+                <div class="glabel">moodle.centralelille.fr</div>
+                <div class="gsub">Connecté, Jean Debaecker · jeton conservé dans le trousseau macOS</div>
+              </div>
+              <div class="gright"><span class="mini-btn">Modifier…</span></div>
+            </div>
+          </div>
+
+          <div class="group-label">Cours synchronisés</div>
+          <div class="group-desc">Sur consentement : seuls les cours où votre compte est inscrit peuvent être proposés ici. Rien d'autre n'est lu.</div>
+          <div class="group">
+            <div class="grow">
+              <div>
+                <div class="glabel">Anthropologie des mondes numériques</div>
+                <div class="gsub">31 documents · synchronisé il y a 2 h</div>
+              </div>
+              <div class="gright"><span class="switch on"></span></div>
+            </div>
+            <div class="grow">
+              <div>
+                <div class="glabel">Littératie critique de l'IA</div>
+                <div class="gsub">26 documents · synchronisé il y a 2 h</div>
+              </div>
+              <div class="gright"><span class="badge-sm">2 nouveautés</span><span class="switch on"></span></div>
+            </div>
+            <div class="grow">
+              <div>
+                <div class="glabel">Algorithmique</div>
+                <div class="gsub">18 documents · synchronisé hier</div>
+              </div>
+              <div class="gright"><span class="switch on"></span></div>
+            </div>
+            <div class="grow">
+              <div>
+                <div class="glabel">Histoire du cinéma</div>
+                <div class="gsub">24 documents · jamais synchronisé</div>
+              </div>
+              <div class="gright"><span class="switch"></span></div>
+            </div>
+          </div>
+
+          <div class="settings-foot">
+            <span class="last">Dernière synchronisation : aujourd'hui, 09:12</span>
+            <span class="mini-btn primary">Synchroniser maintenant</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ol class="notes">
+    <li><b>Une vraie fenêtre Réglages (⌘,), pas un rail.</b> Cinq onglets natifs, Général, Connexion, Bibliothèque, Moodle, Avancé, pour tout ce qu'on configure une fois puis qu'on oublie.</li>
+    <li><b>Le consentement est le réglage central de l'onglet Moodle.</b> La liste ne peut contenir que les cours où le compte est inscrit ; chaque cours s'active par un interrupteur explicite. La gouvernance devient lisible.</li>
+    <li><b>Le jargon est confiné dans « Avancé ».</b> Température, jetons, consigne système : disponibles pour qui les cherche, invisibles pour tous les autres.</li>
+    <li><b>Les clés n'apparaissent jamais à l'écran.</b> « Connexion » gère les profils ; les secrets vivent dans le trousseau macOS, l'app le dit en une ligne, calmement.</li>
+  </ol>
+</section>
+
+<!-- ==================== ÉCRAN 3 ==================== -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="num">Écran 3 · Les citations</div>
+    <h2>La citation-pastille</h2>
+    <p>Chaque affirmation est traçable : cliquer une pastille [n] ouvre une popover native avec la provenance exacte et l'extrait cité.</p>
+  </div>
+
+  <div class="desktop">
+    <div class="gesture-stage">
+      <div class="excerpt">
+        <p>La littératie critique vise à évaluer la provenance et la fiabilité d'une source plutôt qu'à la consommer passivement <span class="cite active">1</span>. Elle réintègre l'IA dans l'éducation à l'information <span class="cite">2</span>.</p>
+
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pop-head">
+            <div class="doc-ic">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 1.8h5l3 3v9.4H4Z"/><path d="M9 1.8v3h3"/></svg>
+            </div>
+            <div>
+              <div class="ptitle">Chapitre 10, Littératie de la provenance</div>
+              <div class="pmeta">Polycopiés L3 · PDF · page 214</div>
+            </div>
+          </div>
+          <div class="pop-quote">«&nbsp;Évaluer la provenance d'une source, c'est interroger qui parle, depuis où, et selon quelles intentions, avant même d'en juger le contenu.&nbsp;»</div>
+          <div class="pop-actions">
+            <span class="mini-btn">Copier la référence</span>
+            <span class="mini-btn primary">Ouvrir le passage</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ol class="notes">
+    <li><b>La pastille est le seul objet pétrole du texte</b>, l'œil apprend vite : pétrole = sourcé, vérifiable. Au clic, elle s'assombrit et ancre la popover.</li>
+    <li><b>La provenance est hiérarchisée en trois temps :</b> document, collection, page. L'enseignant·e vérifie une affirmation en deux secondes, sans quitter la conversation.</li>
+    <li><b>L'extrait exact est cité,</b> liseré pétrole, pour confronter la reformulation de l'IA au texte d'origine, c'est la littératie critique appliquée à l'app elle-même.</li>
+    <li><b>Deux actions, pas plus :</b> « Ouvrir le passage » mène au PDF à la bonne page ; « Copier la référence » produit une citation propre pour un support de cours.</li>
+  </ol>
+</section>
+
+<footer class="board-foot">
+  <span><b>Doceria</b>, Pédagogie ouverte, conçue avec soin.</span>
+  <span>Aperçu de la future interface, disponible en juillet 2026.</span>
+  <span>Interface native macOS, modes clair et sombre.</span>
+</footer>
+
+</body>
+</html>
