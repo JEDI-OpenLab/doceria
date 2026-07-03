@@ -220,8 +220,13 @@ sélectionner, puis valider. Les 8 fonctions (contenu seulement, **aucune donné
 | `mod_resource_get_resources_by_courses` | Ressources fichiers (métadonnées + `fileurl`) |
 | `mod_book_get_books_by_courses` | Métadonnées des Books *(si module installé ; chapitres via `get_contents`)* |
 
-**Rien d'autre** — surtout pas `core_user_*`, `core_enrol_*`, `gradereport_*`,
-`mod_assign_get_submissions` (ce serait des données personnelles / notes).
+**Rien d'autre** — surtout pas `core_user_*`, `gradereport_*`, `mod_assign_get_submissions`
+(données personnelles / notes), ni aucune fonction `core_enrol_*`… **à une exception près** : le
+**filtre opt-in « cours consentis »** (livré au Lot 7, **actif par défaut** dans l'application)
+requiert une **9ᵉ fonction**, `core_enrol_get_users_courses` — à ajouter **aussi** (voir §C.3).
+C'est la **seule** `core_enrol_*` utilisée, appelée **uniquement pour le compte technique** (aucune
+donnée d'étudiant). **Sans elle**, la case « Cours consentis uniquement » (cochée par défaut) fera
+échouer le listing avec un message explicite → il faudra l'ajouter, ou décocher l'option côté app.
 
 > **Note — colonne « Capacités requises ».** L'écran du service affiche, pour certaines fonctions,
 > des capacités (ex. `core_course_get_contents` → `moodle/course:update, moodle/course:viewhiddencourses`).
@@ -260,7 +265,7 @@ Dans **chaque cours à indexer** → *Participants* → **Inscrire des utilisate
 
 ---
 
-## Consentement / opt-in (inscription du compte) — 🔜 filtre applicatif EN COURS
+## Consentement / opt-in (inscription du compte) — ✅ filtre applicatif LIVRÉ (Lot 7)
 
 > **Principe : opt-in par consentement.** Doceria retient l'**opt-in par défaut**. Contrairement au
 > modèle « l'IA est partout, à vous de la désactiver » (opt-out), **aucun cours n'est indexé sans une
@@ -270,10 +275,11 @@ Dans **chaque cours à indexer** → *Participants* → **Inscrire des utilisate
 > Valeurs : transparence, choix et liberté de l'enseignant. Un rôle dédié rend la présence du compte
 > **visible** pour l'enseignant dans la liste des participants.
 >
-> **Statut honnête.** Le principe et la configuration Moodle sont **posés** (étapes ci-dessous). Le
-> **filtre applicatif** — Doceria n'affiche que les cours consentis, via
-> `core_enrol_get_users_courses` appelée **uniquement pour le compte technique** (donc **aucune donnée
-> d'étudiant**) — est le **prochain lot, EN COURS**. À ne pas présenter comme déjà livré.
+> **Statut.** Le principe, la configuration Moodle **et** le filtre applicatif sont **livrés (Lot 7)**.
+> Doceria n'affiche que les cours consentis, via `core_enrol_get_users_courses` appelée **uniquement
+> pour le compte technique** (donc **aucune donnée d'étudiant**). La bascule « Cours consentis
+> uniquement » est **cochée par défaut** — d'où l'ajout **nécessaire** de la 9ᵉ fonction (§C.3) pour
+> l'expérience par défaut ; à défaut, Doceria signale l'absence et propose de décocher l'option.
 
 ### C.1 — Créer un rôle dédié « Doceria — indexation IA (lecture seule) »
 Administration du site → Utilisateurs → Permissions → **Définir les rôles** → *Gérer les rôles* →
@@ -299,6 +305,13 @@ ce cours, et rien d'autre. La retirer (désinscrire le compte) révoque le conse
 Administration du site → Serveur → Web services → **Services externes** → service
 **`Doceria RAG (lecture seule)`** → section **Fonctions** → **Ajouter des fonctions** →
 `core_enrol_get_users_courses`. Le service passe ainsi de **8 à 9 fonctions**.
+
+> **Nécessaire pour l'expérience par défaut.** La bascule **« Cours consentis uniquement »** est
+> **cochée par défaut** côté Doceria (Lot 7). Cette 9ᵉ fonction n'est donc « facultative » que si l'on
+> renonce au filtre : **sans elle**, un utilisateur ouvrant l'explorateur avec les réglages par défaut
+> verra le listing **échouer** — Doceria l'indique clairement (« ajouter `core_enrol_get_users_courses`
+> au service, ou décocher l'option »). En pratique : **ajoutez-la** dès l'installation ; ne la retirez
+> que pour un déploiement délibérément en mode « tout indexer » (§C.4), où l'on décoche aussi la bascule.
 
 | Fonction | Rôle |
 |---|---|

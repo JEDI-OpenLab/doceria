@@ -22,6 +22,7 @@ export const state = {
   activeCollectionId: null,
   ragOwner: null, // email du propriétaire RAG (filtrage « mes collections »)
   useLibrary: false, // interrupteur « Utiliser la bibliothèque » dans le chat
+  includeMoodleCourses: false, // Lot 6 : étend la recherche à toutes les collections « Moodle · … » (session, non persisté — comme useLibrary)
   ragMode: 'chat', // mode RAG : 'chat' (extraits + connaissances) | 'requete' (extraits seuls)
   ragMethod: 'hybrid', // méthode de recherche RAG : 'semantic' | 'lexical' | 'hybrid'
   ragTopK: 5, // nombre d'extraits récupérés (limit de /search)

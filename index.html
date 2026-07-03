@@ -47,6 +47,10 @@
           <button class="help up" type="button" aria-label="Envoie la même question aux deux modèles choisis en même temps et affiche les réponses côte à côte, pour garder la meilleure. Coût doublé (suivi dans Conso & coût).">?<span class="help-bubble" aria-hidden="true">Envoie la même question aux <strong>deux modèles</strong> en même temps et affiche les réponses <strong>côte à côte</strong> ; vous gardez la meilleure.<br>⚠ Coût <strong>×2</strong> (suivi dans «&nbsp;Conso&nbsp;&amp;&nbsp;coût&nbsp;»).</span></button>
           <label class="ragtoggle"><input type="checkbox" id="useLibrary" disabled> Utiliser la bibliothèque (RAG)</label>
           <button class="help up" type="button" aria-label="Si coché, chaque question recherche dans la collection active et cite les passages utilisés sous la réponse.">?<span class="help-bubble" aria-hidden="true">Si coché, chaque question recherche dans la <strong>collection active</strong> et cite les passages utilisés sous la réponse.</span></button>
+          <span class="ragmoodle" id="includeMoodleOpt" hidden>
+            <label class="ragtoggle"><input type="checkbox" id="includeMoodle" disabled> Inclure les cours Moodle</label>
+            <button class="help up" type="button" aria-label="Ajoute vos cours Moodle indexés à la recherche : la question interroge la collection active et toutes vos collections « Moodle · … », avec citations. Nécessite « Utiliser la bibliothèque ».">?<span class="help-bubble" aria-hidden="true">Étend la recherche à <strong>tous vos cours Moodle indexés</strong> : la question interroge la collection active <strong>et</strong> chaque collection «&nbsp;Moodle&nbsp;·&nbsp;…&nbsp;», avec citations.<br>Nécessite «&nbsp;Utiliser la bibliothèque&nbsp;».</span></button>
+          </span>
           <span class="ragmode" id="ragModeGroup" hidden>
             <span class="seg-group" role="group" aria-label="Mode de la bibliothèque">
               <button type="button" class="seg" data-mode="chat" aria-pressed="true">Chat</button>

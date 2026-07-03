@@ -195,11 +195,13 @@ function refreshRag() {
     state.collections = [];
     state.activeCollectionId = null;
     state.useLibrary = false;
+    state.includeMoodleCourses = false;
     $('useLibrary').checked = false;
     ui.renderCollections();
     $('ragHint').textContent = 'Ajoute une URL + clé RAG au profil pour activer la bibliothèque.';
     $('ragStatus').textContent = '';
     updateRagMode();
+    updateMoodleChatToggle();
     return;
   }
   $('ragHint').textContent = 'Tes collections privées (RAG géré ILaaS).';
@@ -256,6 +258,7 @@ function updateRagControls() {
     $('ragStatus').textContent = 'Crée d’abord une collection (champ ci-dessus → + Créer), puis ajoute des documents.';
   }
   updateRagMode();
+  updateMoodleChatToggle();
   updateFolderSyncUI();
 }
 
@@ -270,6 +273,21 @@ function updateRagMode() {
     b.classList.toggle('active', active);
     b.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
+}
+
+// Lot 6 — la bascule « Inclure les cours Moodle » : visible dès qu'un cours Moodle est indexé
+// dans le profil actif ; active seulement quand la bibliothèque est utilisable (cochée +
+// collection active). Sinon on la décoche et on oublie l'état (comme useLibrary).
+function updateMoodleChatToggle() {
+  const opt = $('includeMoodleOpt');
+  const box = $('includeMoodle');
+  if (!opt || !box) return;
+  const hasMoodle = moodleCollectionIds().length > 0;
+  const usable = hasMoodle && state.useLibrary && state.activeCollectionId != null;
+  opt.hidden = !hasMoodle;
+  box.disabled = !usable;
+  box.checked = usable && state.includeMoodleCourses;
+  if (!usable) state.includeMoodleCourses = false;
 }
 
 async function onNewCollection() {
@@ -1474,10 +1492,10 @@ async function onMoodleSync() {
           continue;
         }
         // Collection cible (créée si besoin).
-        const collName = 'Moodle · ' + doc.fullname;
+        const collName = MOODLE_COLL_PREFIX + doc.fullname;
         let coll = existing.find((c) => c.name === collName);
         if (!coll) {
-          const createdC = await ragApi.createCollection(collName, 'Cours Moodle importé — ' + mp.name, dest);
+          const createdC = await ragApi.createCollection(collName, MOODLE_COLL_DESC + ' — ' + mp.name, dest);
           const cid = createdC && (createdC.id ?? (createdC.data && createdC.data.id));
           if (cid == null) throw new Error('collection créée mais identifiant introuvable');
           coll = { id: cid, name: collName, visibility: 'private' };
@@ -1698,17 +1716,49 @@ function buildMessages(conv, ragContext) {
   return msgs;
 }
 
+// Marqueurs des collections issues de l'import Moodle. Source unique de vérité, partagée entre
+// la création (onMoodleSync) et le filtre du Lot 6 : le nom porte le préfixe « Moodle · <cours> »
+// et la description porte la marque système posée à la création.
+const MOODLE_COLL_PREFIX = 'Moodle · ';
+const MOODLE_COLL_DESC = 'Cours Moodle importé';
+
+// Une collection est « issue de Moodle » si son nom porte le préfixe d'import. Renfort
+// anti-collision : si le backend renvoie une description, elle doit AUSSI porter la marque
+// système (une collection créée à la main par l'utilisateur, même nommée « Moodle · … », ne
+// l'aura pas). Description absente/vide → on retombe sur le seul préfixe de nom (jamais de
+// régression : ce filtre est toujours ≥ au préfixe seul, et n'exclut aucun vrai cours importé).
+function isMoodleCollection(c) {
+  if (!c || typeof c.name !== 'string' || !c.name.startsWith(MOODLE_COLL_PREFIX)) return false;
+  const desc = typeof c.description === 'string' ? c.description.trim() : '';
+  return desc ? desc.startsWith(MOODLE_COLL_DESC) : true;
+}
+
+// Lot 6 — ids des collections « Moodle · … » du profil ILaaS actif (cours importés), pour la
+// recherche multi-collections. Vide si aucun cours Moodle n'est indexé dans ce profil.
+function moodleCollectionIds() {
+  return (state.collections || [])
+    .filter(isMoodleCollection)
+    .map((c) => Number(c.id))
+    .filter((n) => Number.isFinite(n));
+}
+
 // Recherche dans la bibliothèque (si activée) et prépare contexte + sources.
 async function retrieveFromLibrary(query) {
   if (!state.useLibrary || state.activeCollectionId == null) return { context: '', sources: [] };
-  ui.setComposerMeta('recherche dans la bibliothèque…');
+  // Lot 6 : collection active, éventuellement étendue à tous les cours Moodle indexés (dédup).
+  const idSet = new Set([Number(state.activeCollectionId)]);
+  const moodleIds = state.includeMoodleCourses ? moodleCollectionIds() : [];
+  moodleIds.forEach((id) => idSet.add(id));
+  const collectionIds = [...idSet];
+  const withMoodle = moodleIds.length > 0;
+  ui.setComposerMeta(withMoodle ? 'recherche (bibliothèque + cours Moodle)…' : 'recherche dans la bibliothèque…');
   // Pipeline état de l'art : recherche (hybride/…) → rerank optionnel → top-k.
   // En rerank on récupère un vivier plus large, puis on le réordonne avant d'écrêter.
   const topK = state.ragTopK;
   const wantRerank = state.ragRerank;
   const fetchLimit = wantRerank ? Math.min(20, Math.max(topK * 3, 10)) : topK;
   const res = await ragApi.search(
-    [Number(state.activeCollectionId)],
+    collectionIds,
     query,
     fetchLimit,
     state.ragMethod,
@@ -2506,6 +2556,10 @@ function wireEvents() {
   $('useLibrary').addEventListener('change', (e) => {
     state.useLibrary = e.target.checked;
     updateRagMode();
+    updateMoodleChatToggle();
+  });
+  $('includeMoodle').addEventListener('change', (e) => {
+    state.includeMoodleCourses = e.target.checked;
   });
   document.querySelectorAll('.seg').forEach((b) => {
     b.addEventListener('click', () => {

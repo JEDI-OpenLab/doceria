@@ -157,6 +157,10 @@ la/les collection(s) Moodle à la requête RAG.
 **Formulation retenue : « Inclure les cours Moodle »** *(cohérent avec « Utiliser la bibliothèque
 (RAG) » ; « cours » rappelle que la source = le contenu synchronisé, pas Moodle en direct)*.
 
+> **✅ Livré (Lot 6, 2026-07-03).** Voir le journal en fin de document. **Écart assumé** : le toggle
+> **requiert** « Utiliser la bibliothèque » (il l'étend) plutôt que d'en être indépendant — sans RAG
+> actif la recherche ne fait rien, un toggle indépendant serait inerte.
+
 ## 5. Sécurité & souveraineté
 - **Jeton au trousseau OS** (`fr.jedi-openlab.doceria`, compte `id:moodle`) ; jamais en JSON/localStorage/webview — seul `hasMoodleToken` (bool) exposé.
 - **Lecture seule** : 8 fonctions WS whitelistées (compte technique, rôle étudiant) ; `moodle.rs` n'appelle QUE ces fonctions (constantes pour audit).
@@ -462,4 +466,31 @@ Fichiers concernés : `src-tauri/src/moodle.rs` (nouveau), `settings.rs`, `keych
     id 5 était inscrit — l'opt-in reflète l'état réel des inscriptions.)*
   - **Revue** adversariale ciblée (confidentialité / filtre / fonction manquante / sélection) lancée.
   - *Fait quand :* ON → l'explorateur ne liste que les cours consentis ; OFF → liste complète.
-- *(à suivre : Lot 6 — interrupteur « inclure les cours Moodle » dans le chat ; puis merge + release.)*
+- **2026-07-03 — Lot 6 (Toggle « Inclure les cours Moodle » dans le chat) ✅ — dernier lot.**
+  - **Constat clé** : le backend RAG supporte **déjà** la recherche multi-collections — `rag_search`
+    prend `collection_ids: Vec<i64>`. Lot 6 est donc **purement frontend** (aucun changement Rust).
+  - **Front** (`src/main.js`) : `retrieveFromLibrary()` construit un **Set dédupliqué** = collection
+    active + (toggle ? toutes les collections « Moodle · … » : ∅) → **un seul** appel `ragApi.search`.
+    Constantes partagées `MOODLE_COLL_PREFIX` / `MOODLE_COLL_DESC` (source unique, aussi utilisées par
+    la création dans `onMoodleSync`). `isMoodleCollection(c)` = préfixe de **nom** **+** marque système
+    dans la **description** (renfort anti-collision, repli gracieux sur le nom seul si le backend ne
+    renvoie pas la description → jamais de régression). État `state.includeMoodleCourses` **de session**
+    (non persisté, comme `useLibrary`).
+  - **UI** (`index.html` + `styles.css`) : `#includeMoodle` dans `.composer-tools` (span `.ragmoodle`,
+    même motif `[hidden]` que `.ragmode`), **visible dès qu'un cours Moodle est indexé**, actif seulement
+    quand la bibliothèque est utilisable ; `updateMoodleChatToggle()` gère affichage/état/reset (câblé
+    dans `updateRagControls`, le reset de `refreshRag`, et les handlers `useLibrary`/`includeMoodle`).
+    Méta « recherche (bibliothèque + cours Moodle)… ». Citations inchangées (résolution par
+    `document_id`, transverse aux collections). `vite build` ✅.
+  - **Écart assumé vs plan §4.3** : le toggle n'est **pas** indépendant de `useLibrary` mais le
+    **requiert** (grisé sinon). Raison : `retrieveFromLibrary` ne fait rien si `useLibrary` est off →
+    un toggle « indépendant » serait inerte et trompeur. « Inclure les cours Moodle » est donc une
+    **extension** de « Utiliser la bibliothèque ».
+  - **Revue** adversariale (logique + régression/confidentialité → vérification indépendante) : **1
+    constat confirmé** — identification par préfixe de nom → faux positif si l'utilisateur nomme une
+    collection « Moodle · … » à la main → **corrigé** par le renfort description ci-dessus.
+    Confidentialité OK (les ids proviennent de `state.collections`, déjà filtré aux collections
+    **propres** de l'utilisateur).
+  - *Fait quand :* toggle coché → une question interroge la collection active **et** tous les cours
+    Moodle indexés, avec citations ; masqué si aucun cours Moodle.
+  - *Reste :* **test en réel** par l'utilisateur (comme les lots précédents), puis **merge + release**.

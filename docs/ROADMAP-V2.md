@@ -147,11 +147,11 @@ l'identité. La **vérification de mise à jour** (GitHub Releases) est déjà e
 > descriptions de modules + fichiers/PDF** (Lot 4, livré) ; sortie **Markdown** avec hiérarchie ;
 > RAG strict « uniquement depuis les documents »).
 
-**Verdict : QUASI TERMINÉ (Lots 0-5 + 5.1 + 7) fusionné dans `main` — pas encore publié en
-`.dmg`.** Le connecteur est **implémenté, relu (revues multi-agents adversariales) et validé** sur
-un Moodle 5.1.4 de test, mais il **n'est pas encore dans le `.dmg` publié `20260626.8.0`** : il est
-destiné à la **prochaine version**. Il ne reste que le **Lot 6** (interrupteur composeur « Inclure
-les cours Moodle ») puis le **merge/release**. C'était le chantier dédié après la v-next,
+**Verdict : TERMINÉ (Lots 0-7, tous les lots) — pas encore publié en `.dmg`.** Le connecteur est
+**implémenté, relu (revues multi-agents adversariales) et validé** sur un Moodle 5.1.4 de test, mais
+il **n'est pas encore dans le `.dmg` publié `20260626.8.0`** : il est destiné à la **prochaine
+version**. **Le Lot 6** (interrupteur composeur « Inclure les cours Moodle ») est **livré (2026-07-03)** ;
+il ne reste que le **test en réel puis le merge/release**. C'était le chantier dédié après la v-next,
 **avant** le build Linux (choix acté). C'est la fonctionnalité **la plus alignée « prof ESR
 souverain »** : elle **nourrit le RAG du prof avec son propre cours Moodle**, sans copier-coller,
 en restant dans le périmètre ESR.
@@ -169,7 +169,7 @@ en restant dans le périmètre ESR.
 | ✅ FAIT | M | **Synchro incrémentale + déduplication** (index local de diff : une re-synchro ne duplique plus ; suppressions ; bilan détaillé) — Lot 5 |
 | ✅ FAIT | S | **Bouton « Nouveautés »** → badge « ⟳ à mettre à jour » sur les cours modifiés côté Moodle — Lot 5.1 |
 | ✅ FAIT | M | **Filtre opt-in « cours inscrits » = consentement de l'enseignant·e** (inscription du compte technique = accord ; `core_enrol_get_users_courses` appelée **uniquement** pour le compte technique → zéro donnée d'étudiant·e ; interrupteur, **défaut ON**) — Lot 7 |
-| should | S | **Interrupteur composeur « Inclure les cours Moodle »** dans le chat — **Lot 6, à venir**, puis merge/release |
+| ✅ FAIT | S | **Interrupteur composeur « Inclure les cours Moodle »** dans le chat (recherche RAG multi-collections : collection active + tous les cours Moodle indexés, avec citations) — **Lot 6** (2026-07-03) ; reste : test réel puis merge/release |
 
 ### 4.2 Plan technique (livré — Lots 0-5 + 5.1 + 7)
 - **Module `src-tauri/src/moodle.rs`** : un seul endpoint `POST /webservice/rest/server.php`
@@ -273,9 +273,10 @@ l'enseignant·e. Techniquement, le filtre s'appuie sur `core_enrol_get_users_cou
   défaut ON ; `core_enrol_get_users_courses` **uniquement** pour le compte technique).
 
 **Reste à faire (avant merge/release) :**
-- **Lot 6 — Interrupteur composeur « Inclure les cours Moodle »** : fait remonter les passages
-  Moodle avec citations dans le chat ; grisé tant qu'aucune collection Moodle n'est synchronisée.
-- **Merge / release** : embarquer le connecteur dans le prochain `.dmg`.
+- **Lot 6 — Interrupteur composeur « Inclure les cours Moodle » ✅ (2026-07-03)** : fait remonter les
+  passages Moodle avec citations dans le chat (recherche RAG multi-collections) ; masqué tant qu'aucune
+  collection Moodle n'est synchronisée, actif seulement quand « Utiliser la bibliothèque » l'est.
+- **Merge / release** *(reste)* : embarquer le connecteur dans le prochain `.dmg`.
 - *(Portage **Windows** — Tauri multiplateforme + WebView2 + **signature Authenticode** —, version
   **serveur/web**, **Linux** et **notarisation** : voir §3 et §5.4.)*
 

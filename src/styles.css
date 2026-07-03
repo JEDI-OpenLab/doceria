@@ -347,6 +347,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
 /* Contrôle segmenté Chat ⇄ Requête (visible quand la bibliothèque est active) */
 .ragmode{display:inline-flex;align-items:center;gap:4px;margin-left:6px}
 .ragmode[hidden]{display:none}
+/* Lot 6 — bascule « Inclure les cours Moodle » (visible dès qu'un cours Moodle est indexé) */
+.ragmoodle{display:inline-flex;align-items:center;gap:4px;margin-left:2px}
+.ragmoodle[hidden]{display:none}
 .seg-group{display:inline-flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
 .seg{font-family:var(--sans);font-size:12px;font-weight:600;line-height:1;color:var(--muted);background:transparent;border:0;border-radius:0;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
 .seg + .seg{border-left:1px solid var(--line-strong)}
