@@ -1,0 +1,106 @@
+/* ============================================================================
+   Doceria — Design tokens « Continuité » (refonte UI)
+   Source de vérité visuelle de la refonte. Valeurs extraites des planches
+   validées (direction A, clair + sombre — cf. docs/nouvelle-interface.html
+   et docs/REFONTE-UI-ROADMAP.md).
+
+   ⚠️ LOT 0 : ce fichier n'est PAS encore importé (aucun effet sur l'app).
+   Il sera branché progressivement à partir des lots 1-2 (fenêtre Réglages),
+   puis les anciennes variables de styles.css migreront vers ces tokens.
+
+   Convention : préfixe --c- (Continuité) pour cohabiter sans collision avec
+   les variables existantes de styles.css pendant la transition.
+   Le sombre suit le mécanisme actuel de l'app : :root[data-theme="dark"]
+   (piloté par src/theme.js — clair / sombre / auto).
+   ========================================================================== */
+
+:root {
+  /* ---- Accent : le pétrole, UNIQUE accent de l'interface -------------- */
+  --c-accent:        #1A5A55;  /* actions, sélections, citations, liens    */
+  --c-accent-deep:   #134540;  /* hover / états enfoncés                   */
+  --c-tint:          rgba(26, 90, 85, .12);  /* sélections, pastilles      */
+  --c-tint-strong:   rgba(26, 90, 85, .18);  /* sélection active, focus    */
+  --c-on-accent:     #FFFFFF;  /* texte sur fond accent                    */
+
+  /* ---- Neutres (gris système macOS) ------------------------------------ */
+  --c-ink:           #1D1D1F;  /* texte principal                          */
+  --c-ink-sec:       #6E6E73;  /* texte secondaire                         */
+  --c-ink-ter:       #AEAEB2;  /* placeholders, méta discrètes             */
+  --c-surface:       #FFFFFF;  /* surface de contenu (fil, cartes)         */
+  --c-control:       #F5F4F2;  /* champs, contrôles, contre-fonds          */
+  --c-canvas:        #FAFAF9;  /* fond de fenêtre (hors zones vibrantes)   */
+  --c-hairline:      rgba(0, 0, 0, .08);  /* séparateurs                   */
+  --c-hairline-soft: rgba(0, 0, 0, .05);  /* séparateurs discrets          */
+
+  /* ---- Matériaux (vibrance : la fenêtre est transparente,
+          windowEffects "sidebar" — le CSS pose des voiles par-dessus) ---- */
+  --c-sidebar-veil:  rgba(243, 242, 238, .62); /* voile sidebar translucide */
+  --c-toolbar-veil:  rgba(250, 250, 249, .78); /* voile toolbar             */
+
+  /* ---- Typographie (SF Pro système, jamais de webfont) ----------------- */
+  --c-font:          -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                     'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --c-font-mono:     ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --c-text-xs:       11px;   /* méta, badges                               */
+  --c-text-sm:       12.5px; /* libellés secondaires, sidebar méta         */
+  --c-text-base:     14px;   /* interface                                  */
+  --c-text-content:  15px;   /* contenu du fil de conversation             */
+  --c-text-title:    17px;   /* titres de fenêtre / d'onglet               */
+
+  /* ---- Grille & formes (discipline 4/8) --------------------------------- */
+  --c-space-1:       4px;
+  --c-space-2:       8px;
+  --c-space-3:       12px;
+  --c-space-4:       16px;
+  --c-space-5:       24px;
+  --c-space-6:       32px;
+  --c-radius-sm:     6px;    /* champs, chips                              */
+  --c-radius-md:     10px;   /* cartes, popovers                           */
+  --c-radius-lg:     14px;   /* panneaux, fenêtre Réglages (groupes)       */
+
+  /* ---- Ombres (macOS : douces, multi-couches) --------------------------- */
+  --c-shadow-popover: 0 0 0 .5px rgba(0, 0, 0, .06),
+                      0 4px 14px rgba(0, 0, 0, .10),
+                      0 12px 32px rgba(0, 0, 0, .12);
+  --c-shadow-raised:  0 .5px 1.5px rgba(0, 0, 0, .07),
+                      0 3px 10px rgba(0, 0, 0, .07);
+
+  /* ---- Sémantique ------------------------------------------------------- */
+  --c-danger:        #C4483E;  /* suppressions (rouge sobre, pas criard)   */
+  --c-warn-bg:       #FDEECF;  /* badge « à mettre à jour » (hérité)       */
+  --c-warn-ink:      #8A5A00;
+}
+
+/* ============================ MODE SOMBRE ================================
+   Planche A-sombre : le relief vient de la VALEUR des surfaces (pas des
+   ombres) ; l'accent pétrole S'ÉCLAIRCIT pour tenir le contraste AA ;
+   jamais de blanc pur. */
+:root[data-theme="dark"] {
+  --c-accent:        #4BA396;  /* pétrole éclairci (AA sur fonds sombres)  */
+  --c-accent-deep:   #5FB5A8;  /* hover : encore un cran plus clair        */
+  --c-tint:          rgba(75, 163, 150, .18);
+  --c-tint-strong:   rgba(75, 163, 150, .26);
+  --c-on-accent:     #0F2E29;  /* encre sur accent (le blanc ne tient pas) */
+
+  --c-ink:           #E8E8EA;
+  --c-ink-sec:       #98989D;
+  --c-ink-ter:       #6E6E73;
+  --c-surface:       #262628;  /* la page                                  */
+  --c-control:       #2A2A2C;  /* champs                                   */
+  --c-canvas:        #1E1E1E;  /* fond de fenêtre                          */
+  --c-hairline:      rgba(255, 255, 255, .08);
+  --c-hairline-soft: rgba(255, 255, 255, .05);
+
+  --c-sidebar-veil:  rgba(30, 30, 30, .55);   /* vibrance sombre           */
+  --c-toolbar-veil:  rgba(30, 30, 30, .72);
+
+  --c-shadow-popover: 0 0 0 .5px rgba(0, 0, 0, .40),
+                      0 6px 18px rgba(0, 0, 0, .38),
+                      0 16px 40px rgba(0, 0, 0, .42);
+  --c-shadow-raised:  0 .5px 1.5px rgba(0, 0, 0, .30),
+                      0 3px 10px rgba(0, 0, 0, .28);
+
+  --c-danger:        #E06C62;
+  --c-warn-bg:       #3A2E12;  /* badge « à mettre à jour » (hérité sombre)*/
+  --c-warn-ink:      #F0C675;
+}

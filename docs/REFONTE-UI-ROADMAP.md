@@ -258,4 +258,17 @@ src-tauri/
   close-by-label, StateFlags window-state, events Tauri en canal principal (storage non fiable
   WKWebView), régime d'écriture du blob, lot 1.5 d'extraction, scission du lot 2, rail retiré en
   fin de lot 4, collections/dossier lié/consignes/bandeau MAJ replacés, verrous inter-fenêtres.
-  *(à suivre : Lot 0.)*
+- **2026-07-06 — Lot 0 ✅ (commit `093d29f`, branche `refonte-ui`).**
+  - Branche **`refonte-ui`** créée (roadmap d'abord commitée sur `main`).
+  - **`src/tokens.css`** : tokens « Continuité » clair + sombre (accent unique pétrole #1A5A55 /
+    #4BA396 en sombre, gris système, voiles de vibrance, grille 4/8, ombres macOS multicouches),
+    préfixe `--c-`, greffés sur le mécanisme `data-theme` existant. **Non importés** : app
+    strictement identique, `vite build` ✅.
+  - **`docs/REFONTE-CONTRAT-FONCTIONNEL.md`** : inventaire par 5 agents (zones chrome /
+    composer-fil / connexion-génération / bibliothèque / Moodle), 252 items bruts → **169
+    fonctions après déduplication inter-zones** (propriété par zone la plus spécifique), toutes
+    classées : **99 à migrer · 56 inchangé-restylé · 9 inchangé · 5 retiré volontairement**
+    (le pliage/les sections du rail, dont la relève est la fenêtre Réglages à onglets).
+  - *Reste (validation utilisateur du lot 0) :* relire le contrat — en particulier les 5 lignes
+    « retiré volontairement » et les cibles notées « à trancher » (bascule rapide du thème).
+  *(à suivre : Lot 1.5 — extraction des services.)*
