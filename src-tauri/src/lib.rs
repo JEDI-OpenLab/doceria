@@ -16,9 +16,26 @@ use tauri::{Manager, WindowEvent};
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
-    .plugin(tauri_plugin_window_state::Builder::default().build())
+    // window-state SANS le flag VISIBLE : la fenêtre Réglages est déclarée cachée et ne doit
+    // jamais être ré-affichée automatiquement au lancement par la restauration d'état.
+    .plugin(
+      tauri_plugin_window_state::Builder::default()
+        .with_state_flags(
+          tauri_plugin_window_state::StateFlags::all()
+            & !tauri_plugin_window_state::StateFlags::VISIBLE,
+        )
+        .build(),
+    )
     .manage(ChatState::default())
-    .on_menu_event(|_app, event| {
+    .on_menu_event(|app, event| {
+      // « Réglages… » (⌘,) : affiche la fenêtre dédiée (déclarée cachée dans tauri.conf.json).
+      if event.id().as_ref() == "settings" {
+        if let Some(w) = app.get_webview_window("settings") {
+          let _ = w.show();
+          let _ = w.set_focus();
+        }
+        return;
+      }
       // Menu « Aide » : ouvre le site, le mode d'emploi ou le suivi d'incidents
       // dans le navigateur (URL https figées, validées par update::open_url).
       let url = match event.id().as_ref() {
@@ -68,9 +85,15 @@ pub fn run() {
       update::open_url
     ])
     .on_window_event(|window, event| {
-      // Fermer la fenêtre arrête toute l'application (cf. SPEC : « fermer = quitter »).
-      if let WindowEvent::CloseRequested { .. } = event {
-        window.app_handle().exit(0);
+      if let WindowEvent::CloseRequested { api, .. } = event {
+        if window.label() == "settings" {
+          // La fenêtre Réglages ne se détruit jamais : on la cache (⌘, la ré-affiche).
+          api.prevent_close();
+          let _ = window.hide();
+        } else {
+          // Fermer la fenêtre PRINCIPALE arrête l'application (SPEC : « fermer = quitter »).
+          window.app_handle().exit(0);
+        }
       }
     })
     .setup(|app| {
@@ -86,6 +109,8 @@ pub fn run() {
           true,
           &[
             &PredefinedMenuItem::about(&h, None, None)?,
+            &PredefinedMenuItem::separator(&h)?,
+            &MenuItem::with_id(&h, "settings", "Réglages…", true, Some("Cmd+,"))?,
             &PredefinedMenuItem::separator(&h)?,
             &PredefinedMenuItem::hide(&h, None)?,
             &PredefinedMenuItem::separator(&h)?,

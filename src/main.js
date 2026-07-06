@@ -1,6 +1,7 @@
 import './styles.css';
 
-import { initTheme, applyTheme } from './theme.js';
+import { initTheme, applyTheme, syncThemeButton } from './theme.js';
+import { annoncerReglage, surReglage } from './bus.js';
 import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings, loadConversations } from './state.js';
 import {
   currentConversation,
@@ -66,6 +67,14 @@ async function init() {
   ensureConversation();
   hydrateGen();
   wireEvents();
+  // Bus inter-fenêtres (refonte, lot 1) : un réglage changé dans la fenêtre Réglages
+  // est relu depuis la persistance, puis l'UI locale est mise à niveau (doctrine bus.js).
+  surReglage((champ) => {
+    if (champ === 'theme') {
+      applyTheme();
+      syncThemeButton($('themeToggle'));
+    }
+  });
   await refreshProfiles();
   await refreshMoodleProfiles();
   refreshConversation();
@@ -2328,6 +2337,9 @@ function setupSections() {
 /* ---------- Branchement des événements ---------- */
 function wireEvents() {
   initTheme($('themeToggle'));
+  // Le handler d'initTheme (enregistré juste au-dessus) persiste le nouveau mode AVANT
+  // que celui-ci n'annonce le changement aux autres fenêtres (ordre d'enregistrement).
+  $('themeToggle').addEventListener('click', () => annoncerReglage('theme'));
   setupHelpTooltips();
   setupSections();
   setupDragDrop();

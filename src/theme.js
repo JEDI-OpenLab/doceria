@@ -43,6 +43,20 @@ function updateButton(btn) {
   btn.setAttribute('title', label);
 }
 
+// --- Accès pour la fenêtre Réglages et le bus inter-fenêtres (refonte, lot 1) ---
+export function themeMode() {
+  return stored();
+}
+export function setThemeMode(mode) {
+  if (!ORDER.includes(mode)) return;
+  try { localStorage.setItem(THEME_KEY, mode); } catch { /* ignore */ }
+  applyTheme();
+}
+// Resynchronise l'icône du bouton (après un changement venu d'une AUTRE fenêtre).
+export function syncThemeButton(btn) {
+  if (btn) updateButton(btn);
+}
+
 export function initTheme(btn) {
   applyTheme();
   if (btn) {

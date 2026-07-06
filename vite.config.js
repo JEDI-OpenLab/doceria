@@ -18,5 +18,13 @@ export default defineConfig({
     target: 'es2021',
     minify: 'esbuild',
     sourcemap: false,
+    // Multi-pages : la fenêtre Réglages a sa propre page. Sans cette entrée,
+    // settings.html marcherait en dev mais serait ABSENT du build de prod (.dmg).
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        settings: 'settings.html',
+      },
+    },
   },
 });

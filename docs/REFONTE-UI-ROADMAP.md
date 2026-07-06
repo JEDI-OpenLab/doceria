@@ -289,4 +289,21 @@ src-tauri/
     format `ilaas_portal` strictement intouchés ; `vite build` ✅ ; importabilité multi-fenêtres
     validée (prérequis du lot 2).
   - *Reste : test de non-régression utilisateur (protocole fourni), puis commit validé.*
-  *(à suivre : Lot 1 — squelette fenêtre Réglages + bus.)*
+- **2026-07-06 — Lot 1 ✅ CODÉ (squelette fenêtre Réglages + bus), en attente de test utilisateur.**
+  Travail en direct (sans fan-out multi-agents : crédit utilisateur à préserver), petits pas :
+  1. **Config** : `vite.config.js` (entrées multi-pages `main`+`settings` → `dist/settings.html`
+     vérifié présent au build ✅) · `capabilities/default.json` (+ fenêtre `settings`) ·
+     `tauri.conf.json` (fenêtre `settings` 680×560, `visible:false`, `url: settings.html`).
+  2. **Rust (`lib.rs`, les 3 modifications actées §1.2)** : `StateFlags::all() & !VISIBLE`
+     (window-state ne ré-affiche jamais Réglages seul) · item de menu **« Réglages… » ⌘,**
+     (menu Doceria, handler `show`+`set_focus`) · **close-by-label** (`settings` →
+     `prevent_close`+`hide` ; `main` → `exit(0)` conservé). `cargo check` ✅.
+  3. **Front** : `src/bus.js` (doctrine : signal = events Tauri `doceria://reglage`, données =
+     persistance relue à réception ; régime blob = relecture-avant-écriture documenté) ·
+     `settings.html` + `src/settings.js` (page squelette style Réglages macOS, **première
+     utilisation de `tokens.css`**, contrôle Apparence Automatique/Clair/Sombre) · `theme.js`
+     (+ `themeMode`/`setThemeMode`/`syncThemeButton`, additif) · `main.js` (annonce au clic
+     thème + écoute du bus → `applyTheme` + resync icône).
+  - **Preuve de bout en bout** : le thème changé dans Réglages bascule la principale sans
+    recharger, et inversement.
+  *(à suivre : test utilisateur du lot 1, puis Lot 2a — Réglages Connexion + Moodle.)*

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Réglages</title>
+  <style>
+    /* Squelette de la fenêtre Réglages (lot 1). Les onglets complets arrivent aux
+       lots 2a/2b. Style macOS Réglages, bâti sur les tokens « Continuité ». */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--c-font);
+      font-size: var(--c-text-base);
+      color: var(--c-ink);
+      background: var(--c-canvas);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    .page { max-width: 560px; margin: 0 auto; padding: var(--c-space-6) var(--c-space-5); }
+    h1 { font-size: var(--c-text-title); font-weight: 600; margin-bottom: var(--c-space-5); }
+    .groupe {
+      background: var(--c-surface);
+      border: 1px solid var(--c-hairline);
+      border-radius: var(--c-radius-lg);
+      box-shadow: var(--c-shadow-raised);
+      padding: var(--c-space-4) var(--c-space-5);
+    }
+    .rangée { display: flex; align-items: center; justify-content: space-between; gap: var(--c-space-4); }
+    .rangée > label { font-weight: 500; }
+    .seg { display: inline-flex; background: var(--c-control); border-radius: var(--c-radius-sm); padding: 2px; }
+    .seg button {
+      appearance: none; border: 0; background: transparent; cursor: pointer;
+      font: inherit; color: var(--c-ink-sec);
+      padding: 5px 14px; border-radius: calc(var(--c-radius-sm) - 2px);
+    }
+    .seg button[aria-pressed="true"] {
+      background: var(--c-surface); color: var(--c-ink);
+      box-shadow: 0 .5px 2px rgba(0,0,0,.18);
+      font-weight: 600;
+    }
+    .seg button:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 1px; }
+    .note { margin-top: var(--c-space-4); font-size: var(--c-text-sm); color: var(--c-ink-ter); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Réglages</h1>
+    <div class="groupe">
+      <div class="rangée">
+        <label id="themeLabel">Apparence</label>
+        <div class="seg" role="group" aria-labelledby="themeLabel" id="themeChoice">
+          <button type="button" data-mode="auto" aria-pressed="false">Automatique</button>
+          <button type="button" data-mode="light" aria-pressed="false">Clair</button>
+          <button type="button" data-mode="dark" aria-pressed="false">Sombre</button>
+        </div>
+      </div>
+    </div>
+    <p class="note">Fenêtre Réglages en construction (refonte «&nbsp;Continuité&nbsp;»)&nbsp;: les
+    onglets Général, Connexion, Bibliothèque, Moodle et Avancé arriveront ici. Fermer cette
+    fenêtre ne quitte pas Doceria&nbsp;— ⌘,&nbsp;la rouvre.</p>
+  </div>
+  <script type="module" src="/src/settings.js"></script>
+</body>
+</html>
