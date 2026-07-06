@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="772" viewBox="0 0 1280 772" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dca-title dca-desc">
   <title id="dca-title">Comment fonctionne Doceria</title>
-  <desc id="dca-desc">Schéma de principe : l'enseignant·e pose une question dans Doceria, application native macOS dont les clés restent au trousseau ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse. En option, les documents déposés par l'enseignant·e sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité. Rien ne part vers un cloud tiers.</desc>
+  <desc id="dca-desc">Schéma de principe : l'enseignant·e pose une question dans Doceria, application native macOS dont les clés restent au trousseau ; la requête part vers ILaaS, l'inférence souveraine de l'ESR, qui génère la réponse. En option, les documents déposés par l'enseignant·e, ainsi que ses cours Moodle, sont indexés en collections privées dans OpenGateLLM (RAG) et fournissent un contexte cité. Rien ne part vers un cloud tiers.</desc>
   <defs>
     <marker id="dca-petrol" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#1A5A55"/></marker>
     <marker id="dca-gold" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#B68F46"/></marker>
@@ -19,7 +19,7 @@
   </defs>
 
   <rect x="0" y="0" width="1280" height="772" rx="28" fill="#F7F2E7"/>
-  <text x="640" y="56" text-anchor="middle" class="dca-title">Doceria — comment ça marche</text>
+  <text x="640" y="56" text-anchor="middle" class="dca-title">Doceria, comment ça marche</text>
   <text x="640" y="86" text-anchor="middle" class="dca-sub">Votre question reste dans le périmètre souverain de l'ESR. Vos clés au trousseau, rien vers un cloud tiers.</text>
 
   <!-- Zones -->
@@ -55,7 +55,7 @@
   <text x="404" y="266" text-anchor="middle" class="dca-bx">app native macOS</text>
   <text x="404" y="287" text-anchor="middle" class="dca-bx">clés au trousseau</text>
 
-  <text x="680" y="238" text-anchor="middle" class="dca-bt">ILaaS — inférence</text>
+  <text x="680" y="238" text-anchor="middle" class="dca-bt">ILaaS · inférence</text>
   <text x="680" y="264" text-anchor="middle" class="dca-bx">les modèles souverains de l'ESR</text>
   <text x="680" y="285" text-anchor="middle" class="dca-bx">llm.ilaas.fr</text>
 
@@ -63,11 +63,11 @@
   <text x="972" y="264" text-anchor="middle" class="dca-bx">au fil de l'eau</text>
   <text x="972" y="285" text-anchor="middle" class="dca-bx">avec citations</text>
 
-  <text x="404" y="532" text-anchor="middle" class="dca-bt">Vos documents</text>
-  <text x="404" y="558" text-anchor="middle" class="dca-bx">PDF, DOCX, Markdown…</text>
-  <text x="404" y="579" text-anchor="middle" class="dca-bx">que vous déposez</text>
+  <text x="404" y="530" text-anchor="middle" class="dca-bt">Vos documents</text>
+  <text x="404" y="556" text-anchor="middle" class="dca-bx">PDF, DOCX, Markdown…</text>
+  <text x="404" y="577" text-anchor="middle" class="dca-bx">et vos <tspan font-weight="700" fill="#1A5A55">cours Moodle</tspan></text>
 
-  <text x="680" y="532" text-anchor="middle" class="dca-bt">OpenGateLLM — RAG</text>
+  <text x="680" y="532" text-anchor="middle" class="dca-bt">OpenGateLLM · RAG</text>
   <text x="680" y="558" text-anchor="middle" class="dca-bx">collections privées</text>
   <text x="680" y="579" text-anchor="middle" class="dca-bx">rag-api.ilaas.fr</text>
 
@@ -91,9 +91,9 @@
 
   <!-- Légende -->
   <line x1="56" y1="694" x2="88" y2="694" stroke="#1A5A55" stroke-width="5" stroke-linecap="round"/>
-  <text x="96" y="699" class="dca-leg">Votre question et la réponse, portées par l'app native — vos clés restent au trousseau du système.</text>
+  <text x="96" y="699" class="dca-leg">Votre question et la réponse, portées par l'app native ; vos clés restent au trousseau du système.</text>
   <line x1="56" y1="722" x2="88" y2="722" stroke="#B68F46" stroke-width="5" stroke-linecap="round"/>
-  <text x="96" y="727" class="dca-leg">Option RAG : vos documents, indexés en collections privées dans le périmètre ESR, fournissent un contexte cité.</text>
+  <text x="96" y="727" class="dca-leg">Option RAG : vos documents et vos cours Moodle, indexés en collections privées dans le périmètre ESR, fournissent un contexte cité.</text>
   <line x1="56" y1="750" x2="88" y2="750" stroke="#CE7A33" stroke-width="5" stroke-linecap="round"/>
-  <text x="96" y="755" class="dca-leg">Génération par un modèle hébergé par l'ESR (ILaaS) — jamais un cloud tiers, aucune télémétrie.</text>
+  <text x="96" y="755" class="dca-leg">Génération par un modèle hébergé par l'ESR (ILaaS) ; jamais un cloud tiers, aucune télémétrie.</text>
 </svg>
