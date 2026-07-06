@@ -47,6 +47,9 @@ img{max-width:100%}
 .lead-intro{font-size:1.12rem;color:#3a443f;max-width:34rem}
 .micro{font-size:.86rem;color:var(--muted)}
 .micro i{color:var(--gold)}
+.hero-new{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;color:var(--petrol-ink);background:var(--gold-soft);border:1px solid #E6D6B0;padding:.4rem .9rem;border-radius:30px}
+.hero-new i{color:var(--gold)}
+.hero-new a{color:var(--petrol-ink);text-decoration:underline}
 
 /* Maquette app */
 .mock{border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -30px rgba(17,48,46,.45);background:var(--surface)}

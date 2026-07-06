@@ -3,10 +3,10 @@
 > Document de passation. Décrit l'architecture réelle de l'application de bureau (coquille Rust
 > Tauri + frontend Vite) telle qu'elle est livrée, et résume la feuille de route.
 >
-> **État courant.** Version publiée : **20260626.8.0** (macOS arm64, **non signée**). Le **RAG livré
+> **État courant.** Version publiée : **20260706.1.0** (macOS arm64, **non signée**). Le **RAG livré
 > est le RAG géré par l'infrastructure ESR (OpenGateLLM / ILaaS)** ; l'ancien design d'un RAG
-> « 100 % local » a été **abandonné** (voir §6). Le **connecteur Moodle** (§7) est livré et validé sur
-> la branche `moodle`, destiné à la **prochaine version** (pas encore dans le `.dmg` publié).
+> « 100 % local » a été **abandonné** (voir §6). Le **connecteur Moodle** (§7) est **publié / disponible
+> dans la version 20260706.1.0 (2026-07-06)**.
 > Références de vérité : `../README.md`, `MOODLE-IMPLEMENTATION-ROADMAP.md`, `RAG-V2-ilaas.md`, le site
 > (section « Mode d'emploi »), et le code (`src/`, `src-tauri/src/`).
 
@@ -128,7 +128,7 @@ Deux modes de bibliothèque (interrupteur « Utiliser la bibliothèque ») :
   (recherche indisponible, ou phrase de refus configurable `ragRefusal`) au lieu de laisser le modèle
   répondre sur ses connaissances générales.
 
-## 7. Connecteur Moodle (livré, branche `moodle`)
+## 7. Connecteur Moodle (publié / disponible dans la version 20260706.1.0 (2026-07-06))
 Module `src-tauri/src/moodle.rs` : **lecture seule stricte**, **aucune donnée personnelle**.
 
 - **Client REST bas niveau `ws_call`** : `POST /webservice/rest/server.php` en form-urlencoded
@@ -209,7 +209,7 @@ Module `src-tauri/src/moodle.rs` : **lecture seule stricte**, **aucune donnée p
   badge « à mettre à jour », filtre opt-in « cours inscrits ».
 - **Lot 6**, interrupteur « Inclure les cours Moodle » dans le chat, **livré (2026-07-03)** :
   recherche RAG multi-collections (collection active + toutes les collections « Moodle · … »).
-  **Reste : test en réel puis merge/release dans le `.dmg`.**
+  **Testé et validé : publié / disponible dans la version 20260706.1.0 (2026-07-06).**
 - **Portage Windows** : Tauri multiplateforme + WebView2 + **signature Authenticode**.
 - **Version serveur / web** : deux formats (app de bureau vs serveur central sans installation).
 - **Linux** (après Moodle).

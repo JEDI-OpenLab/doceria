@@ -118,7 +118,7 @@ justification. Décision définitive.
 
 ### G. Application & distribution
 - **P0**, Fenêtre native ; **fermer = tout arrêter** ; icône + nom.
-- **P0**, Build **macOS (.app/.dmg)**, **non signé** (version publiée `20260626.8.0`, macOS arm64).
+- **P0**, Build **macOS (.app/.dmg)**, **non signé** (version publiée `20260706.1.0`, macOS arm64).
   *(Linux AppImage = feuille de route, après Moodle ; Windows plus tard.)*
 - **P2**, Windows (Tauri + WebView2 + signature Authenticode) ; Linux ; mise à jour automatique ;
   signature/notarisation (quarantaine macOS + SmartScreen Windows).
@@ -126,9 +126,9 @@ justification. Décision définitive.
 ### H. Connecteur Moodle (complet, voir `MOODLE-IMPLEMENTATION-ROADMAP.md`)
 > **⟳ Ajouté depuis ce cadrage.** Non prévu au cahier des charges d'origine. **Complet** (lecture
 > seule, **opt-in par consentement**) : Lots 0-7 livrés, relus par revues multi-agents adversariales et
-> **fusionnés dans `main`**, destinés à la **prochaine** version (**pas encore dans le `.dmg` publié
-> `20260626.8.0`**). Le Lot 6 (interrupteur « Inclure les cours Moodle » dans le chat) est **livré
-> (2026-07-03)** ; reste le test en réel puis le merge/release. Référence de vérité :
+> **fusionnés dans `main`**, **publiés / disponibles dans la version `20260706.1.0` (2026-07-06)**.
+> Le Lot 6 (interrupteur « Inclure les cours Moodle » dans le chat) est **livré
+> (2026-07-03)**, testé et validé. Référence de vérité :
 > `MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.
 - **Lecture seule stricte** (web services REST Moodle).
 - **Profils de connexion Moodle** (nom + URL + jeton ; jeton au **trousseau**, rôle « moodle » ;
@@ -151,7 +151,7 @@ justification. Décision définitive.
   de la Direction.
 - **Interrupteur « Inclure les cours Moodle »** dans le composer du chat (Lot 6, ✅ 2026-07-03) :
   étend la recherche RAG à la collection active **+ toutes** les collections « Moodle · … », en un
-  seul appel, avec citations. Reste : test en réel puis merge/release.
+  seul appel, avec citations. **Publié / disponible dans la version `20260706.1.0` (2026-07-06)**.
 
 ## 6. Exigences non-fonctionnelles
 - **Sécurité/souveraineté** : clés et jetons au trousseau ; zéro télémétrie ; aucune dépendance CDN.
@@ -180,7 +180,7 @@ justification. Décision définitive.
 | Modes RAG | — | **Chat ⇄ Requête** ; en Requête, pas de repli si échec/0 extrait (aucun appel facturé) |
 | Conso | **Tokens par échange** | inchangé (`usage` des réponses chat) |
 | Modèle chat | **`mistral-medium-latest`** (id réel) | inchangé |
-| Connecteur Moodle | *(non prévu)* | **Quasi complet** (lecture seule, opt-in par consentement) ; Lots 0-7 dans `main`, prochaine version (§ H) |
+| Connecteur Moodle | *(non prévu)* | **Complet** (lecture seule, opt-in par consentement) ; Lots 0-7 **publiés / disponibles dans la version `20260706.1.0`** (§ H) |
 | Positionnement | RAG personnel, distinct de **Learnix** | RAG personnel adossé à ILaaS ; **filiation directe du POC Learnix** |
 
 ## 8. Questions ouvertes (au moment du cadrage), **résolues depuis**

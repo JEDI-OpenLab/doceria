@@ -1,7 +1,7 @@
 # Doceria : Prérequis & installation (Tauri)
 
 > À faire **une fois** sur la machine de développement pour compiler l'application.
-> La version publiée est **20260626.8.0** (macOS arm64, non signée).
+> La version publiée est **20260706.1.0** (macOS arm64, non signée).
 
 ## macOS
 ```bash
@@ -51,8 +51,8 @@ sécurité → « Ouvrir quand même »**. À faire une seule fois.
   (gitignoré).
 
 ## Connecteur Moodle (guides)
-Le connecteur Moodle (lecture seule) est **livré et validé sur la branche `moodle`**, destiné à la
-**prochaine version** ; il n'est pas encore dans le `.dmg` publié en 20260626.8.0.
+Le connecteur Moodle (lecture seule) est **publié et disponible dans la version 20260706.1.0
+(2026-07-06)**.
 - `docs/MOODLE-TEST-PLAN.md` : plan de test **public** (configuration admin, validation, mapping).
 - `MOODLE-LOCAL.md` : valeurs réelles de l'environnement de test (**gitignoré**, jamais committé).
 - Référence de vérité : `docs/MOODLE-IMPLEMENTATION-ROADMAP.md` et `src-tauri/src/moodle.rs`.

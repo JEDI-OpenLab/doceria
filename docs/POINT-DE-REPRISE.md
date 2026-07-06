@@ -6,7 +6,7 @@
 > Mis à jour : **2026-07-02**.
 >
 > **Jalon en cours : CONNECTEUR MOODLE en lecture seule, QUASI COMPLET** (branche `moodle`, validé
-> de bout en bout, **pas encore publié en .dmg**, destiné à la prochaine version) : **Lots 0-7 +
+> de bout en bout, **publié / disponible dans la version 20260706.1.0 (2026-07-06)**) : **Lots 0-7 +
 > 5.1 LIVRÉS et relus**. Profils de connexion Moodle (jeton au **trousseau**), test de connexion
 > (**liste blanche de 8 fonctions de contenu**), **explorateur de cours** central (recherche +
 > filtre catégorie + cases à cocher), **Synchroniser** = ingestion du **texte** ET des **fichiers/
@@ -34,13 +34,12 @@ ILaaS** (OpenGateLLM). Frontend web (Vite + JS vanilla) dans une coquille Rust. 
 du POC **Learnix**.
 
 ## 2. État global
-- **Version publiée : `20260626.8.0`** (macOS **arm64**, **non signée** : pas de compte Apple).
+- **Version publiée : `20260706.1.0`** (macOS **arm64**, **non signée** : pas de compte Apple).
   Guide : `INSTALLATION-macOS.md`.
 - **macOS : fonctionnellement complet et soigné** (chat, RAG, comparaison multi-modèles, LaTeX…).
 - **Connecteur Moodle : TOUS les lots livrés et relus** (0-7 + 5.1, dont le **Lot 6 « Inclure les
   cours Moodle » ✅ 2026-07-03**, dernier lot, fusionnés dans `main`). Lecture seule complète.
-  **Reste = test en réel du Lot 6 puis release.** **Pas encore intégré au .dmg publié** → à
-  embarquer dans la prochaine version.
+  **Test en réel du Lot 6 validé.** **Publié / disponible dans la version 20260706.1.0 (2026-07-06).**
 - **Windows / Linux : non livrés** (feuille de route). Tauri est multiplateforme → portage Windows
   surtout conditionné par la **signature Authenticode** (+ WebView2), Linux par le build AppImage.
 
@@ -135,8 +134,9 @@ autorisant KaTeX, bundle « all »).
 
 ## 7. Prochaines étapes (feuille de route, dans l'ordre)
 1. **Lot 6, interrupteur « Inclure les cours Moodle »** dans le chat : **✅ livré (2026-07-03)** ;
-   reste son **test en réel** par l'utilisateur.
-2. **Publier une version embarquant le connecteur** (Lots 0-7 + 5.1, déjà fusionnés dans `main`).
+   **test en réel validé**.
+2. **Version embarquant le connecteur** (Lots 0-7 + 5.1) : **publiée / disponible dans la version
+   20260706.1.0 (2026-07-06)**.
 3. **Portage Windows** : Tauri multiplateforme (WebView2) ; le vrai chantier = **signature
    Authenticode** (équivalent Windows de la quarantaine macOS). Appui B7 (certificat + build).
 4. **Version serveur/web** : deux formats partageant le cœur Rust (app de bureau vs serveur central
@@ -151,7 +151,7 @@ autorisant KaTeX, bundle « all »).
   testés sur une instance Moodle réelle (synchro texte **et** fichiers/PDF d'un cours → collection RAG
   → réponse sourcée ; re-sync sans doublon ; badge « à mettre à jour » ; filtre « cours inscrits »).
   **Gouvernance OPT-IN par consentement actée** (jamais opt-out ; zéro donnée d'étudiant).
-  **Lot 6 (interrupteur chat) livré le 2026-07-03 ; reste : test en réel puis release.**
+  **Lot 6 (interrupteur chat) livré le 2026-07-03 ; test en réel validé ; publié dans la version 20260706.1.0 (2026-07-06).**
 - **Correctif RAG Requête** : validé (« ça marche parfaitement »), plus de repli trompeur.
 - **Site web** : en ligne. Reste (utilisateur) : captures `docs/assets/screen-*.png` + Release GitHub
   avec le `.dmg`.

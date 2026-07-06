@@ -2,8 +2,8 @@
 
 > **STATUT : validation historique.** Ce document retrace la préparation et la validation manuelle
 > qui ont précédé le code. L'intégration est désormais **LIVRÉE en totalité** (Lots 0–7, fusionnés
-> dans `main`) : le connecteur n'est pas encore dans le `.dmg` publié (20260626.8.0) mais est livré
-> et validé, destiné à la **prochaine version**. Texte des cours (Lot 3 ✅), fichiers/PDF (Lot 4 ✅),
+> dans `main`) : le connecteur est **publié / disponible dans la version 20260706.1.0 (2026-07-06)**,
+> livré et validé. Texte des cours (Lot 3 ✅), fichiers/PDF (Lot 4 ✅),
 > synchro incrémentale (Lot 5 ✅), opt-in (Lot 7 ✅), interrupteur chat (Lot 6 ✅ 2026-07-03).
 > Journal d'implémentation : [`docs/MOODLE-IMPLEMENTATION-ROADMAP.md`](MOODLE-IMPLEMENTATION-ROADMAP.md).
 > Les Phases 0 à 3 ci-dessous sont conservées comme **repères de validation** (au passé).

@@ -12,8 +12,8 @@
 > (pas « à faire »). Le **RAG livré est le RAG géré par ILaaS** (OpenGateLLM, `rag-api.ilaas.fr`) ;
 > l'ancien « RAG 100 % local » (`bge-m3`/`fastembed`, LanceDB, OCR/index locaux) est un design
 > **abandonné**. Le **connecteur Moodle** (lecture seule, ingestion du texte vers une collection
-> RAG « Moodle · <cours> ») est **livré et validé sur la branche `moodle`, destiné à la prochaine
-> version** (pas encore dans le `.dmg` publié `20260626.8.0`). **Correctif mode Requête** : si la
+> RAG « Moodle · <cours> ») est **publié / disponible dans la version `20260706.1.0` (2026-07-06)**.
+> **Correctif mode Requête** : si la
 > recherche RAG échoue ou ne renvoie aucun extrait, le modèle **bloque et l'explique** (pas de
 > repli sur ses connaissances générales, pas d'appel facturé) ; en mode Chat, repli assumé **avec
 > avertissement**. **Plateformes** : seul **macOS arm64** est livré ; Windows et Linux sont de la
