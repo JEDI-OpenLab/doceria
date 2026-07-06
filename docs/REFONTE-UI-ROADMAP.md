@@ -289,7 +289,7 @@ src-tauri/
     format `ilaas_portal` strictement intouchés ; `vite build` ✅ ; importabilité multi-fenêtres
     validée (prérequis du lot 2).
   - *Reste : test de non-régression utilisateur (protocole fourni), puis commit validé.*
-- **2026-07-06 — Lot 1 ✅ CODÉ (squelette fenêtre Réglages + bus), en attente de test utilisateur.**
+- **2026-07-06 — Lot 1 ✅ VALIDÉ (testé par Jean : ⌘, ouvre/cache, thème synchronisé dans les deux sens, fermer Réglages ne quitte pas). Squelette fenêtre Réglages + bus.**
   Travail en direct (sans fan-out multi-agents : crédit utilisateur à préserver), petits pas :
   1. **Config** : `vite.config.js` (entrées multi-pages `main`+`settings` → `dist/settings.html`
      vérifié présent au build ✅) · `capabilities/default.json` (+ fenêtre `settings`) ·
