@@ -274,4 +274,19 @@ src-tauri/
 - **2026-07-06 — Lot 0 VALIDÉ par l'utilisateur** (« Je suis d'accord avec tout ») : les 5
   « retiré volontairement » approuvés ; bascule rapide du thème **conservée en toolbar** (en plus
   de Réglages > Général). Lot 1.5 engagé.
-  *(à suivre : Lot 1.5 — extraction des services.)*
+- **2026-07-06 — Lot 1.5 ✅ (extraction des services).** Réalisé en 4 étapes séquentielles
+  (envoi→état ; services profils ILaaS+Moodle ; syncengine ; balayage + presets) puis revue
+  adversariale (2 relecteurs : comportements tracés avant/après + architecture/invariants) :
+  **zéro défaut réel**.
+  - **Créés** : `src/services/profiles.js` (112 l. — sauvegarder/tester/supprimer/activer avec
+    cascade, chargerModeles à callbacks), `moodleconf.js` (64 l.), `syncengine.js` (233 l. —
+    lier/délier/synchroniser/synchroniserProfil, verrou `syncing` + garde profil-figé dans le
+    service, index `doceria_sync_v1` au format intouché), `presets.js` (49 l.).
+  - **`main.js` : 2661 → 2518 lignes** (310 supprimées, 167 ajoutées) — les handlers deviennent du
+    câblage ; `buildMessages()`/`send()`/`regenerate()` ne lisent plus AUCUN réglage dans le DOM
+    (uniquement `state.*`, tenu à jour à la saisie).
+  - **Invariants prouvés** : services sans DOM/ui.js ; `index.html`, `src-tauri/`, `package.json`,
+    format `ilaas_portal` strictement intouchés ; `vite build` ✅ ; importabilité multi-fenêtres
+    validée (prérequis du lot 2).
+  - *Reste : test de non-régression utilisateur (protocole fourni), puis commit validé.*
+  *(à suivre : Lot 1 — squelette fenêtre Réglages + bus.)*

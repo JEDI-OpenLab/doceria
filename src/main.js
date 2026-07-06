@@ -15,8 +15,41 @@ import {
   truncateConversation,
   downloadMarkdown,
 } from './conversations.js';
-import { listModels, streamChat, describeError, profilesApi, moodleApi, ragApi, dragDrop, updater, usageApi } from './api.js';
+import { streamChat, describeError, profilesApi, moodleApi, ragApi, dragDrop, updater, usageApi } from './api.js';
 import { readDocument } from './documents.js';
+// Lot 1.5 — services métier SANS DOM : main.js n'est plus que le câblage
+// (lire le DOM → appeler le service → refléter le résultat via ui.js).
+import {
+  sauvegarderProfil,
+  testerConnexion,
+  supprimerProfil,
+  activerProfil,
+  chargerModeles,
+} from './services/profiles.js';
+import {
+  sauvegarderConnexionMoodle,
+  testerConnexionMoodle,
+  supprimerConnexionMoodle,
+  activerConnexionMoodle,
+} from './services/moodleconf.js';
+import {
+  chargerPresets,
+  enregistrerPreset,
+  appliquerPreset,
+  supprimerPreset,
+} from './services/presets.js';
+import {
+  lier,
+  delier,
+  synchroniser,
+  synchroniserProfil,
+  estOccupe,
+  liaisonDossier,
+  purgerDocumentSuivi,
+  televerserFichier,
+  // Alias : la synchro Moodle (encore dans main.js, étape 4) l'utilise sous son ancien nom.
+  extraireIdDocument as extractDocId,
+} from './services/syncengine.js';
 import * as ui from './ui.js';
 
 const $ = ui.$;
@@ -315,16 +348,14 @@ async function onNewCollection() {
 
 async function onDeleteCollection() {
   if (state.activeCollectionId == null) return;
-  if (syncing) { $('ragStatus').textContent = 'Synchronisation en cours — réessaie dans un instant.'; return; }
+  if (estOccupe()) { $('ragStatus').textContent = 'Synchronisation en cours — réessaie dans un instant.'; return; }
   const c = state.collections.find((x) => String(x.id) === String(state.activeCollectionId));
   if (!window.confirm('Supprimer la collection « ' + (c?.name || state.activeCollectionId) + ' » et ses documents chez ILaaS ? Action définitive.')) return;
   const deletedId = Number(state.activeCollectionId);
   try {
     await ragApi.deleteCollection(deletedId);
     // Purge l'éventuel lien de synchro de cette collection (sinon index fantôme).
-    const m = loadSyncMap();
-    delete m[syncMapKey(deletedId)];
-    saveSyncMap(m);
+    delier(deletedId);
     // Idem pour l'index de synchro Moodle : retire les cours pointant sur cette collection, MAIS
     // uniquement pour le profil ILaaS actif (les ids de collection sont propres à chaque profil —
     // un même id peut exister dans deux profils différents). La clé est « dest::mpId::courseId ».
@@ -343,32 +374,8 @@ async function onDeleteCollection() {
   }
 }
 
-// Téléverse un fichier vers une collection. PDF/DOCX : extraction du texte EN LOCAL
-// (pdf.js/mammoth) puis envoi en .md — contourne le parser PDF d'ILaaS (502). Les formats
-// texte partent en direct. Un PDF scanné (sans couche texte) n'est pas importable pour
-// l'instant (pas de modèle OCR chez ILaaS — voir roadmap).
-async function uploadFileSmart(collectionId, path, profileId) {
-  const name = String(path).split(/[\\/]/).pop() || 'document';
-  const ext = (name.split('.').pop() || '').toLowerCase();
-  if (ext === 'pdf' || ext === 'docx') {
-    const raw = await ragApi.readFile(path); // IPC binaire (ArrayBuffer ou Uint8Array)
-    const part = raw instanceof ArrayBuffer || ArrayBuffer.isView(raw) ? raw : new Uint8Array(raw);
-    const file = new File([part], name);
-    let text;
-    try {
-      text = (await readDocument(file, undefined, { noTruncate: true })).text; // RAG = texte complet
-    } catch (e) {
-      if (ext === 'pdf') {
-        throw new Error('PDF scanné « ' + name + ' » : aucun texte extractible (OCR pas encore disponible).');
-      }
-      throw e;
-    }
-    const mdName = name.replace(/\.(pdf|docx)$/i, '') + '.md';
-    return await ragApi.uploadText(collectionId, mdName, text, profileId);
-  }
-  return await ragApi.uploadDocument(collectionId, path, null, profileId);
-}
-
+// Le téléversement « intelligent » (PDF/DOCX extraits en local puis envoyés en .md)
+// vit dans services/syncengine.js (televerserFichier) — partagé avec la synchro dossier.
 async function uploadPaths(paths) {
   if (state.activeCollectionId == null) {
     $('ragStatus').textContent = 'Sélectionne ou crée une collection d’abord.';
@@ -385,7 +392,7 @@ async function uploadPaths(paths) {
     ui.uploadBusy(msg + '…');
     $('ragStatus').textContent = msg + '…';
     try {
-      await uploadFileSmart(cid, paths[i]);
+      await televerserFichier(cid, paths[i]);
       ok++;
     } catch (e) {
       fail++;
@@ -456,115 +463,24 @@ function setupDragDrop() {
 }
 
 // ───────────────────────── Synchro dossier ↔ collection ─────────────────────────
-// Index local (localStorage) : pour chaque collection liée à un dossier, on mémorise le
-// dossier et, par fichier, son document_id côté ILaaS + taille/mtime (détection des
-// changements). Clé = « profil::collection » (les id de collection sont propres au RAG).
-const SYNC_KEY = 'doceria_sync_v1';
-let syncing = false;
+// Lot 1.5 — le moteur (index doceria_sync_v1, diff taille+mtime, verrou, garde
+// anti-changement-de-profil) vit dans services/syncengine.js ; ici, uniquement le
+// câblage : $('ragStatus') et le grisage des boutons via les callbacks du service.
 
-function loadSyncMap() {
-  try { return JSON.parse(localStorage.getItem(SYNC_KEY) || '{}') || {}; } catch { return {}; }
-}
-function saveSyncMap(m) {
-  try { localStorage.setItem(SYNC_KEY, JSON.stringify(m)); } catch { /* ignore */ }
-}
-function syncMapKey(collectionId, profileId = state.activeId) { return profileId + '::' + collectionId; }
-function syncRecord(collectionId, profileId = state.activeId) { return loadSyncMap()[syncMapKey(collectionId, profileId)] || null; }
-
-// Extrait l'id du document créé, en tolérant les variantes de schéma OpenGateLLM
-// (id / document_id, éventuellement imbriqué sous data / data.document).
-function extractDocId(created) {
-  if (created == null) return null;
-  if (typeof created === 'number') return created;
-  const d = created.data || {};
-  return (
-    created.id ?? created.document_id ??
-    d.id ?? d.document_id ?? (d.document && d.document.id) ?? null
-  );
-}
-
-// Compare le dossier lié à l'index et applique les différences (ajout / maj / suppression).
-// `profileId` est FIGÉ par l'appelant : toutes les écritures d'index et tous les appels
-// réseau ciblent ce profil, même si l'utilisateur change de profil pendant la synchro.
-async function syncCollection(collectionId, profileId, opts = {}) {
-  const silent = !!opts.silent;
-  const map = loadSyncMap();
-  const key = syncMapKey(collectionId, profileId);
-  const rec = map[key];
-  if (!rec || !rec.folder) return { skipped: true };
-  const status = (t) => { if (!silent) $('ragStatus').textContent = t; };
-
-  let entries;
-  try {
-    status('Analyse du dossier…');
-    entries = await ragApi.listDirEntries(rec.folder);
-  } catch (e) {
-    status('✗ Dossier illisible : ' + describeError(e));
-    return { error: describeError(e) };
-  }
-  // On rattache `files` à l'enregistrement et on sauvegarde APRÈS CHAQUE opération : si
-  // l'app se ferme en cours de synchro, les document_id déjà obtenus ne sont pas perdus.
-  const files = rec.files || {};
-  rec.files = files;
-  map[key] = rec;
-  const persist = () => saveSyncMap(map);
-  const current = new Map(entries.map((e) => [e.path, e]));
-  let added = 0, updated = 0, removed = 0, failed = 0;
-
-  // 1) Suppressions : connu de l'index mais disparu du disque → retirer de la collection.
-  for (const p of Object.keys(files)) {
-    if (current.has(p)) continue;
-    const docId = files[p] && files[p].documentId;
-    if (docId != null) {
-      try { await ragApi.deleteDocument(Number(docId), profileId); } catch { /* déjà absent : on nettoie l'index */ }
-    }
-    delete files[p];
-    removed++;
-    persist();
-  }
-
-  // 2) Ajouts / modifications (taille ou date changée → suppr + ré-upload).
-  const list = [...current.values()];
-  for (let i = 0; i < list.length; i++) {
-    const e = list[i];
-    const known = files[e.path];
-    const changed = known && (known.size !== e.size || known.mtime !== e.mtime);
-    if (known && !changed) continue; // inchangé → on saute
-    status('Synchronisation ' + (i + 1) + '/' + list.length + '…');
-    try {
-      if (changed && known.documentId != null) {
-        try { await ragApi.deleteDocument(Number(known.documentId), profileId); } catch { /* ignore */ }
-      }
-      const created = await uploadFileSmart(collectionId, e.path, profileId);
-      const docId = extractDocId(created);
-      files[e.path] = { documentId: docId, size: e.size, mtime: e.mtime };
-      persist();
-      if (changed) updated++; else added++;
-    } catch {
-      failed++;
-    }
-  }
-
-  persist();
-  if (!silent) {
-    $('ragStatus').textContent =
-      '✓ Sync : ' + added + ' ajout(s), ' + updated + ' maj, ' + removed + ' retiré(s)' +
-      (failed ? ', ' + failed + ' échec(s)' : '') + '.';
-  }
-  return { added, updated, removed, failed };
-}
-
-// Verrou global anti-concurrence (partagé avec autoSyncProfile) + grisage des boutons.
+// Lance la synchro d'une collection : grisage des boutons + retours dans ragStatus.
+// Le verrou global (une seule synchro à la fois) vit dans le service (estOccupe).
 async function runSync(collectionId) {
-  if (syncing) return;
-  syncing = true;
-  const pid = state.activeId; // profil figé pour toute la synchro
+  if (estOccupe()) return;
   for (const id of ['folderSync', 'folderLink', 'folderUnlink']) { const el = $(id); if (el) el.disabled = true; }
   try {
-    await syncCollection(collectionId, pid);
-    if (state.activeId === pid) await loadCollections();
+    await synchroniser(collectionId, {
+      onStatus: (t) => { $('ragStatus').textContent = t; },
+      onError: (t) => { $('ragStatus').textContent = t; },
+      // onProgress(fait, total) : réservé à la future barre de progression (lot 2) —
+      // aujourd'hui l'avancement passe déjà par onStatus (« Synchronisation i/N… »).
+      onDone: async () => { await loadCollections(); },
+    });
   } finally {
-    syncing = false;
     for (const id of ['folderSync', 'folderLink', 'folderUnlink']) { const el = $(id); if (el) el.disabled = false; }
     updateFolderSyncUI();
   }
@@ -575,10 +491,7 @@ async function onLinkFolder() {
   let dir;
   try { dir = await ragApi.pickFolder(); } catch (e) { $('ragStatus').textContent = '✗ ' + describeError(e); return; }
   if (!dir) return;
-  const map = loadSyncMap();
-  const key = syncMapKey(state.activeCollectionId);
-  map[key] = { collectionId: Number(state.activeCollectionId), folder: dir, files: (map[key] && map[key].files) || {} };
-  saveSyncMap(map);
+  lier(dir, state.activeCollectionId);
   updateFolderSyncUI();
   await runSync(Number(state.activeCollectionId)); // import initial
 }
@@ -590,9 +503,7 @@ async function onSyncFolder() {
 function onUnlinkFolder() {
   if (state.activeCollectionId == null) return;
   if (!window.confirm('Délier le dossier de cette collection ? Les documents déjà importés restent dans la collection (ils ne seront simplement plus synchronisés).')) return;
-  const map = loadSyncMap();
-  delete map[syncMapKey(state.activeCollectionId)];
-  saveSyncMap(map);
+  delier(state.activeCollectionId);
   updateFolderSyncUI();
   $('ragStatus').textContent = '✓ Dossier délié (documents conservés).';
 }
@@ -610,7 +521,7 @@ function updateFolderSyncUI() {
   if (dm) dm.classList.toggle('is-hidden', !enabled);
   if (!enabled || (docListLoadedFor !== null && docListLoadedFor !== state.activeCollectionId)) collapseDocList();
   if (!enabled) return;
-  const rec = syncRecord(state.activeCollectionId);
+  const rec = liaisonDossier(state.activeCollectionId);
   const linked = !!(rec && rec.folder);
   $('folderLinked').hidden = !linked;
   $('folderUnlinked').hidden = linked;
@@ -622,33 +533,16 @@ function updateFolderSyncUI() {
 }
 
 // Synchronise en arrière-plan toutes les collections liées du profil actif (si l'option
-// est activée). On abandonne proprement si l'utilisateur change de profil entre-temps.
+// est activée). La boucle, le verrou et l'abandon si l'utilisateur change de profil
+// vivent dans le service (synchroniserProfil) ; ici, uniquement les retours UI.
 async function autoSyncProfile() {
-  if (syncing) return; // une synchro (manuelle ou auto) est déjà en cours
-  const pid = state.activeId;
-  const map = loadSyncMap();
-  const prefix = pid + '::';
-  const recs = Object.keys(map)
-    .filter((k) => k.startsWith(prefix) && map[k] && map[k].folder && map[k].collectionId != null)
-    .map((k) => map[k]);
-  if (!recs.length) return;
-  syncing = true;
-  $('ragStatus').textContent = '↻ Synchronisation automatique…';
-  let touched = false;
-  try {
-    for (const rec of recs) {
-      if (state.activeId !== pid) return; // profil changé : on abandonne
-      try {
-        const r = await syncCollection(Number(rec.collectionId), pid, { silent: true });
-        if (r && (r.added || r.updated || r.removed)) touched = true;
-      } catch { /* on continue avec les autres collections */ }
-    }
-    if (state.activeId !== pid) return;
-    await loadCollections();
-    $('ragStatus').textContent = touched ? '↻ Synchronisation automatique terminée.' : '';
-  } finally {
-    syncing = false;
-  }
+  await synchroniserProfil({
+    onStatus: (t) => { $('ragStatus').textContent = t; },
+    onDone: async (touched) => {
+      await loadCollections();
+      $('ragStatus').textContent = touched ? '↻ Synchronisation automatique terminée.' : '';
+    },
+  });
 }
 
 // ───────────────────────── Gestion documentaire (lister / supprimer) ─────────────────────────
@@ -706,7 +600,7 @@ async function onDeleteDocument(doc, row) {
   try {
     await ragApi.deleteDocument(Number(doc.id));
     if (row) row.remove();
-    pruneSyncDoc(Number(state.activeCollectionId), Number(doc.id)); // si suivi par la synchro
+    purgerDocumentSuivi(Number(state.activeCollectionId), Number(doc.id)); // si suivi par la synchro
     await loadCollections(); // met à jour le compteur « (N doc.) »
     $('ragStatus').textContent = '✓ document supprimé.';
   } catch (e) {
@@ -714,69 +608,54 @@ async function onDeleteDocument(doc, row) {
   }
 }
 
-// Retire un document de l'index de synchro (s'il y figure) après une suppression manuelle,
-// pour ne pas re-tenter sa suppression ; si le fichier est encore sur le disque, une future
-// synchro le considérera comme nouveau et le ré-importera (le dossier reste la référence).
-function pruneSyncDoc(collectionId, documentId) {
-  const map = loadSyncMap();
-  const rec = map[syncMapKey(collectionId)];
-  if (!rec || !rec.files) return;
-  let changed = false;
-  for (const p of Object.keys(rec.files)) {
-    if (Number(rec.files[p].documentId) === documentId) { delete rec.files[p]; changed = true; }
-  }
-  if (changed) saveSyncMap(map);
-}
-
+// Lot 1.5 — la logique (gardes, état, persistance) vit dans services/profiles.js ;
+// ici, uniquement les effets UI, branchés aux callbacks dans le même ordre qu'avant.
 async function loadModels() {
-  const p = activeProfile();
-  if (!p) { ui.showError('Crée un profil d’abord.'); return; }
-  if (!p.hasLlmKey) { ui.showError('Ce profil n’a pas de clé LLM. Modifie-le pour l’ajouter.'); return; }
-  ui.clearError();
-  ui.setStatus('chargement…');
-  $('loadModelsBtn').disabled = true;
-  try {
-    const list = await listModels();
-    state.models = list;
-    ui.fillModels(list, state.model || p.llmModel);
-    state.model = $('modelSelect').value;
-    saveSettings();
-    ui.setStatus('connecté', 'on');
-    ui.enableChat(true);
-    syncCompareUI();
-  } catch (err) {
-    ui.setStatus('échec', 'err');
-    ui.showError(describeError(err));
-  } finally {
-    $('loadModelsBtn').disabled = false;
-  }
+  await chargerModeles({
+    onBusy: () => {
+      ui.clearError();
+      ui.setStatus('chargement…');
+      $('loadModelsBtn').disabled = true;
+    },
+    onModeles: (list, choix) => {
+      ui.fillModels(list, choix);
+      return $('modelSelect').value; // le sélecteur peut normaliser le choix
+    },
+    onSucces: () => {
+      ui.setStatus('connecté', 'on');
+      ui.enableChat(true);
+      syncCompareUI();
+    },
+    onError: (msg, apresRequete) => {
+      if (apresRequete) ui.setStatus('échec', 'err');
+      ui.showError(msg);
+    },
+    onDone: () => { $('loadModelsBtn').disabled = false; },
+  });
 }
 
 async function switchProfile(id) {
   if (moodleSyncing || state.busy || id === state.activeId) return;
   try {
-    const payload = await profilesApi.setActive(id);
-    state.profiles = payload.profiles;
-    state.activeId = payload.activeId;
-    // Destination RAG changée → l'état « à mettre à jour » (spécifique au profil) est périmé.
-    mvUpdatableSet = new Set();
-    if (!$('moodleView').hidden) renderMoodleView();
-    state.model = '';
-    state.models = [];
-    ui.fillModels([], '');
-    ui.enableChat(false);
-    ui.clearError();
-    ui.renderProfiles();
+    await activerProfil(id, {
+      onProfilsMisAJour: () => {
+        // Destination RAG changée → l'état « à mettre à jour » (spécifique au profil) est périmé.
+        mvUpdatableSet = new Set();
+        if (!$('moodleView').hidden) renderMoodleView();
+      },
+      onModelesReinitialises: () => {
+        ui.fillModels([], '');
+        ui.enableChat(false);
+        ui.clearError();
+        ui.renderProfiles();
+      },
+    });
     applyActiveProfile();
     const p = activeProfile();
     if (p && p.hasLlmKey) loadModels();
   } catch (err) {
     ui.showError(describeError(err));
   }
-}
-
-function newId() {
-  return globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now();
 }
 
 // Remplit le menu « Modèle par défaut » du profil (liste récupérée au test de la clé).
@@ -822,29 +701,29 @@ function closeEditor() {
 }
 
 // Persiste le profil (métadonnées) + les clés saisies (write-only). Renvoie l'id.
-// Les champs clé sont vidés dans tous les cas (finally), même en cas d'échec.
+// Lot 1.5 — la logique (upsert + pose des clés au trousseau) vit dans
+// services/profiles.js ; ici uniquement les lectures DOM. Les champs clé sont
+// vidés dans tous les cas (finally), même en cas d'échec.
 async function saveProfileFromEditor() {
-  const id = editingId || newId();
-  const ragUrl = $('pfRagUrl').value.trim();
-  const profile = {
-    id,
-    name: $('pfName').value.trim() || 'Profil',
-    llmBaseUrl: $('pfLlmUrl').value.trim() || 'https://llm.ilaas.fr/v1',
-    llmModel: $('pfLlmModel').value.trim() || 'mistral-medium-latest',
-    ragBaseUrl: ragUrl || null,
-  };
-  let llmKey = $('pfLlmKey').value.trim();
-  let ragKey = $('pfRagKey').value.trim();
   try {
-    await profilesApi.upsert(profile);
-    editingId = id;
-    if (llmKey) await profilesApi.setKey(id, 'llm', llmKey);
-    if (ragKey) await profilesApi.setKey(id, 'rag', ragKey);
-    return id;
+    const profil = await sauvegarderProfil(
+      {
+        id: editingId,
+        name: $('pfName').value,
+        llmUrl: $('pfLlmUrl').value,
+        model: $('pfLlmModel').value,
+        ragUrl: $('pfRagUrl').value,
+        llmKey: $('pfLlmKey').value,
+        ragKey: $('pfRagKey').value,
+      },
+      // Id d'édition figé dès l'upsert des métadonnées (avant la pose des clés),
+      // exactement comme avant : un échec de setKey laisse le profil éditable.
+      { onUpsert: (id) => { editingId = id; } }
+    );
+    return profil.id;
   } finally {
     $('pfLlmKey').value = '';
     $('pfRagKey').value = '';
-    llmKey = ragKey = null;
   }
 }
 
@@ -853,11 +732,7 @@ async function onSaveProfile() {
   try {
     const id = await saveProfileFromEditor();
     // setActive renvoie déjà le payload complet (profils + activeId) : pas de list() en plus.
-    const payload = await profilesApi.setActive(id);
-    state.profiles = payload.profiles;
-    state.activeId = payload.activeId;
-    state.model = '';
-    state.models = [];
+    await activerProfil(id);
     closeEditor();
     ui.renderProfiles();
     applyActiveProfile();
@@ -877,12 +752,8 @@ async function onTestProfile(target) {
   if (!url) { hint.textContent = '✗ URL manquante.'; return; }
   hint.textContent = 'test en cours…';
   try {
-    let models;
-    if (key) {
-      models = await profilesApi.testEphemeral(url, key); // rien n'est écrit
-    } else if (editingId) {
-      models = await profilesApi.test(editingId, target); // profil déjà enregistré
-    } else {
+    const models = await testerConnexion({ url, key, profileId: editingId, target });
+    if (!models) {
       hint.textContent = '✗ Saisis une clé pour tester.';
       return;
     }
@@ -900,11 +771,7 @@ async function onDeleteProfile() {
   if (!p) return;
   if (!window.confirm('Supprimer le profil « ' + p.name + ' » et ses clés du trousseau ? Action définitive.')) return;
   try {
-    const payload = await profilesApi.remove(p.id);
-    state.profiles = payload.profiles;
-    state.activeId = payload.activeId;
-    state.model = '';
-    state.models = [];
+    await supprimerProfil(p.id);
     ui.fillModels([], '');
     ui.enableChat(false);
     ui.clearError();
@@ -933,9 +800,7 @@ async function refreshMoodleProfiles() {
 async function switchMoodleProfile(id) {
   if (!id || id === state.activeMoodleId) return;
   try {
-    const payload = await moodleApi.setActive(id);
-    state.moodleProfiles = payload.profiles;
-    state.activeMoodleId = payload.activeId;
+    await activerConnexionMoodle(id);
     renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
@@ -965,24 +830,24 @@ function closeMoodleEditor() {
 }
 
 // Persiste la connexion Moodle + le jeton saisi (write-only). Renvoie l'id.
+// Lot 1.5 — la logique (upsert + jeton au trousseau) vit dans services/moodleconf.js ;
+// ici uniquement les lectures DOM. Le champ jeton est vidé dans tous les cas (finally).
 async function saveMoodleProfileFromEditor() {
-  const id = moodleEditingId || newId();
-  const existing = state.moodleProfiles.find((p) => p.id === id);
-  const profile = {
-    id,
-    name: $('moName').value.trim() || 'Moodle',
-    moodleBaseUrl: $('moUrl').value.trim().replace(/\/+$/, ''),
-    courseIds: existing ? existing.courseIds || [] : [], // préservés (choix des cours = lot suivant)
-  };
-  let token = $('moToken').value.trim();
   try {
-    await moodleApi.upsert(profile);
-    moodleEditingId = id;
-    if (token) await moodleApi.setKey(id, token);
-    return id;
+    const profil = await sauvegarderConnexionMoodle(
+      {
+        id: moodleEditingId,
+        name: $('moName').value,
+        url: $('moUrl').value,
+        token: $('moToken').value,
+      },
+      // Id d'édition figé dès l'upsert des métadonnées (avant la pose du jeton),
+      // exactement comme avant : un échec de setKey laisse la connexion éditable.
+      { onUpsert: (id) => { moodleEditingId = id; } }
+    );
+    return profil.id;
   } finally {
     $('moToken').value = '';
-    token = null;
   }
 }
 
@@ -994,9 +859,7 @@ async function onSaveMoodleProfile() {
   }
   try {
     const id = await saveMoodleProfileFromEditor();
-    const payload = await moodleApi.setActive(id);
-    state.moodleProfiles = payload.profiles;
-    state.activeMoodleId = payload.activeId;
+    await activerConnexionMoodle(id);
     closeMoodleEditor();
     renderMoodleAll();
   } catch (err) {
@@ -1009,9 +872,7 @@ async function onDeleteMoodleProfile() {
   if (!p) return;
   if (!window.confirm('Supprimer la connexion Moodle « ' + p.name + ' » et son jeton du trousseau ? Action définitive.')) return;
   try {
-    const payload = await moodleApi.remove(p.id);
-    state.moodleProfiles = payload.profiles;
-    state.activeMoodleId = payload.activeId;
+    await supprimerConnexionMoodle(p.id);
     closeMoodleEditor();
     renderMoodleAll();
   } catch (err) {
@@ -1029,14 +890,14 @@ async function onTestMoodle() {
   if (!url) { hint.textContent = '✗ URL manquante.'; return; }
   hint.textContent = 'test en cours…';
   try {
-    let info;
-    if (token) {
-      info = await moodleApi.testEphemeral(url, token); // rien n'est écrit
-    } else if (moodleEditingId) {
-      info = await moodleApi.test(moodleEditingId, url); // jeton au trousseau, URL affichée
+    const { info, testeSurProfil } = await testerConnexionMoodle({ url, token, profileId: moodleEditingId });
+    if (testeSurProfil) {
+      // Jeton au trousseau testé, mais le diagnostic complet exige le jeton à l'écran.
       hint.textContent = '✗ Colle le jeton pour tester.';
       return;
     }
+    // Ni jeton ni connexion enregistrée → info vaut undefined et la ligne suivante
+    // lève, interceptée par le catch (comportement identique à avant l'extraction).
     const dl = info.downloadFiles ? 'téléchargement fichiers OK' : '⚠ télécharg. fichiers désactivé';
     const fx = (info.missingFunctions && info.missingFunctions.length)
       ? '⚠ fonctions manquantes : ' + info.missingFunctions.join(', ')
@@ -1674,17 +1535,16 @@ async function checkMoodleUpdates() {
 }
 
 /* ---------- Construction de la requête ---------- */
+// Lot 1.5 — l'état (src/state.js) est la SEULE source de vérité de l'envoi : les inputs
+// le tiennent à jour à la saisie (wireEvents) ; on ne relit plus le DOM ici. On persiste
+// simplement les réglages courants avant l'envoi (même timing de sauvegarde qu'avant).
 function readGenerationFromInputs() {
-  state.model = $('modelSelect').value || state.model;
-  state.temp = parseFloat($('temp').value);
-  state.maxTokens = parseInt($('maxTokens').value, 10) || 1024;
-  state.sys = $('sysPrompt').value;
   saveSettings();
 }
 
 function buildMessages(conv, ragContext) {
   const msgs = [];
-  let sys = $('sysPrompt').value.trim();
+  let sys = (state.sys || '').trim();
   if (state.doc.text) {
     const ctx = 'Document de contexte « ' + state.doc.name + ' » :\n\n' + state.doc.text;
     sys = sys ? sys + '\n\n' + ctx : ctx;
@@ -2334,21 +2194,13 @@ function togglePanel(which) {
 }
 
 /* ---------- Modèles de consigne système (presets) ---------- */
-const SYS_PRESETS_KEY = 'doceria_sys_presets';
+// Lot 1.5 — persistance (load/save/apply/delete) extraite dans services/presets.js ;
+// il ne reste ici que le câblage DOM (sélecteur, champs, flash « ✓ … »).
 let sysHintTimer = null;
 
-function loadSysPresets() {
-  try {
-    const a = JSON.parse(localStorage.getItem(SYS_PRESETS_KEY) || '[]');
-    return Array.isArray(a) ? a : [];
-  } catch { return []; }
-}
-function saveSysPresets(a) {
-  try { localStorage.setItem(SYS_PRESETS_KEY, JSON.stringify(a)); } catch { /* ignore */ }
-}
 function renderSysPresets() {
   const sel = $('sysPresetSelect');
-  const presets = loadSysPresets();
+  const presets = chargerPresets();
   sel.innerHTML = '';
   const o0 = document.createElement('option');
   o0.value = '';
@@ -2372,12 +2224,7 @@ function flashSysHint(msg) {
 function onSysPresetSave() {
   const name = $('sysPresetName').value.trim();
   if (!name) { $('sysPresetName').focus(); return; }
-  const text = $('sysPrompt').value;
-  const presets = loadSysPresets();
-  const i = presets.findIndex((p) => p.name === name);
-  if (i >= 0) presets[i].text = text;
-  else presets.push({ name, text });
-  saveSysPresets(presets);
+  enregistrerPreset(name, $('sysPrompt').value);
   $('sysPresetName').value = '';
   renderSysPresets();
   $('sysPresetSelect').value = name;
@@ -2385,17 +2232,15 @@ function onSysPresetSave() {
 }
 function onSysPresetLoad(name) {
   if (!name) return;
-  const p = loadSysPresets().find((x) => x.name === name);
+  const p = appliquerPreset(name);
   if (!p) return;
   $('sysPrompt').value = p.text;
-  state.sys = p.text;
-  saveSettings();
   flashSysHint('✓ « ' + name + ' » chargée et appliquée.');
 }
 function onSysPresetDelete() {
   const name = $('sysPresetSelect').value;
   if (!name) return;
-  saveSysPresets(loadSysPresets().filter((p) => p.name !== name));
+  supprimerPreset(name);
   renderSysPresets();
   flashSysHint('Modèle supprimé.');
 }
@@ -2629,13 +2474,25 @@ function wireEvents() {
     $('tempVal').textContent = state.temp.toFixed(2);
   });
   $('temp').addEventListener('change', saveSettings);
+  // Lot 1.5 — l'envoi lit l'état, plus le DOM : on met l'état à jour dès la saisie
+  // (input) pour qu'il soit TOUJOURS à jour avant un envoi ; la persistance et les
+  // retours visuels restent sur « change » (comportement inchangé).
+  $('maxTokens').addEventListener('input', (e) => {
+    state.maxTokens = parseInt(e.target.value, 10) || 1024;
+  });
   $('maxTokens').addEventListener('change', (e) => {
     state.maxTokens = parseInt(e.target.value, 10) || 1024;
     saveSettings();
   });
+  $('memoryTurns').addEventListener('input', (e) => {
+    state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0);
+  });
   $('memoryTurns').addEventListener('change', (e) => {
     state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0);
     saveSettings();
+  });
+  $('sysPrompt').addEventListener('input', (e) => {
+    state.sys = e.target.value;
   });
   $('sysPrompt').addEventListener('change', (e) => {
     state.sys = e.target.value;
