@@ -271,4 +271,7 @@ src-tauri/
     (le pliage/les sections du rail, dont la relève est la fenêtre Réglages à onglets).
   - *Reste (validation utilisateur du lot 0) :* relire le contrat — en particulier les 5 lignes
     « retiré volontairement » et les cibles notées « à trancher » (bascule rapide du thème).
+- **2026-07-06 — Lot 0 VALIDÉ par l'utilisateur** (« Je suis d'accord avec tout ») : les 5
+  « retiré volontairement » approuvés ; bascule rapide du thème **conservée en toolbar** (en plus
+  de Réglages > Général). Lot 1.5 engagé.
   *(à suivre : Lot 1.5 — extraction des services.)*
