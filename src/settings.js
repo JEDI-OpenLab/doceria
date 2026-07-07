@@ -14,11 +14,14 @@ import { applyTheme, initTheme, themeMode, setThemeMode } from './theme.js';
 import {
   annoncerReglage, surReglage, surVerrou, signalerReglagesPret,
 } from './bus.js';
-import { state, activeProfile } from './state.js';
-import { profilesApi, describeError } from './api.js';
+import { state, activeProfile, activeMoodleProfile } from './state.js';
+import { profilesApi, moodleApi, describeError } from './api.js';
 import {
   sauvegarderProfil, testerConnexion, supprimerProfil, activerProfil,
 } from './services/profiles.js';
+import {
+  sauvegarderConnexionMoodle, testerConnexionMoodle, supprimerConnexionMoodle, activerConnexionMoodle,
+} from './services/moodleconf.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -250,27 +253,214 @@ $('rgPfRagTest').addEventListener('click', () => onTestProfile('rag'));
 // Auto-test au collage de la clé LLM (convenience, contrat #24) — sans écraser une saisie vide.
 $('rgPfLlmKey').addEventListener('change', () => { if ($('rgPfLlmKey').value.trim()) onTestProfile('llm'); });
 
-/* ---- Bannière de verrou ---- */
-function renderLock() {
-  const b = $('rgLockBanner');
-  if (lock.moodleSyncing) {
-    b.textContent = 'Synchronisation Moodle en cours — la connexion est momentanément verrouillée.';
-    b.classList.add('on');
-  } else if (lock.busy) {
-    b.textContent = 'Génération en cours — la connexion est momentanément verrouillée.';
-    b.classList.add('on');
-  } else {
-    b.classList.remove('on');
-    b.textContent = '';
+/* ===================== Moodle — connexions ===================== */
+// Jumeau structurel de la Connexion : mutations via services/moodleconf.js (jeton → invoke
+// direct trousseau, jamais sur le bus) + annonce ; la principale rejoue via refreshMoodleProfiles.
+let moodleEditingId = null;
+function setMoodleStatus(msg) { $('rgMoodleStatus').textContent = msg || ''; }
+
+async function refetchMoodle() {
+  try {
+    const payload = await moodleApi.list();
+    state.moodleProfiles = payload.profiles || [];
+    state.activeMoodleId = payload.activeId || state.moodleProfiles[0]?.id || null;
+    // Anti-résurrection : si l'éditeur porte une connexion EXISTANTE disparue ailleurs, on ferme.
+    if (moodleEditingId && !state.moodleProfiles.some((p) => p.id === moodleEditingId)) {
+      closeMoodleEditor();
+      setMoodleStatus('La connexion en cours d’édition a été supprimée ailleurs — éditeur fermé.');
+    }
+    renderMoodle();
+  } catch (err) {
+    setMoodleStatus('✗ ' + describeError(err));
   }
-  renderProfiles(); // reflète l'état grisé
+}
+
+function renderMoodle() {
+  const sel = $('rgMoodleSelect');
+  sel.innerHTML = '';
+  const has = state.moodleProfiles.length > 0;
+  const dis = locked();
+  $('rgMoodleNew').disabled = dis;
+  $('rgMoodleEdit').disabled = !has || dis;
+  $('rgMoodleDelete').disabled = !has || dis;
+  if (!has) {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = '— aucune connexion —'; o.disabled = true; o.selected = true;
+    sel.appendChild(o);
+    sel.disabled = true;
+  } else {
+    sel.disabled = dis;
+    for (const p of state.moodleProfiles) {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.name + (p.hasMoodleToken ? '' : ' — jeton manquant');
+      sel.appendChild(o);
+    }
+    sel.value = state.activeMoodleId || state.moodleProfiles[0].id;
+  }
+  $('rgMoodleHint').hidden = has;
+  renderMoodleCoursesBox();
+}
+
+// Affiche/masque la zone « cours à indexer » + son résumé (compte lu depuis les métadonnées
+// de la connexion active — aucune requête réseau ici).
+function renderMoodleCoursesBox() {
+  const p = activeMoodleProfile();
+  const box = $('rgMoodleCoursesBox');
+  if (p && p.hasMoodleToken) {
+    box.hidden = false;
+    const n = (p.courseIds || []).length;
+    $('rgMoodleCoursesHint').textContent = n
+      ? n + ' cours sélectionné' + (n > 1 ? 's' : '') + '. « Gérer les cours… » pour modifier.'
+      : 'Aucun cours sélectionné. « Gérer les cours… » pour choisir.';
+    $('rgMoodleOpenExplorer').disabled = locked();
+  } else {
+    box.hidden = true;
+  }
+}
+
+function openMoodleEditor(forNew) {
+  const p = forNew ? null : activeMoodleProfile();
+  moodleEditingId = forNew ? null : (p ? p.id : null);
+  $('rgMoName').value = p ? p.name : '';
+  $('rgMoUrl').value = p ? p.moodleBaseUrl : '';
+  $('rgMoToken').value = '';
+  $('rgMoTokenHint').textContent = p && p.hasMoodleToken
+    ? 'jeton défini — laisser vide pour le conserver.'
+    : 'stocké au trousseau du système — jamais en clair, jamais affiché.';
+  $('rgMoTestHint').textContent = '';
+  $('rgMoodleEditor').hidden = false;
+}
+
+function closeMoodleEditor() {
+  // Ne jamais laisser le jeton saisi traîner dans le DOM après fermeture/annulation.
+  $('rgMoToken').value = '';
+  $('rgMoTestHint').textContent = '';
+  $('rgMoodleEditor').hidden = true;
+  moodleEditingId = null;
+}
+
+async function saveMoodleFromEditor() {
+  try {
+    const profil = await sauvegarderConnexionMoodle(
+      { id: moodleEditingId, name: $('rgMoName').value, url: $('rgMoUrl').value, token: $('rgMoToken').value },
+      { onUpsert: (id) => { moodleEditingId = id; } }
+    );
+    return profil.id;
+  } finally {
+    $('rgMoToken').value = '';
+  }
+}
+
+async function onSaveMoodle() {
+  if (locked()) return;
+  const url = $('rgMoUrl').value.trim();
+  if (!/^https?:\/\//.test(url)) { setMoodleStatus('✗ L’URL Moodle doit commencer par http:// ou https://.'); return; }
+  try {
+    const id = await saveMoodleFromEditor();
+    await activerConnexionMoodle(id);
+    closeMoodleEditor();
+    renderMoodle();
+    setMoodleStatus('✓ connexion enregistrée.');
+    annoncerReglage('moodle', 'settings');
+  } catch (err) {
+    setMoodleStatus('✗ ' + describeError(err));
+  }
+}
+
+// Test de connexion Moodle : diagnostic complet (site, compte, version, téléchargement, fonctions).
+async function onTestMoodle() {
+  const hint = $('rgMoTestHint');
+  const url = $('rgMoUrl').value.trim();
+  const token = $('rgMoToken').value.trim();
+  if (!url) { hint.textContent = '✗ URL manquante.'; return; }
+  hint.textContent = 'test en cours…';
+  try {
+    const { info, testeSurProfil } = await testerConnexionMoodle({ url, token, profileId: moodleEditingId });
+    if (testeSurProfil) { hint.textContent = '✗ Colle le jeton pour tester.'; return; }
+    if (!info) { hint.textContent = '✗ Colle le jeton pour tester.'; return; }
+    const dl = info.downloadFiles ? 'téléchargement fichiers OK' : '⚠ télécharg. fichiers désactivé';
+    const fx = (info.missingFunctions && info.missingFunctions.length)
+      ? '⚠ fonctions manquantes : ' + info.missingFunctions.join(', ')
+      : '8 fonctions OK';
+    hint.textContent = '✓ ' + (info.sitename || 'Moodle') + ' — ' + info.username
+      + ' · Moodle ' + info.release + ' · ' + dl + ' · ' + fx;
+  } catch (err) {
+    hint.textContent = '✗ ' + describeError(err);
+  }
+}
+
+async function onDeleteMoodle() {
+  if (locked()) return;
+  const p = activeMoodleProfile();
+  if (!p) return;
+  if (!window.confirm('Supprimer la connexion Moodle « ' + p.name + ' » et son jeton du trousseau ? Action définitive.')) return;
+  try {
+    await supprimerConnexionMoodle(p.id);
+    closeMoodleEditor();
+    renderMoodle();
+    setMoodleStatus('✓ connexion supprimée.');
+    annoncerReglage('moodle', 'settings');
+  } catch (err) {
+    setMoodleStatus('✗ ' + describeError(err));
+  }
+}
+
+async function onSwitchMoodle(id) {
+  if (locked() || !id || id === state.activeMoodleId) { renderMoodle(); return; }
+  try {
+    await activerConnexionMoodle(id);
+    renderMoodle();
+    setMoodleStatus('');
+    annoncerReglage('moodle', 'settings');
+  } catch (err) {
+    setMoodleStatus('✗ ' + describeError(err));
+  }
+}
+
+// « Gérer les cours… » : l'explorateur central vit dans la fenêtre principale ; on lui délègue
+// l'ouverture via le bus (elle se met au premier plan).
+function onOpenExplorer() {
+  if (locked()) return;
+  const p = activeMoodleProfile();
+  if (!p || !p.hasMoodleToken) { setMoodleStatus('Ajoute d’abord une connexion avec un jeton valide.'); return; }
+  annoncerReglage('moodle-explorer', 'settings');
+}
+
+/* ---- Câblage des contrôles Moodle ---- */
+$('rgMoodleSelect').addEventListener('change', (e) => onSwitchMoodle(e.target.value));
+$('rgMoodleNew').addEventListener('click', () => { if (!locked()) openMoodleEditor(true); });
+$('rgMoodleEdit').addEventListener('click', () => { if (!locked()) openMoodleEditor(false); });
+$('rgMoodleDelete').addEventListener('click', onDeleteMoodle);
+$('rgMoSave').addEventListener('click', onSaveMoodle);
+$('rgMoCancel').addEventListener('click', closeMoodleEditor);
+$('rgMoTest').addEventListener('click', onTestMoodle);
+$('rgMoodleOpenExplorer').addEventListener('click', onOpenExplorer);
+
+/* ---- Bannière de verrou (Connexion + Moodle) ---- */
+function lockBannerText() {
+  if (lock.moodleSyncing) return 'Synchronisation Moodle en cours — les réglages de connexion sont momentanément verrouillés.';
+  if (lock.busy) return 'Génération en cours — les réglages de connexion sont momentanément verrouillés.';
+  return '';
+}
+function renderLock() {
+  const txt = lockBannerText();
+  for (const id of ['rgLockBanner', 'rgMoodleLockBanner']) {
+    const b = $(id);
+    if (!b) continue;
+    b.textContent = txt;
+    b.classList.toggle('on', !!txt);
+  }
+  renderProfiles(); // reflète l'état grisé (Connexion)
+  renderMoodle();   // reflète l'état grisé (Moodle)
 }
 
 /* ===================== Bus inter-fenêtres ===================== */
 surReglage((champ) => {
   if (champ === 'theme') { applyTheme(); reflectTheme(); }
   else if (champ === 'profils') { refetchProfiles(); } // le rail a modifié un profil
-  // 'modeles' est traité par la principale uniquement
+  else if (champ === 'moodle') { refetchMoodle(); }    // le rail (ou l'explorateur) a modifié Moodle
+  // 'modeles' / 'moodle-explorer' sont traités par la principale uniquement
 }, 'settings');
 
 surVerrou((v) => {
@@ -282,10 +472,11 @@ surVerrou((v) => {
 // hide), donc son DOM survit à la « fermeture ». À chaque fermeture (⌘W / bouton rouge), on
 // vide les champs clé de l'éditeur (closeEditor) — le contrat exige le vidage sur TOUS les
 // chemins, « fermer » compris.
-getCurrentWindow().onCloseRequested(() => { closeEditor(); });
+getCurrentWindow().onCloseRequested(() => { closeEditor(); closeMoodleEditor(); });
 
 // Poignée de main : demande à la principale l'état de verrou courant (course au démarrage).
 signalerReglagesPret();
 
 // Chargement initial.
 refetchProfiles();
+refetchMoodle();

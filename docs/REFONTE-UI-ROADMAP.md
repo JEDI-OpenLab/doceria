@@ -335,3 +335,24 @@ src-tauri/
   - **Contrat** : lignes L2a Connexion #24, #80-92 → *migrées* (Moodle #106-111, #136-138 = 2a-ii).
   - `vite build` ✅ (`dist/settings.html` présent, bundle settings 18 kB). Rust inchangé ce lot.
   *(à suivre : test utilisateur du lot 2a-i, puis Lot 2a-ii — onglet Moodle.)*
+- **2026-07-07 — Lot 2a-ii ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur.**
+  Onglet **Moodle** de la fenêtre Réglages — jumeau structurel de Connexion (2a-i), même patron
+  (ids `rg*`, services `moodleconf.js`, bus). Les 3 correctifs du 2a-i appliqués d'emblée.
+  - **UI** (`settings.html`) : 3ᵉ onglet Moodle = connexions (liste + Nouveau/Modifier/Supprimer),
+    éditeur (nom, URL, jeton + test à diagnostic complet), zone « cours à indexer » + « Gérer les
+    cours… ». `settings.js` : logique en miroir du rail, verrou/anti-résurrection/jeton-à-la-fermeture.
+  - **Délégation de l'explorateur** (mécanique neuve) : l'explorateur central vit dans la
+    principale → « Gérer les cours… » depuis Réglages émet `moodle-explorer` ; la principale
+    **dé-miniaturise + `setFocus` + ouvre** (`openExplorerFromReglages`). Permissions ajoutées :
+    `core:window:allow-set-focus` **et** `allow-unminimize`.
+  - **Bus** : champ `moodle` (rail ↔ Réglages : `refreshMoodleProfiles` = parité complète, pas de
+    cascade lourde côté Moodle) ; 4 annonces `moodle` au rail (switch/save/delete + persistMoodleSelection).
+  - **Revue adversariale ciblée** (3 dimensions × vérif) : **2 défauts MEDIUM corrigés** —
+    (1) `setFocus` seul est un no-op sur fenêtre minimisée macOS → ajout de `unminimize()` avant ;
+    (2) **résurrection côté rail** (supprimer depuis Réglages laissait l'éditeur du rail ouvert) →
+    garde anti-résurrection ajoutée dans `refreshMoodleProfiles`. **Rétro-correctif** : le même trou
+    symétrique existait pour les **profils** (2a-i) → garde ajoutée dans `resyncProfilesFromReglages`
+    (anti-résurrection désormais couverte **des deux côtés**, profils ET Moodle).
+  - **Contrat** : lignes L2a Moodle #106-111, #136-138 → *migrées*. **Lot 2a COMPLET** une fois testé.
+  - `vite build` ✅, `cargo check` ✅.
+  *(à suivre : test utilisateur du lot 2a-ii → clôt le Lot 2a, puis Lot 2b — Bibliothèque + Avancé + Général.)*

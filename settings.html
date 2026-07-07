@@ -124,6 +124,7 @@
     <nav class="tabs" role="tablist" aria-label="Sections des réglages">
       <button class="tab" role="tab" data-tab="general" aria-selected="true"><span class="ic">􀆪</span>Général</button>
       <button class="tab" role="tab" data-tab="connexion" aria-selected="false"><span class="ic">􀎡</span>Connexion</button>
+      <button class="tab" role="tab" data-tab="moodle" aria-selected="false"><span class="ic">􀉚</span>Moodle</button>
     </nav>
 
     <div class="pane">
@@ -203,8 +204,66 @@
           </div>
         </div>
 
-        <p class="note">Les clés sont écrites au trousseau du système (jamais affichées, jamais en clair).
-        La connexion Moodle arrivera dans un onglet dédié.</p>
+        <p class="note">Les clés sont écrites au trousseau du système (jamais affichées, jamais en clair).</p>
+      </section>
+
+      <!-- ============ MOODLE ============ -->
+      <section class="tabpane" id="tab-moodle" role="tabpanel" aria-label="Moodle">
+        <h1>Moodle</h1>
+        <div class="banner" id="rgMoodleLockBanner" role="status"></div>
+
+        <div class="groupe">
+          <div class="gtitle">Connexion Moodle</div>
+          <div class="rangée">
+            <label for="rgMoodleSelect">Connexion active</label>
+            <select id="rgMoodleSelect" aria-label="Connexion Moodle active"></select>
+          </div>
+          <div class="hint" id="rgMoodleHint">Ajoute une connexion (URL + jeton) pour indexer tes cours.</div>
+          <div class="btnrow">
+            <button class="btn" id="rgMoodleNew" type="button">+ Nouveau</button>
+            <button class="btn" id="rgMoodleEdit" type="button">Modifier</button>
+            <button class="btn danger" id="rgMoodleDelete" type="button">Supprimer</button>
+          </div>
+          <div class="status" id="rgMoodleStatus"></div>
+
+          <!-- Éditeur de connexion Moodle (caché par défaut) -->
+          <div class="editor" id="rgMoodleEditor" hidden>
+            <div class="field">
+              <label for="rgMoName">Nom de la connexion</label>
+              <input type="text" id="rgMoName" placeholder="ex. Moodle Centrale Lille" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="rgMoUrl">URL Moodle</label>
+              <input type="text" id="rgMoUrl" placeholder="https://moodle.mon-etablissement.fr" autocomplete="off" spellcheck="false" />
+              <div class="hint">L'adresse de ton Moodle (http:// ou https://), sans «&nbsp;/webservice&nbsp;».</div>
+            </div>
+            <div class="field">
+              <label for="rgMoToken">Jeton (web service)</label>
+              <div class="keyline">
+                <input type="password" id="rgMoToken" placeholder="coller le jeton Moodle" autocomplete="off" spellcheck="false" />
+                <button class="btn" id="rgMoTest" type="button">Tester</button>
+              </div>
+              <div class="hint" id="rgMoTokenHint"></div>
+              <div class="hint" id="rgMoTestHint" aria-live="polite"></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn primary" id="rgMoSave" type="button">Enregistrer la connexion</button>
+              <button class="btn" id="rgMoCancel" type="button">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cours à indexer (connexion active) : résumé + accès à l'explorateur central -->
+        <div class="groupe" id="rgMoodleCoursesBox" hidden>
+          <div class="gtitle">Cours à indexer</div>
+          <div class="rangée">
+            <div class="hint" id="rgMoodleCoursesHint" style="margin:0"></div>
+            <button class="btn" id="rgMoodleOpenExplorer" type="button">Gérer les cours…</button>
+          </div>
+        </div>
+
+        <p class="note">Le jeton est écrit au trousseau du système (jamais affiché, jamais en clair).
+        «&nbsp;Gérer les cours…&nbsp;» ouvre l'explorateur dans la fenêtre principale.</p>
       </section>
     </div>
   </div>

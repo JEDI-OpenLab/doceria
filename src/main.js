@@ -2,6 +2,7 @@ import './styles.css';
 
 import { initTheme, applyTheme, syncThemeButton } from './theme.js';
 import { annoncerReglage, surReglage, publierVerrou, surReglagesPret } from './bus.js';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings, loadConversations } from './state.js';
 import {
   currentConversation,
@@ -79,6 +80,12 @@ async function init() {
       resyncProfilesFromReglages();
     } else if (champ === 'modeles') {
       loadModels(); // « Charger les modèles » déclenché depuis Réglages
+    } else if (champ === 'moodle') {
+      // Réglages a créé/activé/supprimé une connexion Moodle → on relit + on re-rend le rail
+      // (renderMoodleAll ferme l'explorateur si la connexion active a changé — parité).
+      refreshMoodleProfiles();
+    } else if (champ === 'moodle-explorer') {
+      openExplorerFromReglages(); // ramène la principale au 1er plan (dé-miniaturise) + ouvre l'explorateur
     }
   }, 'main');
   // La fenêtre Réglages, à son ouverture, demande l'état de verrou courant : on le diffuse.
@@ -217,6 +224,9 @@ async function resyncProfilesFromReglages() {
   let target;
   try {
     const payload = await profilesApi.list();
+    // Anti-résurrection (symétrique de settings.js) : si l'éditeur du rail porte un profil
+    // supprimé depuis Réglages, on le referme — « Enregistrer » le recréerait sinon.
+    if (editingId && !(payload.profiles || []).some((p) => p.id === editingId)) closeEditor();
     target = payload.activeId || payload.profiles?.[0]?.id || null;
   } catch (err) {
     ui.showError(describeError(err));
@@ -849,6 +859,9 @@ async function refreshMoodleProfiles() {
     const payload = await moodleApi.list();
     state.moodleProfiles = payload.profiles || [];
     state.activeMoodleId = payload.activeId || state.moodleProfiles[0]?.id || null;
+    // Anti-résurrection (symétrique de settings.js) : si l'éditeur du rail porte une connexion
+    // supprimée depuis l'autre fenêtre, on le referme — « Enregistrer » la recréerait sinon.
+    if (moodleEditingId && !state.moodleProfiles.some((p) => p.id === moodleEditingId)) closeMoodleEditor();
     renderMoodleAll();
   } catch (err) {
     ui.showError(describeError(err));
@@ -860,6 +873,7 @@ async function switchMoodleProfile(id) {
   try {
     await activerConnexionMoodle(id);
     renderMoodleAll();
+    annoncerReglage('moodle', 'main'); // la fenêtre Réglages resynchronise sa liste Moodle
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -920,6 +934,7 @@ async function onSaveMoodleProfile() {
     await activerConnexionMoodle(id);
     closeMoodleEditor();
     renderMoodleAll();
+    annoncerReglage('moodle', 'main');
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -933,6 +948,7 @@ async function onDeleteMoodleProfile() {
     await supprimerConnexionMoodle(p.id);
     closeMoodleEditor();
     renderMoodleAll();
+    annoncerReglage('moodle', 'main');
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -1006,6 +1022,16 @@ let moodleSyncing = false;   // synchro en cours → verrou global (bloque tout 
 
 // Ouvre l'explorateur sur la connexion active : la sélection est initialisée depuis le
 // profil, puis les cours sont chargés (une seule fois par connexion). Couvre le chat.
+// « Gérer les cours… » déclenché depuis la fenêtre Réglages : ramène la principale au premier
+// plan AVANT d'ouvrir l'explorateur. `set_focus` seul est un no-op sur une fenêtre minimisée
+// (macOS) → on dé-miniaturise d'abord, sinon l'explorateur s'ouvrirait invisible dans le Dock.
+async function openExplorerFromReglages() {
+  const w = getCurrentWindow();
+  try { await w.unminimize(); } catch { /* déjà visible */ }
+  try { await w.setFocus(); } catch { /* ignore */ }
+  openMoodleExplorer();
+}
+
 async function openMoodleExplorer() {
   const p = activeMoodleProfile();
   if (!p || !p.hasMoodleToken) return;
@@ -1255,6 +1281,7 @@ async function persistMoodleSelection() {
         ? n + ' cours sélectionné' + (n > 1 ? 's' : '') + '. « Gérer les cours… » pour modifier.'
         : 'Aucun cours sélectionné. « Gérer les cours… » pour choisir.';
     }
+    annoncerReglage('moodle', 'main'); // le résumé « cours à indexer » de Réglages se met à jour
   } catch (err) {
     ui.showError(describeError(err));
   }
