@@ -86,6 +86,10 @@ async function init() {
       refreshMoodleProfiles();
     } else if (champ === 'moodle-explorer') {
       openExplorerFromReglages(); // ramène la principale au 1er plan (dé-miniaturise) + ouvre l'explorateur
+    } else if (champ === 'gen') {
+      loadSettings(); hydrateGen(); // Réglages a changé un réglage génération/RAG → relit + ré-hydrate le rail
+    } else if (champ === 'presets') {
+      renderSysPresets(); // la liste des modèles de consigne a changé
     }
   }, 'main');
   // La fenêtre Réglages, à son ouverture, demande l'état de verrou courant : on le diffuse.
@@ -163,21 +167,27 @@ async function loadUsage() {
   }
 }
 
+// N'écrit valeur/état QUE si le champ n'a pas le focus : une ré-hydratation déclenchée par la
+// fenêtre Réglages (annonce 'gen') ne doit pas écraser une saisie en cours au rail (revue lot
+// 2b-i — le changement de fenêtre ne déclenche pas le blur/change entre deux WKWebViews).
+function setField(id, value) { const el = $(id); if (el && el !== document.activeElement) el.value = value; }
+function setCheck(id, value) { const el = $(id); if (el && el !== document.activeElement) el.checked = value; }
+
 function hydrateGen() {
-  $('temp').value = state.temp;
+  setField('temp', state.temp);
   $('tempVal').textContent = Number(state.temp).toFixed(2);
-  $('maxTokens').value = state.maxTokens;
-  $('sysPrompt').value = state.sys;
-  $('memoryTurns').value = state.memoryTurns;
-  $('ragMethod').value = state.ragMethod;
-  $('ragTopK').value = state.ragTopK;
+  setField('maxTokens', state.maxTokens);
+  setField('sysPrompt', state.sys);
+  setField('memoryTurns', state.memoryTurns);
+  setField('ragMethod', state.ragMethod);
+  setField('ragTopK', state.ragTopK);
   $('ragTopKVal').textContent = state.ragTopK;
-  $('ragThreshold').value = state.ragThreshold;
+  setField('ragThreshold', state.ragThreshold);
   $('ragThresholdVal').textContent =
     state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
-  $('ragRerank').checked = state.ragRerank;
-  $('ragRefusal').value = state.ragRefusal;
-  $('ragAutoSync').checked = state.ragAutoSync;
+  setCheck('ragRerank', state.ragRerank);
+  setField('ragRefusal', state.ragRefusal);
+  setCheck('ragAutoSync', state.ragAutoSync);
 }
 
 // Modèle de chat : met à jour l'état et synchronise les deux sélecteurs (rail + composeur).
@@ -211,6 +221,13 @@ function publishLock() {
 function setSendingUI(on) {
   ui.setSending(on);
   publishLock();
+}
+
+// Persiste un réglage de génération (blob partagé `ilaas_portal`) PUIS annonce à la fenêtre
+// Réglages, qui relit le blob et ré-hydrate ses champs (relecture-avant-écriture, cf. bus.js).
+function persistGen() {
+  saveSettings();
+  annoncerReglage('gen', 'main');
 }
 
 // Rejoue la cascade après une mutation de profil venue de la fenêtre Réglages. Celle-ci
@@ -2286,6 +2303,7 @@ let sysHintTimer = null;
 
 function renderSysPresets() {
   const sel = $('sysPresetSelect');
+  const prev = sel.value; // préserve la sélection (une annonce 'presets' ne doit pas la vider → Suppr. no-op)
   const presets = chargerPresets();
   sel.innerHTML = '';
   const o0 = document.createElement('option');
@@ -2298,6 +2316,7 @@ function renderSysPresets() {
     o.textContent = p.name;
     sel.appendChild(o);
   }
+  if (prev && presets.some((p) => p.name === prev)) sel.value = prev;
 }
 function flashSysHint(msg) {
   const h = $('sysHint');
@@ -2314,6 +2333,7 @@ function onSysPresetSave() {
   $('sysPresetName').value = '';
   renderSysPresets();
   $('sysPresetSelect').value = name;
+  annoncerReglage('presets', 'main'); // la LISTE des modèles a changé → Réglages ré-affiche
   flashSysHint('✓ modèle « ' + name + ' » enregistré.');
 }
 function onSysPresetLoad(name) {
@@ -2321,6 +2341,7 @@ function onSysPresetLoad(name) {
   const p = appliquerPreset(name);
   if (!p) return;
   $('sysPrompt').value = p.text;
+  annoncerReglage('gen', 'main'); // la consigne (state.sys) a changé → Réglages ré-hydrate
   flashSysHint('✓ « ' + name + ' » chargée et appliquée.');
 }
 function onSysPresetDelete() {
@@ -2328,6 +2349,7 @@ function onSysPresetDelete() {
   if (!name) return;
   supprimerPreset(name);
   renderSysPresets();
+  annoncerReglage('presets', 'main');
   flashSysHint('Modèle supprimé.');
 }
 
@@ -2562,7 +2584,7 @@ function wireEvents() {
     state.temp = parseFloat(e.target.value);
     $('tempVal').textContent = state.temp.toFixed(2);
   });
-  $('temp').addEventListener('change', saveSettings);
+  $('temp').addEventListener('change', persistGen);
   // Lot 1.5 — l'envoi lit l'état, plus le DOM : on met l'état à jour dès la saisie
   // (input) pour qu'il soit TOUJOURS à jour avant un envoi ; la persistance et les
   // retours visuels restent sur « change » (comportement inchangé).
@@ -2571,21 +2593,21 @@ function wireEvents() {
   });
   $('maxTokens').addEventListener('change', (e) => {
     state.maxTokens = parseInt(e.target.value, 10) || 1024;
-    saveSettings();
+    persistGen();
   });
   $('memoryTurns').addEventListener('input', (e) => {
     state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0);
   });
   $('memoryTurns').addEventListener('change', (e) => {
     state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0);
-    saveSettings();
+    persistGen();
   });
   $('sysPrompt').addEventListener('input', (e) => {
     state.sys = e.target.value;
   });
   $('sysPrompt').addEventListener('change', (e) => {
     state.sys = e.target.value;
-    saveSettings();
+    persistGen();
     flashSysHint('✓ consigne enregistrée et appliquée.');
   });
 

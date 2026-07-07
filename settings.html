@@ -68,14 +68,20 @@
     .btnrow { display: flex; flex-wrap: wrap; gap: var(--c-space-2); padding-top: var(--c-space-2); }
 
     /* ---- Contrôles ---- */
-    select, input[type="text"], input[type="password"] {
+    select, input[type="text"], input[type="password"], input[type="number"], textarea {
       appearance: none; -webkit-appearance: none;
       background: var(--c-control); color: var(--c-ink);
       border: 1px solid var(--c-hairline); border-radius: var(--c-radius-sm);
       padding: 5px 9px; font-size: var(--c-text-base);
       user-select: text;
     }
-    select:focus, input:focus { outline: 2px solid var(--c-accent); outline-offset: 0; border-color: transparent; }
+    input[type="number"] { -webkit-appearance: auto; appearance: auto; }
+    select:focus, input:focus, textarea:focus { outline: 2px solid var(--c-accent); outline-offset: 0; border-color: transparent; }
+    textarea { width: 100%; resize: vertical; min-height: 54px; line-height: 1.45; font: inherit; }
+    input[type="range"] { flex: 1; accent-color: var(--c-accent); }
+    .rangerow { display: flex; align-items: center; gap: var(--c-space-3); }
+    .rangeval { font-variant-numeric: tabular-nums; color: var(--c-ink-sec); min-width: 4em; text-align: right; }
+    .field input[type="number"] { width: 8em; }
     select:disabled, input:disabled, button:disabled { opacity: .45; cursor: default; }
     select { min-width: 190px; padding-right: 26px;
       background-image: linear-gradient(45deg, transparent 50%, var(--c-ink-sec) 50%), linear-gradient(135deg, var(--c-ink-sec) 50%, transparent 50%);
@@ -125,6 +131,7 @@
       <button class="tab" role="tab" data-tab="general" aria-selected="true"><span class="ic">􀆪</span>Général</button>
       <button class="tab" role="tab" data-tab="connexion" aria-selected="false"><span class="ic">􀎡</span>Connexion</button>
       <button class="tab" role="tab" data-tab="moodle" aria-selected="false"><span class="ic">􀉚</span>Moodle</button>
+      <button class="tab" role="tab" data-tab="avance" aria-selected="false"><span class="ic">􀍟</span>Avancé</button>
     </nav>
 
     <div class="pane">
@@ -264,6 +271,54 @@
 
         <p class="note">Le jeton est écrit au trousseau du système (jamais affiché, jamais en clair).
         «&nbsp;Gérer les cours…&nbsp;» ouvre l'explorateur dans la fenêtre principale.</p>
+      </section>
+
+      <!-- ============ AVANCÉ ============ -->
+      <section class="tabpane" id="tab-avance" role="tabpanel" aria-label="Avancé">
+        <h1>Avancé</h1>
+
+        <div class="groupe">
+          <div class="gtitle">Génération</div>
+          <div class="field">
+            <label for="rgTemp">Température</label>
+            <div class="rangerow">
+              <input type="range" id="rgTemp" min="0" max="1.5" step="0.05" />
+              <span class="rangeval" id="rgTempVal">0.30</span>
+            </div>
+            <div class="hint">Bas pour des réponses stables et factuelles, haut pour plus de variété.</div>
+          </div>
+          <div class="field">
+            <label for="rgMaxTokens">Longueur max (tokens)</label>
+            <input type="number" id="rgMaxTokens" min="1" max="32000" />
+          </div>
+          <div class="field">
+            <label for="rgMemoryTurns">Mémoire — tours précédents</label>
+            <input type="number" id="rgMemoryTurns" min="0" max="100" />
+            <div class="hint">Nombre d'échanges passés renvoyés à chaque message. 0&nbsp;= tout l'historique
+            (à réduire si la conversation devient très longue).</div>
+          </div>
+        </div>
+
+        <div class="groupe">
+          <div class="gtitle">Consigne système</div>
+          <div class="field">
+            <label for="rgSysPrompt">Consigne système (facultatif)</label>
+            <textarea id="rgSysPrompt" rows="3" placeholder="Ex. : Réponds de façon concise et en français."></textarea>
+            <div class="hint" id="rgSysHint">Appliquée automatiquement à chaque message envoyé.</div>
+          </div>
+          <div class="field">
+            <label for="rgSysPresetSelect">Modèles de consigne enregistrés</label>
+            <select id="rgSysPresetSelect" aria-label="Modèles de consigne enregistrés"></select>
+          </div>
+          <div class="keyline">
+            <input type="text" id="rgSysPresetName" placeholder="nom du modèle" autocomplete="off" spellcheck="false" />
+            <button class="btn" id="rgSysPresetSave" type="button">Enregistrer</button>
+            <button class="btn danger" id="rgSysPresetDelete" type="button">Suppr.</button>
+          </div>
+        </div>
+
+        <p class="note">La consigne système et ces réglages sont partagés en direct avec la fenêtre
+        principale.</p>
       </section>
     </div>
   </div>

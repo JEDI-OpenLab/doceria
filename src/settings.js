@@ -14,7 +14,7 @@ import { applyTheme, initTheme, themeMode, setThemeMode } from './theme.js';
 import {
   annoncerReglage, surReglage, surVerrou, signalerReglagesPret,
 } from './bus.js';
-import { state, activeProfile, activeMoodleProfile } from './state.js';
+import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings } from './state.js';
 import { profilesApi, moodleApi, describeError } from './api.js';
 import {
   sauvegarderProfil, testerConnexion, supprimerProfil, activerProfil,
@@ -22,11 +22,20 @@ import {
 import {
   sauvegarderConnexionMoodle, testerConnexionMoodle, supprimerConnexionMoodle, activerConnexionMoodle,
 } from './services/moodleconf.js';
+import {
+  chargerPresets, enregistrerPreset, appliquerPreset, supprimerPreset,
+} from './services/presets.js';
 
 const $ = (id) => document.getElementById(id);
 
 // Thème appliqué au plus tôt (évite le flash), + suivi du mode auto système.
 initTheme(null);
+
+// Charge les réglages persistés (blob localStorage `ilaas_portal`, partagé entre fenêtres)
+// dans NOTRE miroir state AVANT toute hydratation/écriture. Indispensable : sinon les champs
+// Avancé afficheraient les défauts et une écriture écraserait les vrais réglages (relecture-
+// avant-écriture, cf. bus.js). Réappelé à chaque annonce 'gen'.
+loadSettings();
 
 let editingId = null; // id du profil en cours d'édition (null = création)
 let lock = { busy: false, moodleSyncing: false }; // verrous diffusés par la principale
@@ -437,6 +446,105 @@ $('rgMoCancel').addEventListener('click', closeMoodleEditor);
 $('rgMoTest').addEventListener('click', onTestMoodle);
 $('rgMoodleOpenExplorer').addEventListener('click', onOpenExplorer);
 
+/* ===================== Avancé — génération + consigne système ===================== */
+// Réglages PERSISTÉS dans le blob partagé : input → met à jour l'état (+ affichage) ; change →
+// persiste ET annonce 'gen' ; la principale relit le blob et ré-hydrate ses champs (et inversement).
+let sysHintTimer = null;
+
+// N'écrit la valeur QUE si le champ n'a pas le focus : une ré-hydratation déclenchée par l'autre
+// fenêtre ne doit pas écraser une saisie en cours (revue lot 2b-i — deux WKWebViews = deux
+// documents, changer de fenêtre ne déclenche PAS le blur/change du champ dans l'autre).
+function setFieldValue(id, value) {
+  const el = $(id);
+  if (el && el !== document.activeElement) el.value = value;
+}
+
+function hydrateAvance() {
+  setFieldValue('rgTemp', state.temp);
+  $('rgTempVal').textContent = Number(state.temp).toFixed(2);
+  setFieldValue('rgMaxTokens', state.maxTokens);
+  setFieldValue('rgMemoryTurns', state.memoryTurns);
+  setFieldValue('rgSysPrompt', state.sys);
+}
+
+function flashSysHint(msg) {
+  const h = $('rgSysHint');
+  h.textContent = msg;
+  clearTimeout(sysHintTimer);
+  sysHintTimer = setTimeout(() => {
+    h.textContent = 'Appliquée automatiquement à chaque message envoyé.';
+  }, 2600);
+}
+
+function renderSysPresets() {
+  const sel = $('rgSysPresetSelect');
+  const prev = sel.value; // préserve la sélection (une annonce 'presets' ne doit pas la vider → Suppr. no-op)
+  const presets = chargerPresets();
+  sel.innerHTML = '';
+  const o0 = document.createElement('option');
+  o0.value = '';
+  o0.textContent = presets.length ? '— charger un modèle —' : '— aucun modèle enregistré —';
+  sel.appendChild(o0);
+  for (const p of presets) {
+    const o = document.createElement('option');
+    o.value = p.name; o.textContent = p.name;
+    sel.appendChild(o);
+  }
+  if (prev && presets.some((p) => p.name === prev)) sel.value = prev;
+}
+
+// RELECTURE-AVANT-ÉCRITURE (revue lot 2b-i, clobber HIGH). Le blob `ilaas_portal` contient AUSSI
+// des champs que seule la principale édite (RAG, modèle, consentement moodleEnrolledOnly) et qui
+// n'annoncent PAS 'gen'. Écrire tout le blob depuis un miroir périmé les ferait régresser. On
+// relit donc le blob JUSTE avant d'écrire, puis on ré-applique le seul réglage Avancé modifié ici.
+function commitGen(apply) {
+  loadSettings();  // récupère les changements des autres fenêtres (RAG, modèle, moodleEnrolledOnly…)
+  apply();         // ré-applique le réglage Avancé modifié ICI (relit le DOM, pas le miroir périmé)
+  saveSettings();  // écrit le blob complet SANS écraser les champs non-Avancé
+  annoncerReglage('gen', 'settings');
+}
+
+$('rgTemp').addEventListener('input', (e) => {
+  state.temp = parseFloat(e.target.value);
+  $('rgTempVal').textContent = state.temp.toFixed(2);
+});
+$('rgTemp').addEventListener('change', () => commitGen(() => { state.temp = parseFloat($('rgTemp').value); }));
+$('rgMaxTokens').addEventListener('input', (e) => { state.maxTokens = parseInt(e.target.value, 10) || 1024; });
+$('rgMaxTokens').addEventListener('change', () => commitGen(() => { state.maxTokens = parseInt($('rgMaxTokens').value, 10) || 1024; }));
+$('rgMemoryTurns').addEventListener('input', (e) => { state.memoryTurns = Math.max(0, parseInt(e.target.value, 10) || 0); });
+$('rgMemoryTurns').addEventListener('change', () => commitGen(() => { state.memoryTurns = Math.max(0, parseInt($('rgMemoryTurns').value, 10) || 0); }));
+$('rgSysPrompt').addEventListener('input', (e) => { state.sys = e.target.value; });
+$('rgSysPrompt').addEventListener('change', () => { commitGen(() => { state.sys = $('rgSysPrompt').value; }); flashSysHint('✓ consigne enregistrée et appliquée.'); });
+
+$('rgSysPresetSelect').addEventListener('change', (e) => {
+  const name = e.target.value;
+  if (!name) return;
+  loadSettings();                  // relecture-avant-écriture : appliquerPreset va persister le blob
+  const p = appliquerPreset(name); // met state.sys + saveSettings (blob)
+  if (!p) return;
+  $('rgSysPrompt').value = p.text;
+  annoncerReglage('gen', 'settings'); // la consigne a changé → la principale ré-hydrate
+  flashSysHint('✓ « ' + name + ' » chargée et appliquée.');
+});
+$('rgSysPresetSave').addEventListener('click', () => {
+  const name = $('rgSysPresetName').value.trim();
+  if (!name) { $('rgSysPresetName').focus(); return; }
+  enregistrerPreset(name, $('rgSysPrompt').value);
+  $('rgSysPresetName').value = '';
+  renderSysPresets();
+  $('rgSysPresetSelect').value = name;
+  annoncerReglage('presets', 'settings'); // la LISTE des modèles a changé
+  flashSysHint('✓ modèle « ' + name + ' » enregistré.');
+});
+$('rgSysPresetDelete').addEventListener('click', () => {
+  const name = $('rgSysPresetSelect').value;
+  if (!name) return;
+  supprimerPreset(name);
+  renderSysPresets();
+  annoncerReglage('presets', 'settings');
+  flashSysHint('Modèle supprimé.');
+});
+
 /* ---- Bannière de verrou (Connexion + Moodle) ---- */
 function lockBannerText() {
   if (lock.moodleSyncing) return 'Synchronisation Moodle en cours — les réglages de connexion sont momentanément verrouillés.';
@@ -460,6 +568,8 @@ surReglage((champ) => {
   if (champ === 'theme') { applyTheme(); reflectTheme(); }
   else if (champ === 'profils') { refetchProfiles(); } // le rail a modifié un profil
   else if (champ === 'moodle') { refetchMoodle(); }    // le rail (ou l'explorateur) a modifié Moodle
+  else if (champ === 'gen') { loadSettings(); hydrateAvance(); } // relit le blob + ré-hydrate Avancé
+  else if (champ === 'presets') { renderSysPresets(); } // la liste des modèles de consigne a changé
   // 'modeles' / 'moodle-explorer' sont traités par la principale uniquement
 }, 'settings');
 
@@ -480,3 +590,5 @@ signalerReglagesPret();
 // Chargement initial.
 refetchProfiles();
 refetchMoodle();
+hydrateAvance();     // depuis le blob déjà chargé (loadSettings en tête de module)
+renderSysPresets();

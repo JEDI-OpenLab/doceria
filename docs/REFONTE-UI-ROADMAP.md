@@ -356,3 +356,28 @@ src-tauri/
   - **Contrat** : lignes L2a Moodle #106-111, #136-138 → *migrées*. **Lot 2a COMPLET** une fois testé.
   - `vite build` ✅, `cargo check` ✅.
   *(à suivre : test utilisateur du lot 2a-ii → clôt le Lot 2a, puis Lot 2b — Bibliothèque + Avancé + Général.)*
+- **2026-07-07 — Lot 2b-i ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur.**
+  Onglet **Avancé** de la fenêtre Réglages : température, longueur max, mémoire (tours), consigne
+  système + modèles de consigne. **Découpage** : 2b-i = Avancé (génération), 2b-ii = Bibliothèque
+  (RAG) + Général (conso + « Vérifier les MAJ »).
+  - **Nouvelle infra (le cœur du lot)** : ces réglages sont PERSISTÉS dans le blob localStorage
+    `ilaas_portal`, PARTAGÉ entre fenêtres (≠ profils/Moodle au backend Rust). `settings.js`
+    appelle `loadSettings()` au démarrage (sinon miroir = défauts) ; bus champ **`gen`** (relit +
+    ré-hydrate) et **`presets`** (liste des modèles de consigne). Le rail : les 4 handlers
+    génération → `persistGen` (saveSettings + annonce) ; presets annoncent.
+  - **Revue adversariale** (3 dimensions × vérif, 8 agents) : **1 défaut HIGH + 1 MEDIUM + 1 LOW,
+    tous corrigés** :
+    · **HIGH — clobber du blob** : le rail écrit RAG/modèle/`moodleEnrolledOnly` (consentement) SANS
+      annoncer `gen` → le miroir de Réglages devenait périmé et son écriture (température…)
+      RÉÉCRIVAIT tout le blob, faisant régresser ces champs (perte silencieuse, y compris le
+      consentement). **Correctif** : `commitGen` = **relecture-avant-écriture** réelle côté Réglages
+      (`loadSettings()` → ré-applique le champ → `saveSettings()`), + même relecture avant l'application
+      d'un preset. *(2b-ii devra convertir les handlers RAG du rail en `persistGen` pour l'affichage live.)*
+    · **MEDIUM — écrasement d'une saisie en cours** : deux WKWebViews = deux documents, changer de
+      fenêtre ne déclenche PAS le blur/change dans l'autre → une ré-hydratation `gen` écrasait une
+      frappe non commitée. **Correctif** : garde de focus à l'hydratation (`setField`/`setCheck`/
+      `setFieldValue` : n'écrit pas dans `document.activeElement`), des deux côtés.
+    · **LOW — sélection de preset perdue** : une annonce `presets` reconstruisait le `<select>` de
+      l'autre fenêtre → bouton Suppr. no-op. **Correctif** : préservation de la sélection au re-rendu.
+  - `vite build` ✅. Rust inchangé ce lot.
+  *(à suivre : test utilisateur du lot 2b-i, puis Lot 2b-ii — Bibliothèque (RAG) + Général (conso + MAJ).)*
