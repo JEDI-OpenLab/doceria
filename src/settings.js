@@ -1,39 +1,291 @@
-// Fenêtre Réglages (refonte « Continuité », lot 1 : squelette + preuve de synchro).
-// Règles : cette fenêtre réutilise les services/état existants ; le SIGNAL inter-fenêtres
-// passe par src/bus.js (events Tauri), les DONNÉES par la persistance (cf. doctrine bus.js).
+// Fenêtre Réglages (refonte « Continuité »).
+//  - Lot 1  : squelette + preuve de synchro (thème).
+//  - Lot 2a-i : onglet Connexion (profils ILaaS) — pilote la MÊME logique que le rail
+//    via les services extraits (services/profiles.js) + le bus (src/bus.js).
+//
+// Doctrine (cf. bus.js) : cette fenêtre exécute ses mutations elle-même (backend Rust
+// autoritaire, clés → invoke direct vers le trousseau) puis ANNONCE ; la fenêtre
+// principale rejoue la cascade (chargement des modèles, RAG, explorateur) dans SON DOM.
+// Les verrous (chat/synchro) naissent dans la principale et arrivent par le bus.
 
-import './tokens.css'; // première utilisation des tokens « Continuité »
+import './tokens.css';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { applyTheme, initTheme, themeMode, setThemeMode } from './theme.js';
-import { annoncerReglage, surReglage } from './bus.js';
+import {
+  annoncerReglage, surReglage, surVerrou, signalerReglagesPret,
+} from './bus.js';
+import { state, activeProfile } from './state.js';
+import { profilesApi, describeError } from './api.js';
+import {
+  sauvegarderProfil, testerConnexion, supprimerProfil, activerProfil,
+} from './services/profiles.js';
+
+const $ = (id) => document.getElementById(id);
 
 // Thème appliqué au plus tôt (évite le flash), + suivi du mode auto système.
 initTheme(null);
 
-/* ---------- Apparence (preuve de bout en bout du bus, lot 1) ---------- */
-const choix = document.getElementById('themeChoice');
+let editingId = null; // id du profil en cours d'édition (null = création)
+let lock = { busy: false, moodleSyncing: false }; // verrous diffusés par la principale
 
-function refleterTheme() {
+/* ===================== Onglets ===================== */
+function selectTab(name) {
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tabpane').forEach((p) => {
+    p.classList.toggle('on', p.id === 'tab-' + name);
+  });
+}
+document.querySelectorAll('.tab').forEach((t) => {
+  t.addEventListener('click', () => selectTab(t.dataset.tab));
+});
+
+/* ===================== Apparence (thème) ===================== */
+const choix = $('themeChoice');
+function reflectTheme() {
   const mode = themeMode();
   choix.querySelectorAll('button').forEach((b) => {
     b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
   });
 }
-
 choix.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-mode]');
   if (!btn) return;
   setThemeMode(btn.dataset.mode); // persiste (doceria_theme) + applique ICI
-  refleterTheme();
-  annoncerReglage('theme'); // signale aux autres fenêtres (elles relisent)
+  reflectTheme();
+  annoncerReglage('theme', 'settings'); // la principale relit + resynchronise son bouton
 });
+reflectTheme();
 
-// Changement venu d'une AUTRE fenêtre (ex. bouton thème de la principale) :
-// on relit la persistance et on met l'UI à niveau.
-surReglage((champ) => {
-  if (champ === 'theme') {
-    applyTheme();
-    refleterTheme();
+/* ===================== Connexion — profils ILaaS ===================== */
+const locked = () => lock.busy || lock.moodleSyncing;
+function setStatus(msg) { $('rgConnStatus').textContent = msg || ''; }
+
+// Recharge le miroir des profils depuis le backend (source de vérité) puis rend.
+async function refetchProfiles() {
+  try {
+    const payload = await profilesApi.list();
+    state.profiles = payload.profiles || [];
+    state.activeId = payload.activeId || state.profiles[0]?.id || null;
+    // Si l'éditeur est ouvert sur un profil EXISTANT qui vient de disparaître (supprimé
+    // depuis le rail), on le referme : « Enregistrer » recréerait sinon un profil fantôme
+    // sans clé (upsert.push). editingId=null (création d'un nouveau profil) n'est pas concerné.
+    if (editingId && !state.profiles.some((p) => p.id === editingId)) {
+      closeEditor();
+      setStatus('Le profil en cours d’édition a été supprimé ailleurs — éditeur fermé.');
+    }
+    renderProfiles();
+  } catch (err) {
+    setStatus('✗ ' + describeError(err));
   }
+}
+
+function renderProfiles() {
+  const sel = $('rgProfileSelect');
+  sel.innerHTML = '';
+  const has = state.profiles.length > 0;
+  const dis = locked();
+  $('rgProfileNew').disabled = dis;
+  $('rgProfileEdit').disabled = !has || dis;
+  $('rgProfileDelete').disabled = !has || dis;
+  $('rgLoadModels').disabled = !has || dis;
+  if (!has) {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = '— aucun profil —'; o.disabled = true; o.selected = true;
+    sel.appendChild(o);
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = dis;
+  for (const p of state.profiles) {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.hasLlmKey ? '' : ' — clé manquante');
+    sel.appendChild(o);
+  }
+  sel.value = state.activeId || state.profiles[0].id;
+}
+
+// Remplit le menu « Modèle par défaut » (liste récupérée au test de la clé) — garde
+// toujours au moins une option pour que l'enregistrement marche sans avoir testé.
+function setProfileModelOptions(list, selected) {
+  const sel = $('rgPfLlmModel');
+  sel.innerHTML = '';
+  const opts = Array.isArray(list) ? list.slice() : [];
+  if (selected && !opts.includes(selected)) opts.unshift(selected);
+  if (!opts.length) opts.push('mistral-medium-latest');
+  for (const id of opts) {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = id;
+    sel.appendChild(o);
+  }
+  sel.value = selected && opts.includes(selected) ? selected : opts[0];
+}
+
+function openEditor(forNew) {
+  const p = forNew ? null : activeProfile();
+  editingId = forNew ? null : (p ? p.id : null);
+  $('rgPfName').value = p ? p.name : '';
+  $('rgPfLlmUrl').value = p ? p.llmBaseUrl : 'https://llm.ilaas.fr/v1';
+  setProfileModelOptions([], p ? p.llmModel : 'mistral-medium-latest');
+  $('rgPfRagUrl').value = p && p.ragBaseUrl ? p.ragBaseUrl : 'https://rag-api.ilaas.fr/v1';
+  $('rgPfLlmKey').value = '';
+  $('rgPfRagKey').value = '';
+  $('rgPfLlmKeyHint').textContent =
+    (p && p.hasLlmKey ? 'clé définie — laisser vide pour la conserver. ' : 'aucune clé enregistrée. ') +
+    'Teste pour récupérer les modèles.';
+  $('rgPfRagKeyHint').textContent = p && p.hasRagKey ? 'clé définie — laisser vide pour la conserver' : 'aucune clé enregistrée';
+  $('rgProfileEditor').hidden = false;
+}
+
+function closeEditor() {
+  // Ne jamais laisser une clé saisie traîner dans le DOM après fermeture/annulation.
+  $('rgPfLlmKey').value = '';
+  $('rgPfRagKey').value = '';
+  $('rgProfileEditor').hidden = true;
+  editingId = null;
+}
+
+// Persiste le profil (métadonnées) + les clés saisies (write-only, trousseau). Renvoie
+// l'id. Les champs clé sont vidés dans tous les cas (finally), même en cas d'échec.
+async function saveProfileFromEditor() {
+  try {
+    const profil = await sauvegarderProfil(
+      {
+        id: editingId,
+        name: $('rgPfName').value,
+        llmUrl: $('rgPfLlmUrl').value,
+        model: $('rgPfLlmModel').value,
+        ragUrl: $('rgPfRagUrl').value,
+        llmKey: $('rgPfLlmKey').value,
+        ragKey: $('rgPfRagKey').value,
+      },
+      { onUpsert: (id) => { editingId = id; } }
+    );
+    return profil.id;
+  } finally {
+    $('rgPfLlmKey').value = '';
+    $('rgPfRagKey').value = '';
+  }
+}
+
+async function onSaveProfile() {
+  if (locked()) return;
+  try {
+    const id = await saveProfileFromEditor();
+    await activerProfil(id); // setActive : renvoie le payload complet
+    closeEditor();
+    renderProfiles();
+    setStatus('✓ profil enregistré.');
+    annoncerReglage('profils', 'settings'); // la principale rejoue la cascade (modèles, RAG…)
+  } catch (err) {
+    setStatus('✗ ' + describeError(err));
+  }
+}
+
+// Teste SANS persister : URL + clé saisies (éphémère) ; sinon teste le profil enregistré.
+async function onTestProfile(target) {
+  const hint = target === 'llm' ? $('rgPfLlmKeyHint') : $('rgPfRagKeyHint');
+  const url = (target === 'llm' ? $('rgPfLlmUrl') : $('rgPfRagUrl')).value.trim();
+  const key = (target === 'llm' ? $('rgPfLlmKey') : $('rgPfRagKey')).value.trim();
+  if (!url) { hint.textContent = '✗ URL manquante.'; return; }
+  hint.textContent = 'test en cours…';
+  try {
+    const models = await testerConnexion({ url, key, profileId: editingId, target });
+    if (!models) { hint.textContent = '✗ Saisis une clé pour tester.'; return; }
+    hint.textContent = '✓ connexion OK — ' + models.length + ' modèles disponibles';
+    if (target === 'llm') setProfileModelOptions(models, $('rgPfLlmModel').value);
+  } catch (err) {
+    hint.textContent = '✗ ' + describeError(err);
+  }
+}
+
+async function onDeleteProfile() {
+  if (locked()) return;
+  const p = activeProfile();
+  if (!p) return;
+  if (!window.confirm('Supprimer le profil « ' + p.name + ' » et ses clés du trousseau ? Action définitive.')) return;
+  try {
+    await supprimerProfil(p.id);
+    closeEditor();
+    renderProfiles();
+    setStatus('✓ profil supprimé.');
+    annoncerReglage('profils', 'settings');
+  } catch (err) {
+    setStatus('✗ ' + describeError(err));
+  }
+}
+
+async function onSwitchProfile(id) {
+  if (locked() || !id || id === state.activeId) { renderProfiles(); return; }
+  try {
+    await activerProfil(id);
+    renderProfiles();
+    setStatus('');
+    annoncerReglage('profils', 'settings');
+  } catch (err) {
+    setStatus('✗ ' + describeError(err));
+  }
+}
+
+// « Charger les modèles » : l'effet (sélecteurs + statut de connexion) vit dans la
+// principale ; on lui délègue l'action via le bus.
+function onLoadModels() {
+  if (locked()) return;
+  annoncerReglage('modeles', 'settings');
+  setStatus('↻ Chargement des modèles demandé…');
+}
+
+/* ---- Câblage des contrôles Connexion ---- */
+$('rgProfileSelect').addEventListener('change', (e) => onSwitchProfile(e.target.value));
+$('rgProfileNew').addEventListener('click', () => { if (!locked()) openEditor(true); });
+$('rgProfileEdit').addEventListener('click', () => { if (!locked()) openEditor(false); });
+$('rgProfileDelete').addEventListener('click', onDeleteProfile);
+$('rgLoadModels').addEventListener('click', onLoadModels);
+$('rgPfSave').addEventListener('click', onSaveProfile);
+$('rgPfCancel').addEventListener('click', closeEditor);
+$('rgPfLlmTest').addEventListener('click', () => onTestProfile('llm'));
+$('rgPfRagTest').addEventListener('click', () => onTestProfile('rag'));
+// Auto-test au collage de la clé LLM (convenience, contrat #24) — sans écraser une saisie vide.
+$('rgPfLlmKey').addEventListener('change', () => { if ($('rgPfLlmKey').value.trim()) onTestProfile('llm'); });
+
+/* ---- Bannière de verrou ---- */
+function renderLock() {
+  const b = $('rgLockBanner');
+  if (lock.moodleSyncing) {
+    b.textContent = 'Synchronisation Moodle en cours — la connexion est momentanément verrouillée.';
+    b.classList.add('on');
+  } else if (lock.busy) {
+    b.textContent = 'Génération en cours — la connexion est momentanément verrouillée.';
+    b.classList.add('on');
+  } else {
+    b.classList.remove('on');
+    b.textContent = '';
+  }
+  renderProfiles(); // reflète l'état grisé
+}
+
+/* ===================== Bus inter-fenêtres ===================== */
+surReglage((champ) => {
+  if (champ === 'theme') { applyTheme(); reflectTheme(); }
+  else if (champ === 'profils') { refetchProfiles(); } // le rail a modifié un profil
+  // 'modeles' est traité par la principale uniquement
+}, 'settings');
+
+surVerrou((v) => {
+  lock = { busy: !!v.busy, moodleSyncing: !!v.moodleSyncing };
+  renderLock();
 });
 
-refleterTheme();
+// Sécurité des secrets : la fenêtre Réglages n'est jamais détruite (Rust : prevent_close +
+// hide), donc son DOM survit à la « fermeture ». À chaque fermeture (⌘W / bouton rouge), on
+// vide les champs clé de l'éditeur (closeEditor) — le contrat exige le vidage sur TOUS les
+// chemins, « fermer » compris.
+getCurrentWindow().onCloseRequested(() => { closeEditor(); });
+
+// Poignée de main : demande à la principale l'état de verrou courant (course au démarrage).
+signalerReglagesPret();
+
+// Chargement initial.
+refetchProfiles();

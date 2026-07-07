@@ -1,7 +1,7 @@
 import './styles.css';
 
 import { initTheme, applyTheme, syncThemeButton } from './theme.js';
-import { annoncerReglage, surReglage } from './bus.js';
+import { annoncerReglage, surReglage, publierVerrou, surReglagesPret } from './bus.js';
 import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings, loadConversations } from './state.js';
 import {
   currentConversation,
@@ -67,15 +67,24 @@ async function init() {
   ensureConversation();
   hydrateGen();
   wireEvents();
-  // Bus inter-fenêtres (refonte, lot 1) : un réglage changé dans la fenêtre Réglages
-  // est relu depuis la persistance, puis l'UI locale est mise à niveau (doctrine bus.js).
+  // Bus inter-fenêtres : un réglage changé dans la fenêtre Réglages est relu ici, puis
+  // la cascade est rejouée dans CE DOM (doctrine bus.js — cf. §0 de la roadmap).
   surReglage((champ) => {
     if (champ === 'theme') {
       applyTheme();
       syncThemeButton($('themeToggle'));
+    } else if (champ === 'profils') {
+      // Réglages a créé/activé/supprimé un profil → on rejoue la cascade complète
+      // (modèles, RAG, explorateur) exactement comme un changement de profil au rail.
+      resyncProfilesFromReglages();
+    } else if (champ === 'modeles') {
+      loadModels(); // « Charger les modèles » déclenché depuis Réglages
     }
-  });
+  }, 'main');
+  // La fenêtre Réglages, à son ouverture, demande l'état de verrou courant : on le diffuse.
+  surReglagesPret(() => publishLock());
   await refreshProfiles();
+  publishLock(); // état initial (idle) pour une fenêtre Réglages déjà ouverte
   await refreshMoodleProfiles();
   refreshConversation();
   checkForUpdate(); // vérif de mise à jour en arrière-plan (silencieuse si indisponible)
@@ -181,6 +190,43 @@ function refreshConversation() {
   ui.renderThread(currentConversation());
   ui.updateComposerMeta();
   refreshTurnActions();
+}
+
+/* ---------- Verrou inter-fenêtres (bus) ---------- */
+// Diffuse l'état de verrou courant (chat/synchro) vers la fenêtre Réglages, qui grise
+// alors ses contrôles Connexion/Moodle (contrat #103/#104). Émis à chaque transition.
+function publishLock() {
+  publierVerrou({ busy: state.busy, moodleSyncing });
+}
+
+// Enveloppe ui.setSending en y accolant la diffusion du verrou : toute bascule du verrou
+// chat (busy) passe par setSendingUI, donc la fenêtre Réglages reste synchronisée.
+function setSendingUI(on) {
+  ui.setSending(on);
+  publishLock();
+}
+
+// Rejoue la cascade après une mutation de profil venue de la fenêtre Réglages. Celle-ci
+// a déjà écrit le backend (activer/créer/supprimer) mais n'a transmis AUCUNE donnée : on
+// relit la source de vérité, puis on emprunte EXACTEMENT le chemin du rail pour un effet
+// strictement identique (contrat « zéro régression ») —
+//   • vrai changement de profil actif → switchProfile (reset modèles, badges Moodle rendus
+//     APRÈS mise à jour de l'actif, cascade RAG, loadModels) ;
+//   • création/suppression/édition sans changement d'actif → refreshProfiles.
+async function resyncProfilesFromReglages() {
+  let target;
+  try {
+    const payload = await profilesApi.list();
+    target = payload.activeId || payload.profiles?.[0]?.id || null;
+  } catch (err) {
+    ui.showError(describeError(err));
+    return;
+  }
+  if (target && target !== state.activeId) {
+    await switchProfile(target); // même cascade que le rail (activerProfil idempotent)
+  } else {
+    await refreshProfiles();
+  }
 }
 
 /* ---------- Profils ---------- */
@@ -662,6 +708,7 @@ async function switchProfile(id) {
     applyActiveProfile();
     const p = activeProfile();
     if (p && p.hasLlmKey) loadModels();
+    annoncerReglage('profils', 'main'); // la fenêtre Réglages resynchronise sa liste
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -747,6 +794,7 @@ async function onSaveProfile() {
     applyActiveProfile();
     const p = activeProfile();
     if (p && p.hasLlmKey) loadModels();
+    annoncerReglage('profils', 'main'); // la fenêtre Réglages resynchronise sa liste
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -789,6 +837,7 @@ async function onDeleteProfile() {
     applyActiveProfile();
     const np = activeProfile();
     if (np && np.hasLlmKey) loadModels();
+    annoncerReglage('profils', 'main'); // la fenêtre Réglages resynchronise sa liste
   } catch (err) {
     ui.showError(describeError(err));
   }
@@ -1230,6 +1279,7 @@ function setMvSyncing(on) {
   $('moodleView').classList.toggle('syncing', on); // gèle les cases (CSS pointer-events)
   $('mvProgress').hidden = !on;
   if (!on) $('mvProgressFill').style.width = '0%';
+  publishLock(); // la fenêtre Réglages grise/dégrise ses contrôles Connexion pendant la synchro
 }
 
 // Met à jour la barre + le libellé « Cours i/N : <nom>… » pendant la synchro.
@@ -1712,7 +1762,7 @@ async function send() {
   }
   // Verrou posé AVANT tout await (recherche RAG) : ferme la fenêtre de double-soumission.
   state.busy = true;
-  ui.setSending(true);
+  setSendingUI(true);
   ui.hideTurnActions();
 
   const conv = ensureConversation();
@@ -1762,7 +1812,7 @@ async function runGeneration(conv, text) {
     ui.finalizeBubble(ui.appendMessage('assistant', ''), msg);
     ui.setComposerMeta(ragError ? 'mode Requête : recherche indisponible, réponse bloquée.' : 'mode Requête : aucun extrait pertinent trouvé.');
     state.busy = false;
-    ui.setSending(false);
+    setSendingUI(false);
     ui.renderConversationList(convHandlers);
     refreshTurnActions();
     ui.scrollDown();
@@ -1831,7 +1881,7 @@ async function runGeneration(conv, text) {
   } finally {
     state.busy = false;
     abortController = null;
-    ui.setSending(false);
+    setSendingUI(false);
     ui.renderConversationList(convHandlers);
     refreshTurnActions();
     ui.scrollDown();
@@ -1856,7 +1906,7 @@ async function regenerate() {
   readGenerationFromInputs();
   if (!state.model) { ui.showError('Sélectionnez un modèle (chargez les modèles d’abord).'); return; }
   state.busy = true;
-  ui.setSending(true);
+  setSendingUI(true);
   ui.hideTurnActions();
   ui.clearError();
   removeLastMessage(conv);   // retire l'ancienne réponse (modèle)
@@ -1963,7 +2013,7 @@ async function runComparison(conv, text, models) {
     ui.finalizeBubble(ui.appendMessage('assistant', ''), msg);
     ui.setComposerMeta(ragError ? 'mode Requête : recherche indisponible, réponse bloquée.' : 'mode Requête : aucun extrait pertinent trouvé.');
     state.busy = false;
-    ui.setSending(false);
+    setSendingUI(false);
     ui.renderConversationList(convHandlers);
     refreshTurnActions();
     ui.scrollDown();
@@ -2051,7 +2101,7 @@ function keepComparison(i) {
   if (ctx.ragSources.length) ui.appendSources(bubble, ctx.ragSources);
   ui.setComposerMeta('réponse retenue : ' + ctx.models[i]);
   state.busy = false;
-  ui.setSending(false);
+  setSendingUI(false);
   ui.renderConversationList(convHandlers);
   refreshTurnActions();
   ui.scrollDown();
@@ -2068,7 +2118,7 @@ function cancelComparison() {
   if (ctx.conv.messages[ctx.conv.messages.length - 1]?.role === 'user') removeLastMessage(ctx.conv);
   ui.setComposerMeta('comparaison annulée.');
   state.busy = false;
-  ui.setSending(false);
+  setSendingUI(false);
   ui.renderConversationList(convHandlers);
   refreshTurnActions();
   ui.scrollDown();
@@ -2339,7 +2389,7 @@ function wireEvents() {
   initTheme($('themeToggle'));
   // Le handler d'initTheme (enregistré juste au-dessus) persiste le nouveau mode AVANT
   // que celui-ci n'annonce le changement aux autres fenêtres (ordre d'enregistrement).
-  $('themeToggle').addEventListener('click', () => annoncerReglage('theme'));
+  $('themeToggle').addEventListener('click', () => annoncerReglage('theme', 'main'));
   setupHelpTooltips();
   setupSections();
   setupDragDrop();

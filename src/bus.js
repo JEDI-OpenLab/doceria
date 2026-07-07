@@ -1,31 +1,57 @@
-// Bus inter-fenêtres (refonte, lot 1).
+// Bus inter-fenêtres (refonte — lot 1, étendu au lot 2a).
 //
-// DOCTRINE (cf. docs/REFONTE-UI-ROADMAP.md §2) :
+// DOCTRINE (cf. docs/REFONTE-UI-ROADMAP.md §0) :
 //  - le SIGNAL passe par les events Tauri (emit/listen), fiables entre fenêtres ;
-//  - les DONNÉES passent par la persistance (localStorage, partagé entre les
-//    webviews d'une même app sur macOS) : le récepteur RELIT à réception.
-//  - On ne dépend JAMAIS de l'événement DOM « storage » (non fiable inter-WKWebViews,
-//    bug WebKit #225344).
+//  - les DONNÉES ne transitent PAS par le bus : le récepteur relit la source de
+//    vérité (backend Rust pour les profils/Moodle ; localStorage pour le thème et
+//    les réglages de génération). On ne dépend JAMAIS de l'événement DOM « storage »
+//    (non fiable inter-WKWebViews, bug WebKit #225344).
+//  - Les CLÉS/JETONS ne transitent JAMAIS par le bus : chaque fenêtre les envoie
+//    elle-même au trousseau via un invoke Rust direct (write-only), puis les oublie.
 //
-// Régime d'écriture du blob `ilaas_portal` (tranché au lot 1) : RELECTURE-AVANT-ÉCRITURE.
-// Toute fenêtre qui reçoit « réglage changé » doit relire la persistance (loadSettings())
-// AVANT sa prochaine écriture, pour ne jamais écraser la valeur d'une autre fenêtre avec
-// une copie mémoire périmée. (Le thème utilise sa propre clé `doceria_theme`, relue par
-// applyTheme() — même principe.)
+// ⚠️ Tauri `emit` revient AUSSI à la fenêtre émettrice. Pour l'annonce de réglage
+// (écoutée par les DEUX fenêtres, thème compris), on étiquette l'émetteur (`from`)
+// et chaque fenêtre ignore ses propres annonces (`self`). Les canaux « verrou » et
+// « prêt » sont dirigés par construction (un seul émetteur, un seul abonné).
 
 import { emit, listen } from '@tauri-apps/api/event';
 
-const EVT_REGLAGE = 'doceria://reglage';
+const EVT_REGLAGE = 'doceria://reglage'; // { champ, from } — « relis tel réglage »
+const EVT_VERROU = 'doceria://verrou'; // { busy, moodleSyncing } — principale → Réglages
+const EVT_PRET = 'doceria://reglages-pret'; // Réglages signale sa présence → principale rediffuse le verrou
 
-/** Annonce aux autres fenêtres qu'un réglage a changé (la valeur est déjà persistée). */
-export function annoncerReglage(champ) {
-  return emit(EVT_REGLAGE, { champ }).catch(() => { /* silencieux hors Tauri */ });
+/* ------------------------- Annonces de réglage ------------------------- */
+// champ ∈ 'theme' | 'profils' | 'modeles' | 'moodle'. `from` = label de l'émetteur.
+export function annoncerReglage(champ, from) {
+  return emit(EVT_REGLAGE, { champ, from }).catch(() => { /* silencieux hors Tauri */ });
+}
+// cb(champ) pour les annonces des AUTRES fenêtres. `self` = mon label (annonces ignorées si from === self).
+export function surReglage(cb, self) {
+  return listen(EVT_REGLAGE, (e) => {
+    const p = e && e.payload;
+    if (!p || !p.champ) return;
+    if (p.from && p.from === self) return; // ne pas réagir à ses propres annonces (emit revient à l'émetteur)
+    cb(p.champ);
+  });
 }
 
-/** Écoute les annonces de réglages des autres fenêtres. cb(champ). */
-export function surReglage(cb) {
-  return listen(EVT_REGLAGE, (e) => {
-    const champ = e && e.payload && e.payload.champ;
-    if (champ) cb(champ);
-  });
+/* --------------------------- Verrous (busy) --------------------------- */
+// Diffusé par la fenêtre principale (seule origine des verrous chat/synchro).
+export function publierVerrou(etat) {
+  return emit(EVT_VERROU, etat || {}).catch(() => { /* silencieux hors Tauri */ });
+}
+// Écouté par la fenêtre Réglages, qui grise ses contrôles en conséquence.
+export function surVerrou(cb) {
+  return listen(EVT_VERROU, (e) => cb((e && e.payload) || {}));
+}
+
+/* ----------------- Poignée de main au démarrage Réglages ----------------- */
+// La fenêtre Réglages (persistante mais cachée au lancement) signale qu'elle est
+// prête : la principale rediffuse alors l'état de verrou courant, pour éviter la
+// course « Réglages ouverte avant la première transition de verrou ».
+export function signalerReglagesPret() {
+  return emit(EVT_PRET, {}).catch(() => { /* silencieux hors Tauri */ });
+}
+export function surReglagesPret(cb) {
+  return listen(EVT_PRET, () => cb());
 }

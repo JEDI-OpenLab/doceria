@@ -307,3 +307,31 @@ src-tauri/
   - **Preuve de bout en bout** : le thème changé dans Réglages bascule la principale sans
     recharger, et inversement.
   *(à suivre : test utilisateur du lot 1, puis Lot 2a — Réglages Connexion + Moodle.)*
+- **2026-07-07 — Lot 2a-i ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur.**
+  Le lot 2a est **découpé** en 2a-i (Connexion / profils ILaaS) puis 2a-ii (Moodle) — deux
+  points de test sûrs. Ici : **2a-i**. Retour du crédit → méthode complète (revue adversariale).
+  - **Architecture** (le nœud du lot) : source de vérité profils = **backend Rust** (partagé
+    entre fenêtres) ; chaque webview a son **propre miroir `state`** (bundles séparés). La
+    fenêtre Réglages EXÉCUTE ses mutations via les services extraits (clés → invoke Rust
+    direct, **jamais sur le bus**) puis **annonce** ; la principale **possède la cascade**
+    (loadModels, RAG, explorateur) et la rejoue dans SON DOM via `resyncProfilesFromReglages`,
+    qui **réutilise `switchProfile`** (chemin exact du rail → parité stricte).
+  - **Bus étendu** (`bus.js`) : annonce `{champ, from}` + garde anti-écho (`emit` revient à
+    l'émetteur) ; canal **verrou** `doceria://verrou` (busy/moodleSyncing diffusés par la
+    principale, Réglages grise ses contrôles) ; **poignée de main** `doceria://reglages-pret`
+    (course au démarrage). Verrou diffusé via `setSendingUI` (enveloppe les 7 transitions
+    `busy`) + fin de `setMvSyncing`.
+  - **UI** : `settings.html` devient une fenêtre **tabulée** (Général + Connexion) ; onglet
+    Connexion = profils (liste + Nouveau/Modifier/Supprimer + Charger les modèles) + éditeur
+    complet (nom, URL/clé inférence + test, modèle, URL/clé RAG + test), tokens « Continuité ».
+    `settings.js` réplique la logique du rail contre des ids `rg*`, sans jamais toucher au
+    DOM chat/RAG (délègue « Charger les modèles » via le champ `modeles`).
+  - **Revue adversariale** (5 dimensions × vérif indépendante, 13 agents) : **0 défaut sur le
+    cœur** (bus/races/ping-pong/handshake/verrou : sains) ; **3 défauts MEDIUM** trouvés et
+    **corrigés** avant test : (1) parité cascade — `resync` réutilise désormais `switchProfile`
+    (réinitialise `state.model`, rend les badges Moodle APRÈS la bascule d'actif) ; (2) secrets —
+    `onCloseRequested` vide les champs clé à la fermeture (la fenêtre est cachée, pas détruite) ;
+    (3) résurrection — `refetchProfiles` referme l'éditeur si le profil édité est supprimé ailleurs.
+  - **Contrat** : lignes L2a Connexion #24, #80-92 → *migrées* (Moodle #106-111, #136-138 = 2a-ii).
+  - `vite build` ✅ (`dist/settings.html` présent, bundle settings 18 kB). Rust inchangé ce lot.
+  *(à suivre : test utilisateur du lot 2a-i, puis Lot 2a-ii — onglet Moodle.)*
