@@ -335,7 +335,7 @@ src-tauri/
   - **Contrat** : lignes L2a Connexion #24, #80-92 → *migrées* (Moodle #106-111, #136-138 = 2a-ii).
   - `vite build` ✅ (`dist/settings.html` présent, bundle settings 18 kB). Rust inchangé ce lot.
   *(à suivre : test utilisateur du lot 2a-i, puis Lot 2a-ii — onglet Moodle.)*
-- **2026-07-07 — Lot 2a-ii ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur.**
+- **2026-07-07 — Lot 2a-ii ✅ VALIDÉ (testé par Jean : « je valide tout »). ⇒ LOT 2a COMPLET (Connexion + Moodle). CODÉ + REVUE PASSÉE.**
   Onglet **Moodle** de la fenêtre Réglages — jumeau structurel de Connexion (2a-i), même patron
   (ids `rg*`, services `moodleconf.js`, bus). Les 3 correctifs du 2a-i appliqués d'emblée.
   - **UI** (`settings.html`) : 3ᵉ onglet Moodle = connexions (liste + Nouveau/Modifier/Supprimer),
