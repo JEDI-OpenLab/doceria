@@ -307,7 +307,7 @@ src-tauri/
   - **Preuve de bout en bout** : le thème changé dans Réglages bascule la principale sans
     recharger, et inversement.
   *(à suivre : test utilisateur du lot 1, puis Lot 2a — Réglages Connexion + Moodle.)*
-- **2026-07-07 — Lot 2a-i ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur.**
+- **2026-07-07 — Lot 2a-i ✅ VALIDÉ (testé par Jean : « c'est parfait ça fonctionne »). CODÉ + REVUE PASSÉE.**
   Le lot 2a est **découpé** en 2a-i (Connexion / profils ILaaS) puis 2a-ii (Moodle) — deux
   points de test sûrs. Ici : **2a-i**. Retour du crédit → méthode complète (revue adversariale).
   - **Architecture** (le nœud du lot) : source de vérité profils = **backend Rust** (partagé
