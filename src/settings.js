@@ -15,7 +15,7 @@ import {
   annoncerReglage, surReglage, surVerrou, signalerReglagesPret,
 } from './bus.js';
 import { state, activeProfile, activeMoodleProfile, loadSettings, saveSettings } from './state.js';
-import { profilesApi, moodleApi, describeError } from './api.js';
+import { profilesApi, moodleApi, usageApi, updater, describeError } from './api.js';
 import {
   sauvegarderProfil, testerConnexion, supprimerProfil, activerProfil,
 } from './services/profiles.js';
@@ -88,6 +88,7 @@ async function refetchProfiles() {
       setStatus('Le profil en cours d’édition a été supprimé ailleurs — éditeur fermé.');
     }
     renderProfiles();
+    resetUsage(); // la conso affichée dépend du profil (parité : applyActiveProfile au rail)
   } catch (err) {
     setStatus('✗ ' + describeError(err));
   }
@@ -102,6 +103,9 @@ function renderProfiles() {
   $('rgProfileEdit').disabled = !has || dis;
   $('rgProfileDelete').disabled = !has || dis;
   $('rgLoadModels').disabled = !has || dis;
+  // Conso : grisé si aucun profil (contrat #101) OU récupération en vol (renderProfiles est
+  // rappelé par renderLock à chaque verrou publié — il ne doit pas ré-armer le bouton).
+  $('rgUsageRefresh').disabled = !has || usageBusy;
   if (!has) {
     const o = document.createElement('option');
     o.value = ''; o.textContent = '— aucun profil —'; o.disabled = true; o.selected = true;
@@ -189,6 +193,7 @@ async function onSaveProfile() {
     await activerProfil(id); // setActive : renvoie le payload complet
     closeEditor();
     renderProfiles();
+    resetUsage();
     setStatus('✓ profil enregistré.');
     annoncerReglage('profils', 'settings'); // la principale rejoue la cascade (modèles, RAG…)
   } catch (err) {
@@ -222,6 +227,7 @@ async function onDeleteProfile() {
     await supprimerProfil(p.id);
     closeEditor();
     renderProfiles();
+    resetUsage();
     setStatus('✓ profil supprimé.');
     annoncerReglage('profils', 'settings');
   } catch (err) {
@@ -234,6 +240,7 @@ async function onSwitchProfile(id) {
   try {
     await activerProfil(id);
     renderProfiles();
+    resetUsage();
     setStatus('');
     annoncerReglage('profils', 'settings');
   } catch (err) {
@@ -454,9 +461,23 @@ let sysHintTimer = null;
 // N'écrit la valeur QUE si le champ n'a pas le focus : une ré-hydratation déclenchée par l'autre
 // fenêtre ne doit pas écraser une saisie en cours (revue lot 2b-i — deux WKWebViews = deux
 // documents, changer de fenêtre ne déclenche PAS le blur/change du champ dans l'autre).
+// Revue 2b-ii : un <input type=range> ne PREND PAS le focus au clic/drag sous WKWebView
+// (activeElement reste body) → on suit aussi le drag en cours (pointerdown → pointerup),
+// sinon une annonce 'gen' asynchrone (ex. fin de « Charger les modèles ») écraserait le drag.
+let rangeEnCours = null;
+document.addEventListener('pointerdown', (e) => {
+  if (e.target && e.target.matches && e.target.matches('input[type="range"]')) rangeEnCours = e.target;
+}, true);
+window.addEventListener('pointerup', () => { rangeEnCours = null; }, true);
+window.addEventListener('pointercancel', () => { rangeEnCours = null; }, true);
+
 function setFieldValue(id, value) {
   const el = $(id);
-  if (el && el !== document.activeElement) el.value = value;
+  if (el && el !== document.activeElement && el !== rangeEnCours) el.value = value;
+}
+function setCheckValue(id, value) {
+  const el = $(id);
+  if (el && el !== document.activeElement) el.checked = value;
 }
 
 function hydrateAvance() {
@@ -545,6 +566,177 @@ $('rgSysPresetDelete').addEventListener('click', () => {
   flashSysHint('Modèle supprimé.');
 });
 
+/* ===================== Bibliothèque — réglages RAG (blob partagé) ===================== */
+// Mêmes réglages que le rail (double surface) : chaque change → commitGen (relecture-avant-
+// écriture) → annonce 'gen' → le rail relit et ré-hydrate ses contrôles (et inversement).
+const RAG_REFUSAL_DEFAUT = 'Je ne trouve pas la réponse dans la bibliothèque.';
+
+function hydrateBiblio() {
+  setFieldValue('rgRagMethod', state.ragMethod);
+  setFieldValue('rgRagTopK', state.ragTopK);
+  $('rgRagTopKVal').textContent = state.ragTopK;
+  setFieldValue('rgRagThreshold', state.ragThreshold);
+  $('rgRagThresholdVal').textContent =
+    state.ragThreshold > 0 ? Number(state.ragThreshold).toFixed(2) : 'désactivé';
+  setCheckValue('rgRagRerank', state.ragRerank);
+  setFieldValue('rgRagRefusal', state.ragRefusal);
+  setCheckValue('rgRagAutoSync', state.ragAutoSync);
+}
+
+$('rgRagMethod').addEventListener('change', () =>
+  commitGen(() => { state.ragMethod = $('rgRagMethod').value; }));
+$('rgRagTopK').addEventListener('input', (e) => {
+  state.ragTopK = parseInt(e.target.value, 10) || 5;
+  $('rgRagTopKVal').textContent = state.ragTopK;
+});
+$('rgRagTopK').addEventListener('change', () =>
+  commitGen(() => { state.ragTopK = parseInt($('rgRagTopK').value, 10) || 5; }));
+$('rgRagThreshold').addEventListener('input', (e) => {
+  state.ragThreshold = parseFloat(e.target.value) || 0;
+  $('rgRagThresholdVal').textContent =
+    state.ragThreshold > 0 ? state.ragThreshold.toFixed(2) : 'désactivé';
+});
+$('rgRagThreshold').addEventListener('change', () =>
+  commitGen(() => { state.ragThreshold = parseFloat($('rgRagThreshold').value) || 0; }));
+$('rgRagRerank').addEventListener('change', () =>
+  commitGen(() => { state.ragRerank = $('rgRagRerank').checked; }));
+$('rgRagRefusal').addEventListener('change', () =>
+  commitGen(() => {
+    // Champ vidé → texte par défaut (le mode Requête a toujours un refus) — parité rail.
+    let v = $('rgRagRefusal').value;
+    if (!v.trim()) { v = RAG_REFUSAL_DEFAUT; $('rgRagRefusal').value = v; }
+    state.ragRefusal = v;
+  }));
+$('rgRagAutoSync').addEventListener('change', () =>
+  commitGen(() => { state.ragAutoSync = $('rgRagAutoSync').checked; }));
+
+/* ===================== Général — consommation & mises à jour ===================== */
+function resetUsage() {
+  const box = $('rgUsageOut');
+  box.hidden = true;
+  box.innerHTML = '';
+  $('rgUsageHint').textContent = 'Inférence (+ RAG si configuré). Clique pour récupérer.';
+}
+
+// Affiche l'agrégat (même calcul/format que ui.renderUsage de la principale).
+function renderUsageRows(parts) {
+  const box = $('rgUsageOut');
+  box.innerHTML = '';
+  const sum = (k) => parts.reduce((a, p) => a + (Number(p[k]) || 0), 0);
+  const tin = sum('promptTokens');
+  const tout = sum('completionTokens');
+  const ttot = sum('totalTokens') || tin + tout;
+  const n = (x) => Number(x).toLocaleString('fr-FR');
+  const money = (x) => Number(x).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+  const co2 = sum('co2g');
+  const co2fmt = (g) => (g >= 1000
+    ? (g / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' kg'
+    : Math.round(g).toLocaleString('fr-FR') + ' g');
+  const row = (label, val, cls) => {
+    const r = document.createElement('div');
+    r.className = 'usage-row' + (cls ? ' ' + cls : '');
+    const l = document.createElement('span');
+    l.textContent = label;
+    const v = document.createElement('span');
+    v.textContent = val;
+    r.appendChild(l); r.appendChild(v);
+    box.appendChild(r);
+  };
+  row('Requêtes', n(sum('requests')));
+  row('Tokens entrée', n(tin));
+  row('Tokens sortie', n(tout));
+  row('Tokens total', n(ttot));
+  row('Coût cumulé', money(sum('cost')), 'u-total');
+  if (co2 > 0) row('CO₂ estimé', co2fmt(co2));
+  if (parts.length > 1) {
+    const sub = document.createElement('div');
+    sub.className = 'usage-sub';
+    sub.textContent = parts
+      .map((p) => (p.role === 'rag' ? 'RAG' : 'Inférence') + ' : '
+        + n(Number(p.totalTokens) || (Number(p.promptTokens) + Number(p.completionTokens))) + ' tok · ' + money(p.cost))
+      .join('  ·  ');
+    box.appendChild(sub);
+  }
+  box.hidden = false;
+}
+
+let usageBusy = false; // récupération en vol (protège le bouton des re-rendus de renderProfiles)
+
+async function onUsageRefresh() {
+  if (usageBusy) return;
+  const p = activeProfile();
+  if (!p) { $('rgUsageHint').textContent = 'Sélectionne d’abord un profil.'; return; }
+  const pid = state.activeId; // si le profil change pendant la requête, le résultat est périmé
+  usageBusy = true;
+  $('rgUsageRefresh').disabled = true;
+  $('rgUsageHint').textContent = 'Récupération…';
+  try {
+    const parts = [];
+    const llm = await usageApi.fetch('llm').catch(() => null);
+    if (llm) parts.push(llm);
+    if (p.ragBaseUrl && p.hasRagKey) {
+      const rag = await usageApi.fetch('rag').catch(() => null);
+      if (rag) parts.push(rag);
+    }
+    if (state.activeId !== pid) return; // profil changé en vol : on jette (resetUsage a déjà nettoyé)
+    if (!parts.length) {
+      $('rgUsageHint').textContent = '✗ Consommation indisponible (l’endpoint /me/usage a peut-être échoué).';
+      return;
+    }
+    renderUsageRows(parts);
+    $('rgUsageHint').textContent = '≈ 30 derniers jours · coût cumulé (l’API n’expose pas de quota restant).';
+  } catch (e) {
+    if (state.activeId === pid) $('rgUsageHint').textContent = '✗ ' + describeError(e);
+  } finally {
+    usageBusy = false;
+    $('rgUsageRefresh').disabled = state.profiles.length === 0;
+  }
+}
+$('rgUsageRefresh').addEventListener('click', onUsageRefresh);
+
+// Compare deux versions « x.y.z » : > 0 si a est plus récente que b (copie de main.js).
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split('.').map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
+// « Vérifier les mises à jour » : vérification MANUELLE (contrat #44 — EN PLUS du bandeau
+// automatique de la fenêtre principale, jamais à sa place). Affiche aussi « à jour ».
+async function onUpdateCheck() {
+  const btn = $('rgUpdateCheck');
+  const hint = $('rgUpdateHint');
+  btn.disabled = true;
+  $('rgUpdateRow').hidden = true;
+  hint.textContent = 'Vérification…';
+  try {
+    const info = await updater.check();
+    if (!info || !info.latest || !info.current) {
+      hint.textContent = '✗ Vérification indisponible (hors-ligne ou pas de version publiée).';
+      return;
+    }
+    if (compareVersions(info.latest, info.current) <= 0) {
+      hint.textContent = '✓ Doceria est à jour (version ' + info.current + ').';
+      return;
+    }
+    hint.textContent = 'Nouvelle version ' + info.latest + ' disponible (vous avez ' + info.current + ').';
+    const url = info.dmgUrl || info.htmlUrl;
+    if (url) {
+      $('rgUpdateGet').onclick = () => updater.openUrl(url);
+      $('rgUpdateRow').hidden = false;
+    }
+  } catch (e) {
+    hint.textContent = '✗ ' + describeError(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+$('rgUpdateCheck').addEventListener('click', onUpdateCheck);
+
 /* ---- Bannière de verrou (Connexion + Moodle) ---- */
 function lockBannerText() {
   if (lock.moodleSyncing) return 'Synchronisation Moodle en cours — les réglages de connexion sont momentanément verrouillés.';
@@ -568,7 +760,7 @@ surReglage((champ) => {
   if (champ === 'theme') { applyTheme(); reflectTheme(); }
   else if (champ === 'profils') { refetchProfiles(); } // le rail a modifié un profil
   else if (champ === 'moodle') { refetchMoodle(); }    // le rail (ou l'explorateur) a modifié Moodle
-  else if (champ === 'gen') { loadSettings(); hydrateAvance(); } // relit le blob + ré-hydrate Avancé
+  else if (champ === 'gen') { loadSettings(); hydrateAvance(); hydrateBiblio(); } // relit le blob + ré-hydrate
   else if (champ === 'presets') { renderSysPresets(); } // la liste des modèles de consigne a changé
   // 'modeles' / 'moodle-explorer' sont traités par la principale uniquement
 }, 'settings');
@@ -591,4 +783,5 @@ signalerReglagesPret();
 refetchProfiles();
 refetchMoodle();
 hydrateAvance();     // depuis le blob déjà chargé (loadSettings en tête de module)
+hydrateBiblio();
 renderSysPresets();

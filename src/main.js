@@ -170,8 +170,22 @@ async function loadUsage() {
 // N'écrit valeur/état QUE si le champ n'a pas le focus : une ré-hydratation déclenchée par la
 // fenêtre Réglages (annonce 'gen') ne doit pas écraser une saisie en cours au rail (revue lot
 // 2b-i — le changement de fenêtre ne déclenche pas le blur/change entre deux WKWebViews).
-function setField(id, value) { const el = $(id); if (el && el !== document.activeElement) el.value = value; }
-function setCheck(id, value) { const el = $(id); if (el && el !== document.activeElement) el.checked = value; }
+// Revue 2b-ii : un <input type=range> ne PREND PAS le focus au clic/drag sous WKWebView
+// (activeElement reste body) → on suit aussi le drag en cours (pointerdown → pointerup).
+let rangeEnCours = null;
+document.addEventListener('pointerdown', (e) => {
+  if (e.target && e.target.matches && e.target.matches('input[type="range"]')) rangeEnCours = e.target;
+}, true);
+window.addEventListener('pointerup', () => { rangeEnCours = null; }, true);
+window.addEventListener('pointercancel', () => { rangeEnCours = null; }, true);
+function setField(id, value) {
+  const el = $(id);
+  if (el && el !== document.activeElement && el !== rangeEnCours) el.value = value;
+}
+function setCheck(id, value) {
+  const el = $(id);
+  if (el && el !== document.activeElement) el.checked = value;
+}
 
 function hydrateGen() {
   setField('temp', state.temp);
@@ -199,7 +213,7 @@ function setModel(value) {
   const cs = $('chatModelSelect');
   if (cs) cs.value = value;
   ui.setConsoleModel(value);
-  saveSettings();
+  persistGen(); // blob partagé : annonce pour que le miroir de la fenêtre Réglages reste frais
 }
 
 function refreshConversation() {
@@ -700,6 +714,10 @@ async function loadModels() {
       $('loadModelsBtn').disabled = true;
     },
     onModeles: (list, choix) => {
+      // Relecture-avant-écriture : le service persiste le blob juste après ce callback, or
+      // un commitGen de Réglages a pu être livré pendant l'attente réseau de listModels —
+      // sans relecture, cette écriture pleine repartirait d'un miroir périmé (clobber).
+      loadSettings();
       ui.fillModels(list, choix);
       return $('modelSelect').value; // le sélecteur peut normaliser le choix
     },
@@ -707,6 +725,11 @@ async function loadModels() {
       ui.setStatus('connecté', 'on');
       ui.enableChat(true);
       syncCompareUI();
+      // syncCompareUI a pu NORMALISER state.compareModelB (modèle B absent de la nouvelle
+      // liste) APRÈS le saveSettings du service : on re-persiste pour que le blob reflète
+      // l'état réel, PUIS on annonce (miroir de la fenêtre Réglages frais).
+      saveSettings();
+      annoncerReglage('gen', 'main');
     },
     onError: (msg, apresRequete) => {
       if (apresRequete) ui.setStatus('échec', 'err');
@@ -2485,7 +2508,7 @@ function wireEvents() {
   $('mvCheck').addEventListener('click', checkMoodleUpdates);
   $('moodleEnrolledOnly').addEventListener('change', (e) => {
     state.moodleEnrolledOnly = e.target.checked; // opt-in : recharge la liste filtrée/complète
-    saveSettings();
+    persistGen();
     onMvRefresh();
   });
   $('mvSearch').addEventListener('input', renderMoodleView);
@@ -2520,7 +2543,7 @@ function wireEvents() {
   document.querySelectorAll('.seg').forEach((b) => {
     b.addEventListener('click', () => {
       state.ragMode = b.dataset.mode === 'requete' ? 'requete' : 'chat';
-      saveSettings();
+      persistGen();
       updateRagMode();
     });
   });
@@ -2528,22 +2551,28 @@ function wireEvents() {
   // Réglages de récupération (RAG)
   $('ragMethod').addEventListener('change', (e) => {
     state.ragMethod = e.target.value;
-    saveSettings();
+    persistGen();
   });
   $('ragTopK').addEventListener('input', (e) => {
     state.ragTopK = parseInt(e.target.value, 10) || 5;
     $('ragTopKVal').textContent = state.ragTopK;
   });
-  $('ragTopK').addEventListener('change', saveSettings);
+  $('ragTopK').addEventListener('change', (e) => {
+    state.ragTopK = parseInt(e.target.value, 10) || 5; // relit le DOM (cf. temp)
+    persistGen();
+  });
   $('ragThreshold').addEventListener('input', (e) => {
     state.ragThreshold = parseFloat(e.target.value) || 0;
     $('ragThresholdVal').textContent =
       state.ragThreshold > 0 ? state.ragThreshold.toFixed(2) : 'désactivé';
   });
-  $('ragThreshold').addEventListener('change', saveSettings);
+  $('ragThreshold').addEventListener('change', (e) => {
+    state.ragThreshold = parseFloat(e.target.value) || 0; // relit le DOM (cf. temp)
+    persistGen();
+  });
   $('ragRerank').addEventListener('change', (e) => {
     state.ragRerank = e.target.checked;
-    saveSettings();
+    persistGen();
   });
   $('ragRefusal').addEventListener('input', (e) => {
     state.ragRefusal = e.target.value;
@@ -2553,8 +2582,10 @@ function wireEvents() {
     if (!e.target.value.trim()) {
       state.ragRefusal = 'Je ne trouve pas la réponse dans la bibliothèque.';
       e.target.value = state.ragRefusal;
+    } else {
+      state.ragRefusal = e.target.value; // relit le DOM (cf. temp) — sinon frappe perdue au blur
     }
-    saveSettings();
+    persistGen();
   });
   // Synchro dossier ↔ collection
   $('folderLink').addEventListener('click', onLinkFolder);
@@ -2562,7 +2593,7 @@ function wireEvents() {
   $('folderUnlink').addEventListener('click', onUnlinkFolder);
   $('ragAutoSync').addEventListener('change', (e) => {
     state.ragAutoSync = e.target.checked;
-    saveSettings();
+    persistGen();
   });
   $('docListToggle').addEventListener('click', onToggleDocList);
   $('usageRefresh').addEventListener('click', loadUsage);
@@ -2578,13 +2609,18 @@ function wireEvents() {
   });
   $('chatModelSelect2').addEventListener('change', (e) => {
     state.compareModelB = e.target.value;
-    saveSettings();
+    persistGen();
   });
   $('temp').addEventListener('input', (e) => {
     state.temp = parseFloat(e.target.value);
     $('tempVal').textContent = state.temp.toFixed(2);
   });
-  $('temp').addEventListener('change', persistGen);
+  // Au commit (change), on RELIT le DOM : l'état a pu être ré-hydraté par une annonce 'gen'
+  // de la fenêtre Réglages entre la dernière saisie et le blur (revue 2b-ii).
+  $('temp').addEventListener('change', (e) => {
+    state.temp = parseFloat(e.target.value);
+    persistGen();
+  });
   // Lot 1.5 — l'envoi lit l'état, plus le DOM : on met l'état à jour dès la saisie
   // (input) pour qu'il soit TOUJOURS à jour avant un envoi ; la persistance et les
   // retours visuels restent sur « change » (comportement inchangé).

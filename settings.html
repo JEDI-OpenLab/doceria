@@ -79,9 +79,17 @@
     select:focus, input:focus, textarea:focus { outline: 2px solid var(--c-accent); outline-offset: 0; border-color: transparent; }
     textarea { width: 100%; resize: vertical; min-height: 54px; line-height: 1.45; font: inherit; }
     input[type="range"] { flex: 1; accent-color: var(--c-accent); }
+    input[type="checkbox"] { accent-color: var(--c-accent); width: 14px; height: 14px; }
     .rangerow { display: flex; align-items: center; gap: var(--c-space-3); }
     .rangeval { font-variant-numeric: tabular-nums; color: var(--c-ink-sec); min-width: 4em; text-align: right; }
     .field input[type="number"] { width: 8em; }
+
+    /* ---- Consommation (Général) ---- */
+    .usage-row { display: flex; justify-content: space-between; padding: 3px 0;
+      font-variant-numeric: tabular-nums; font-size: var(--c-text-base); }
+    .usage-row.u-total { font-weight: 600; border-top: 1px solid var(--c-hairline-soft);
+      margin-top: 4px; padding-top: 6px; }
+    .usage-sub { margin-top: 6px; font-size: var(--c-text-xs); color: var(--c-ink-ter); }
     select:disabled, input:disabled, button:disabled { opacity: .45; cursor: default; }
     select { min-width: 190px; padding-right: 26px;
       background-image: linear-gradient(45deg, transparent 50%, var(--c-ink-sec) 50%), linear-gradient(135deg, var(--c-ink-sec) 50%, transparent 50%);
@@ -131,6 +139,7 @@
       <button class="tab" role="tab" data-tab="general" aria-selected="true"><span class="ic">􀆪</span>Général</button>
       <button class="tab" role="tab" data-tab="connexion" aria-selected="false"><span class="ic">􀎡</span>Connexion</button>
       <button class="tab" role="tab" data-tab="moodle" aria-selected="false"><span class="ic">􀉚</span>Moodle</button>
+      <button class="tab" role="tab" data-tab="biblio" aria-selected="false"><span class="ic">􀈕</span>Bibliothèque</button>
       <button class="tab" role="tab" data-tab="avance" aria-selected="false"><span class="ic">􀍟</span>Avancé</button>
     </nav>
 
@@ -148,7 +157,25 @@
             </div>
           </div>
         </div>
-        <p class="note">D'autres réglages (bibliothèque, avancé) rejoindront cette fenêtre au fil de la refonte.</p>
+        <div class="groupe">
+          <div class="gtitle">Consommation et coût</div>
+          <div class="rangée">
+            <div class="hint" id="rgUsageHint" style="margin:0">Inférence (+ RAG si configuré). Clique pour récupérer.</div>
+            <button class="btn" id="rgUsageRefresh" type="button">Actualiser</button>
+          </div>
+          <div id="rgUsageOut" hidden></div>
+        </div>
+
+        <div class="groupe">
+          <div class="gtitle">Mises à jour</div>
+          <div class="rangée">
+            <div class="hint" id="rgUpdateHint" style="margin:0">Doceria vérifie au lancement&nbsp;; tu peux relancer une vérification.</div>
+            <button class="btn" id="rgUpdateCheck" type="button">Vérifier les mises à jour</button>
+          </div>
+          <div class="btnrow" id="rgUpdateRow" hidden>
+            <button class="btn primary" id="rgUpdateGet" type="button">Télécharger la mise à jour</button>
+          </div>
+        </div>
       </section>
 
       <!-- ============ CONNEXION ============ -->
@@ -271,6 +298,69 @@
 
         <p class="note">Le jeton est écrit au trousseau du système (jamais affiché, jamais en clair).
         «&nbsp;Gérer les cours…&nbsp;» ouvre l'explorateur dans la fenêtre principale.</p>
+      </section>
+
+      <!-- ============ BIBLIOTHÈQUE ============ -->
+      <section class="tabpane" id="tab-biblio" role="tabpanel" aria-label="Bibliothèque">
+        <h1>Bibliothèque</h1>
+
+        <div class="groupe">
+          <div class="gtitle">Recherche (RAG)</div>
+          <div class="field">
+            <label for="rgRagMethod">Méthode de recherche</label>
+            <select id="rgRagMethod" aria-label="Méthode de recherche">
+              <option value="hybrid">Hybride (recommandé)</option>
+              <option value="semantic">Sémantique (sens)</option>
+              <option value="lexical">Lexicale (mots-clés)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="rgRagTopK">Extraits récupérés (top-k)</label>
+            <div class="rangerow">
+              <input type="range" id="rgRagTopK" min="1" max="20" step="1" />
+              <span class="rangeval" id="rgRagTopKVal">5</span>
+            </div>
+            <div class="hint">Nombre maximum de passages fournis au modèle à chaque question.</div>
+          </div>
+          <div class="field">
+            <label for="rgRagThreshold">Seuil de similarité</label>
+            <div class="rangerow">
+              <input type="range" id="rgRagThreshold" min="0" max="1" step="0.05" />
+              <span class="rangeval" id="rgRagThresholdVal">désactivé</span>
+            </div>
+            <div class="hint">Écarte les extraits sous ce score. 0&nbsp;= aucun filtre&nbsp;; plus haut = plus strict
+            (et plus de «&nbsp;non trouvé&nbsp;» en mode Requête).</div>
+          </div>
+          <div class="rangée">
+            <label for="rgRagRerank">Reranking des extraits</label>
+            <input type="checkbox" id="rgRagRerank" />
+          </div>
+          <div class="hint">Recommandé. Recherche un vivier plus large, le réordonne par pertinence
+          (bge-reranker), puis ne garde que le top-k ci-dessus. Ajoute un appel facturé.</div>
+        </div>
+
+        <div class="groupe">
+          <div class="gtitle">Mode Requête</div>
+          <div class="field">
+            <label for="rgRagRefusal">Message si aucune réponse</label>
+            <input type="text" id="rgRagRefusal" spellcheck="true" />
+            <div class="hint">La phrase exacte renvoyée quand la réponse n'est pas dans tes documents.
+            Laisse vide pour rétablir le texte par défaut.</div>
+          </div>
+        </div>
+
+        <div class="groupe">
+          <div class="gtitle">Synchronisation</div>
+          <div class="rangée">
+            <label for="rgRagAutoSync">Synchroniser à l'ouverture du profil</label>
+            <input type="checkbox" id="rgRagAutoSync" />
+          </div>
+          <div class="hint">Au changement de profil, synchronise en arrière-plan les collections liées
+          à un dossier.</div>
+        </div>
+
+        <p class="note">La collection active, «&nbsp;Utiliser la bibliothèque&nbsp;» et le mode
+        Chat&nbsp;⇄&nbsp;Requête se choisissent dans la fenêtre principale, au fil de la conversation.</p>
       </section>
 
       <!-- ============ AVANCÉ ============ -->

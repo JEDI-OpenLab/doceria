@@ -381,3 +381,29 @@ src-tauri/
       l'autre fenêtre → bouton Suppr. no-op. **Correctif** : préservation de la sélection au re-rendu.
   - `vite build` ✅. Rust inchangé ce lot.
   *(à suivre : test utilisateur du lot 2b-i, puis Lot 2b-ii — Bibliothèque (RAG) + Général (conso + MAJ).)*
+- **2026-07-08 — Lot 2b-ii ✅ CODÉ + REVUE PASSÉE, en attente de test utilisateur (avec le 2b-i). ⇒ la fenêtre Réglages est COMPLÈTE (5 onglets).**
+  Onglet **Bibliothèque** (méthode, top-k, seuil, rerank, message de refus, autoSync — contrat
+  #121, #124-128) + **Général** enrichi (Consommation & coût #101/#102 ; « Vérifier les mises à
+  jour » #44, EN PLUS du bandeau automatique, avec cas « ✓ à jour »).
+  - **Prérequis structurel réalisé** : les **10 écrivains du blob au rail** (setModel,
+    moodleEnrolledOnly, ragMode, ragMethod, ragTopK, ragThreshold, ragRerank, ragRefusal,
+    ragAutoSync, compareModelB) convertis `saveSettings` → `persistGen` (annonce `gen`).
+    **Invariant audité sur tout src/** : « tout écrivain du blob annonce » (5 appelants, tous
+    couverts ; `readGenerationFromInputs` ne change rien ; `chargerModeles` annonce via onSucces).
+  - **Revue adversariale** (3 dimensions × vérif, 10 agents) : **7 constats confirmés → 5
+    correctifs appliqués** :
+    1. `compareModelB` : persisté APRÈS la normalisation de `syncCompareUI` (le blob divergeait
+       de l'état/DOM → la comparaison pouvait interroger un modèle inexistant) ;
+    2. relecture-avant-écriture dans `onModeles` (le `saveSettings` du service `chargerModeles`
+       arrive après une attente réseau → pouvait écraser un commit de Réglages livré entre-temps) ;
+    3. **garde de drag** : un `<input type=range>` ne prend PAS le focus sous WKWebView → la garde
+       `activeElement` était inopérante pour les sliders ; suivi `pointerdown/up` (`rangeEnCours`)
+       dans les DEUX fenêtres ;
+    4. les `change` du rail (temp, ragTopK, ragThreshold, ragRefusal) **relisent le DOM** avant de
+       persister (l'état a pu être ré-hydraté par une annonce entre la saisie et le blur) ;
+    5. conso : verrou `usageBusy` (le bouton n'est plus ré-armé en vol par `renderProfiles`) +
+       résultat jeté si le profil actif a changé pendant la requête.
+  - `vite build` ✅ (`dist/settings.html` 21.9 kB). Rust inchangé.
+  *(à suivre : test utilisateur GROUPÉ 2b-i + 2b-ii → clôt le Lot 2b, puis Lot 3 — sidebar
+  unifiée, le rail reste. NOTE reprise : le Lot 3 est un gros lot visuel — le démarrer avec
+  l'utilisateur disponible pour tester, pas en autonomie.)*
