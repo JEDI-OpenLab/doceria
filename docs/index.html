@@ -375,7 +375,7 @@
           <p class="deep-lead" style="margin:0 0 1.1rem">
             <strong>Opt-in par défaut</strong> : un cours n'est indexé <strong>que si l'enseignant·e a
             inscrit le compte de lecture</strong> de Doceria. L'inscription <strong>vaut accord</strong>,
-            jamais à son insu. À rebours du «&nbsp;l'IA est partout, à vous de la désactiver&nbsp;», on part de
+            jamais à son insu. À rebours de l'<strong>opt-out</strong> («&nbsp;l'IA est partout, à vous de la désactiver&nbsp;»), on part de
             l'inverse&nbsp;: <strong>transparence, choix, liberté</strong>.
           </p>
           <ul class="moodle-points">
@@ -415,7 +415,7 @@
       <div class="text-center mb-5">
         <span class="kicker">Aperçu</span>
         <h2 class="section-serif">L'application en images.</h2>
-        <p class="section-lead">Ces captures montrent l'app d'aujourd'hui. Une <strong>interface entièrement repensée</strong> est en préparation&nbsp;: <a href="nouvelle-interface.html">découvrir la nouvelle Doceria</a>.</p>
+        <p class="section-lead">Ces captures montrent l'app d'aujourd'hui. Une <strong>interface entièrement repensée</strong> est en cours de conception&nbsp;: <a href="nouvelle-interface.html">découvrir la nouvelle Doceria</a>.</p>
       </div>
       <div class="row g-4 g-lg-5 justify-content-center">
         <figure class="col-md-6 shot m-0">
@@ -505,16 +505,19 @@
           </dl>
         </details>
 
-        <details class="doc-group">
+        <details class="doc-group" id="guide-moodle">
           <summary><i class="fa-solid fa-graduation-cap"></i> Connecteur Moodle&nbsp;: paramétrage &amp; usage</summary>
           <p><i class="fa-solid fa-circle-info"></i> Le connecteur est <strong>disponible dans la dernière version</strong> de Doceria. La configuration <strong>côté Moodle</strong> est un réglage <strong>unique</strong>, fait par un administrateur ; l'usage <strong>côté Doceria</strong> est ensuite à la main de l'enseignant·e. Tout est en <strong>lecture seule</strong> et sur <strong>consentement</strong>.</p>
           <dl>
             <dt>Côté Moodle&nbsp;: activer les web services</dt><dd>Dans <em>Administration du site → Serveur → Web services</em> : activer les <strong>services web</strong>, puis le <strong>protocole REST</strong> uniquement (laisser les autres désactivés).</dd>
             <dt>Compte de lecture dédié</dt><dd>Créer un compte technique <code>doceria-rag-readonly</code> (authentification manuelle). C'est <strong>ce compte</strong>, jamais l'administrateur, qui portera le jeton, d'où sa portée strictement limitée.</dd>
-            <dt>Rôle minimal</dt><dd>Créer un rôle <em>Web services REST (lecture seule)</em> avec une <strong>seule</strong> capacité, <code>webservice/rest:use</code>, au contexte <strong>Système</strong>, puis l'attribuer au compte. Le strict nécessaire pour parler REST.</dd>
-            <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>«&nbsp;peut télécharger des fichiers&nbsp;»</strong> coché (pour lire les PDF), <strong>«&nbsp;autoriser le dépôt de fichiers&nbsp;» décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>«&nbsp;cours consentis&nbsp;»</strong>, actif par défaut (voir plus bas), ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong>&nbsp;: surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>.</dd>
-            <dt>Jeton</dt><dd>Générer un jeton pour ce compte et ce service (<em>Gérer les jetons</em>). Il est <strong>révocable</strong> à tout moment et se colle dans Doceria, où il est rangé dans le <strong>trousseau du système</strong>, jamais en clair.</dd>
-            <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant·e y <strong>inscrit le compte de lecture</strong> (comme un participant). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant·e.</dd>
+            <dt>Rôle minimal</dt><dd>Créer un rôle <em>Web services REST (lecture seule)</em> avec une <strong>seule</strong> capacité, <code>webservice/rest:use</code>, au contexte <strong>Système</strong> (<em>Utilisateurs → Permissions → Définir les rôles</em>, archétype «&nbsp;Aucun&nbsp;»). Le strict nécessaire pour parler REST.</dd>
+            <dt>Attribuer ce rôle au compte</dt><dd>Dans <em>Utilisateurs → Permissions → Attribuer les rôles système</em>&nbsp;: choisir <em>Web services REST (lecture seule)</em> et y ajouter <code>doceria-rag-readonly</code>. Sans cette attribution, le compte ne peut pas utiliser le service web.</dd>
+            <dt>Service dédié + liste blanche</dt><dd>Créer un service externe <em>Doceria RAG (lecture seule)</em> : <strong>activé</strong>, <strong>«&nbsp;peut télécharger des fichiers&nbsp;»</strong> coché (pour lire les PDF), <strong>«&nbsp;autoriser le dépôt de fichiers&nbsp;» décoché</strong> (aucun envoi vers Moodle), utilisateurs autorisés restreints. Y ajouter les <strong>8&nbsp;fonctions de contenu</strong> : <code>core_webservice_get_site_info</code>, <code>core_course_get_categories</code>, <code>core_course_get_courses_by_field</code>, <code>core_course_get_contents</code>, <code>mod_page_get_pages_by_courses</code>, <code>mod_label_get_labels_by_courses</code>, <code>mod_resource_get_resources_by_courses</code>, <code>mod_book_get_books_by_courses</code>. Pour le filtre <strong>«&nbsp;cours consentis&nbsp;»</strong>, actif par défaut (voir plus bas), ajouter aussi une <strong>9ᵉ fonction</strong>, <code>core_enrol_get_users_courses</code> : la <strong>seule</strong> fonction <code>core_enrol_*</code> utilisée, appelée <strong>uniquement pour le compte technique</strong> (ses propres inscriptions), donc <strong>sans donnée d'étudiant</strong>. <strong>Rien d'autre</strong>&nbsp;: surtout aucune fonction <code>core_user_*</code>, de notes, ni les <strong>autres</strong> <code>core_enrol_*</code>. Les «&nbsp;capacités requises&nbsp;» affichées à côté de certaines fonctions sont <strong>informatives</strong>&nbsp;: ne pas les ajouter au rôle.</dd>
+            <dt>Autoriser le compte sur le service</dt><dd>Le service étant restreint aux utilisateurs autorisés, ouvrir son lien <em>Utilisateurs autorisés</em> et y ajouter <code>doceria-rag-readonly</code>. Sans cela, le jeton est refusé.</dd>
+            <dt>Jeton</dt><dd>Générer un jeton pour ce compte et ce service (<em>Gérer les jetons</em>), en laissant la <strong>restriction IP vide</strong> (un changement d'adresse du poste, via un VPN par exemple, bloquerait tout). Il est <strong>révocable</strong> à tout moment et se colle dans Doceria, où il est rangé dans le <strong>trousseau du système</strong>, jamais en clair.</dd>
+            <dt>Rôle de cours «&nbsp;Doceria — indexation IA&nbsp;»</dt><dd>Créer un rôle <em>Doceria — indexation IA (lecture seule)</em>, attribuable au contexte <strong>Cours</strong>, à partir de l'archétype <strong>Étudiant</strong> (droits de lecture, aucune édition). C'est avec ce rôle que le compte est inscrit dans les cours&nbsp;: dans la liste des participant·e·s, son libellé dit clairement à l'enseignant·e ce que fait ce compte. (Le rôle Étudiant standard fonctionne aussi, sans cette clarté.)</dd>
+            <dt>Inscription = consentement</dt><dd>Un cours n'est visible par Doceria que si l'enseignant·e y <strong>inscrit le compte de lecture</strong> (<em>Participants → Inscrire des utilisateurs</em>, avec le rôle ci-dessus). Pas d'inscription → cours invisible. C'est le cœur de l'<strong>opt-in</strong> : l'accord se donne <strong>cours par cours</strong>, jamais à l'insu de l'enseignant·e.</dd>
             <dt>Côté Doceria&nbsp;: profil Moodle</dt><dd>Dans l'application&nbsp;: créer un <strong>profil Moodle</strong> (indépendant des profils ILaaS), renseigner l'<strong>URL</strong> de Moodle et coller le <strong>jeton</strong>. Le bouton <strong>Tester</strong> vérifie l'accès.</dd>
             <dt>Explorateur de cours</dt><dd>Le panneau central qui liste vos cours Moodle, groupés par catégorie repliable. <strong>«&nbsp;Rechercher un cours…&nbsp;»</strong> filtre la liste en direct ; le menu <strong>«&nbsp;Toutes les catégories&nbsp;»</strong> la restreint à une catégorie (les deux se combinent). <strong>«&nbsp;Tout cocher (filtré)&nbsp;»</strong> sélectionne d'un clic tous les cours visibles ; le pied de page compte les cours cochés et la sélection est <strong>mémorisée</strong>.</dd>
             <dt>Cours consentis uniquement (option)</dt><dd><strong>Cochée par défaut</strong>, cette bascule ne montre que les cours où le compte de lecture est inscrit, via la 9ᵉ fonction <code>core_enrol_get_users_courses</code> ci-dessus. Si cette fonction n'a pas été ajoutée au service, Doceria l'<strong>indique clairement</strong> : décochez alors l'option pour lister <strong>l'ensemble des cours</strong> (avec les 8&nbsp;fonctions de contenu seules). Le mode «&nbsp;tout indexer&nbsp;» est un choix de l'établissement.</dd>
@@ -619,7 +622,7 @@
         <p class="deep-lead" style="margin:0 auto">
           Doceria vient de gagner la <strong>comparaison multi-modèles</strong>, le <strong>rendu LaTeX</strong>,
           et surtout le <strong>connecteur Moodle</strong> complet (le différenciateur&nbsp;: texte, fichiers, synchro
-          incrémentale, opt-in). La suite&nbsp;: une <strong>interface repensée</strong> (en chantier), puis
+          incrémentale, opt-in). La suite&nbsp;: une <strong>interface repensée</strong> (en cours de conception), puis
           <strong>Windows</strong> et <strong>Linux</strong>, sans jamais trahir l'ADN&nbsp;: souverain, simple, en français.
         </p>
       </div>
@@ -673,7 +676,7 @@
 
       <div class="row align-items-center g-4 g-lg-5 mt-4 mt-lg-5 roadmap-feature">
         <div class="col-lg-5">
-          <span class="roadmap-pill">en cours</span>
+          <span class="roadmap-pill">en conception</span>
           <h3>Une interface entièrement repensée</h3>
           <p>
             Doceria devient une <strong>véritable app macOS</strong>, pensée comme une application Apple de
@@ -686,7 +689,7 @@
           </p>
         </div>
         <div class="col-lg-7">
-          <a class="ui-preview" href="nouvelle-interface.html" aria-label="Aperçu de la nouvelle interface Doceria, en préparation">
+          <a class="ui-preview" href="nouvelle-interface.html" aria-label="Aperçu de la nouvelle interface Doceria, en cours de conception">
             <span class="ui-bar"><span class="ui-tl r"></span><span class="ui-tl y"></span><span class="ui-tl g"></span></span>
             <span class="ui-body">
               <span class="ui-side"></span>
@@ -800,7 +803,7 @@
         </div>
       </div>
       <p class="footer-fine">Pédagogie ouverte, conçue avec soin.</p>
-      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-07-06.2</span></p>
+      <p class="footer-ver">Version du site&nbsp;: <span id="siteVersion">2026-10-14.1</span></p>
     </div>
   </footer>
 
@@ -847,6 +850,19 @@
         btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
         btn.textContent = expand ? 'Tout replier' : 'Tout afficher';
       });
+    })();
+    // Lien direct vers une rubrique du mode d'emploi (ex. #guide-moodle) : on la déplie.
+    (() => {
+      // Défilement APRÈS le chargement complet (les images changent la hauteur de la page).
+      const openFromHash = () => {
+        const el = location.hash && document.getElementById(location.hash.slice(1));
+        if (!el || el.tagName !== 'DETAILS') return;
+        el.open = true;
+        requestAnimationFrame(() => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+      };
+      if (document.readyState === 'complete') openFromHash();
+      else window.addEventListener('load', openFromHash);
+      window.addEventListener('hashchange', openFromHash);
     })();
     // Accessibilité : signale aux lecteurs d'écran que les liens externes ouvrent un nouvel onglet.
     document.querySelectorAll('a[target="_blank"]').forEach((a) => {

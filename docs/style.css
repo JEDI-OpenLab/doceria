@@ -144,7 +144,7 @@ code{background:var(--gold-soft);color:var(--petrol-ink);padding:.1rem .4rem;bor
 .doc-toggle-all{font-family:var(--sans);font-size:.85rem;font-weight:600;color:var(--petrol-ink);background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer;transition:background .12s,border-color .12s}
 .doc-toggle-all:hover{background:var(--surface);border-color:var(--petrol)}
 .doc-guide{max-width:840px;margin:0 auto}
-.doc-group{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:12px;overflow:hidden}
+.doc-group{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:12px;overflow:hidden;scroll-margin-top:90px}
 .doc-group>summary{cursor:pointer;list-style:none;padding:16px 22px;font-family:var(--serif);font-size:1.16rem;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:13px}
 .doc-group>summary::-webkit-details-marker{display:none}
 .doc-group>summary>i{color:var(--petrol);width:22px;text-align:center;font-size:1rem}
